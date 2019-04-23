@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/software-architects/tcslackbot/issues"
   },
-  "homepage": "https://github.com/software-architects/tcslackbot#readme"
+  "homepage": "https://github.com/software-architects/tcslackbot#readme",
+  "devDependencies": {
+    "typescript": "^3.4.4"
+  }
 }
