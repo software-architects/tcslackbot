@@ -8,8 +8,7 @@ describe('ServerTestSuite', () => {
         test(app)
             .get('/api/echo/:message')
             .expect(200)
-            .expect('Content-Type', 'application/json; charset=utf-8')
-            .end((error) => (error) ? done.fail(error) : done());
-
+            .expect('Content-Type', 'application/json; charset=utf-8');
+        // .end((error) => (error) ? done.fail(error) : done());
     });
 });
