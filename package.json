@@ -20,6 +20,7 @@
   "homepage": "https://github.com/software-architects/tcslackbot#readme",
   "devDependencies": {
     "@types/express": "^4.16.1",
+    "@types/jasmine": "^3.3.12",
     "@types/supertest": "^2.0.7",
     "jasmine": "^2.99.0",
     "supertest": "^3.4.2",
