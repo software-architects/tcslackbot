@@ -1,10 +1,12 @@
 # Build NodeJS Express app using Azure Pipelines
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript?view=vsts
 pool:
-  vmImage: ''
+#   name: 'Hosted'
+  vmImage: 'ubuntu-16.04' # examples of other options: 'macOS-10.13', 'vs2017-win2016'
 
 steps:
 - task: NodeTool@0
+  displayName: 'Use Node 8.x'
   inputs:
     versionSpec: '8.x'
   
@@ -19,11 +21,14 @@ steps:
     command: custom
     customCommand: 'lint'
 
+# TODO: Implement jasmine tests
+# - script: npm test
+
 # - task: PublishTestResults@2
-#   inputs:
-#     testResultsFiles: '**/TEST-RESULTS.xml'
-#     testRunTitle: 'Test results for JavaScript'
 #   condition: succeededOrFailed()
+#   inputs:
+#     testRunner: Jasmine
+#     testResultsFiles: '**/TEST-RESULTS.xml'
 
 # - task: PublishCodeCoverageResults@1
 #   inputs: 
