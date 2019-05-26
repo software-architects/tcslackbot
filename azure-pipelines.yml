@@ -14,7 +14,7 @@ steps:
   inputs:
     command: install
 
-- task: Npm@2
+- task: Npm@1
   displayName: 'npm run lint'
   inputs:
     command: custom
