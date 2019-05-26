@@ -20,11 +20,7 @@ steps:
     command: custom
     customCommand: 'run lint'
 
-- task: Npm@3
-  displayName: 'npm test'
-  inputs:
-    command: custom
-    customCommand: 'lint'
+- script: npm test
 
 # - task: PublishTestResults@2
 #   condition: succeededOrFailed()
