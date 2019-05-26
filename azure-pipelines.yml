@@ -16,10 +16,10 @@ steps:
     command: install
 
 - task: Npm@1
-  displayName: 'npm lint'
+  displayName: 'npm run lint'
   inputs:
     command: custom
-    customCommand: 'lint'
+    customCommand: 'run lint'
 
 # TODO: Implement jasmine tests
 # - script: npm test
