@@ -6,7 +6,8 @@
   "scripts": {
     "start": "ts-node src/server.ts",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
-    "test": "ts-node node_modules/jasmine/bin/jasmine"
+    "test": "ts-node node_modules/jasmine/bin/jasmine",
+    "build": "tsc "
   },
   "repository": {
     "type": "git",

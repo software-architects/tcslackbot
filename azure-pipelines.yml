@@ -18,6 +18,12 @@ steps:
     command: custom
     customCommand: 'run lint'
 
+- task: Npm@1
+  displayName: 'npm run build'
+  inputs:
+    command: 'custom'
+    customCommand: 'run build'
+
 - script: npm test
 
 - task: PublishTestResults@2
@@ -28,11 +34,11 @@ steps:
 
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: '$(Build.BinariesDirectory)'
+    rootFolderOrFile: '$(Build.SourcesDirectory)/dist'
     includeRootFolder: false
     archiveType: 'zip'
     archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-    replaceExistingArchive: true
+    replaceExistingArchive: false
 
 - task: PublishBuildArtifacts@1
   inputs:
