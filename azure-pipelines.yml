@@ -33,4 +33,4 @@ steps:
 #     rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
 #     includeRootFolder: false
 
-# - task: PublishBuildArtifacts@1
+- task: PublishBuildArtifacts@1
