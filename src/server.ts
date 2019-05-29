@@ -4,7 +4,7 @@ import { getEcho } from './requests/echo-request';
 //
 // Variables
 //
-const port = 8080;
+const port = 80;
 const app = express();
 
 //
