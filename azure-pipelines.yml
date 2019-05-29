@@ -11,6 +11,12 @@ steps:
   displayName: 'npm install'
   inputs:
     command: install
+    
+- task: Npm@1
+  displayName: 'npm install -D'
+  inputs:
+    command: custom
+    customCommand: install -D
 
 - task: Npm@1
   displayName: 'npm run lint'
