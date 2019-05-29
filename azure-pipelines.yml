@@ -26,11 +26,11 @@ steps:
 
 - script: npm test
 
-- task: PublishTestResults@2
-  condition: succeededOrFailed()
-  inputs:
-    testRunner: Jasmine
-    testResultsFiles: '**/TEST-RESULTS.xml'
+# - task: PublishTestResults@2
+#   condition: succeededOrFailed()
+#   inputs:
+#     testRunner: JUnit
+#     testResultsFiles: '**/TEST-RESULTS.xml'
 
 - task: ArchiveFiles@2
   inputs:
