@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using System;
 using TCSlackbot.Logic;
 
 namespace TCSlackbot.Controllers
@@ -14,12 +16,15 @@ namespace TCSlackbot.Controllers
         private readonly ISecretManager _secretManager;
         private readonly IBotClient _botClient;
 
-        public AuthController(ILogger<AuthController> logger, IConfiguration config, ISecretManager secretManager, IBotClient botClient)
+        private readonly AuthTokensSlack _authTokensSlack;
+
+        public AuthController(ILogger<AuthController> logger, IConfiguration config, ISecretManager secretManager, IBotClient botClient, IOptions<AuthTokensSlack> authTokensSlack)
         {
             _logger = logger;
             _configuration = config;
             _secretManager = secretManager;
             _botClient = botClient;
+            _authTokensSlack = authTokensSlack.Value ?? throw new ArgumentException(nameof(AuthTokensSlack));
         }
 
         [HttpGet]

@@ -1,19 +1,13 @@
-﻿using Microsoft.Extensions.Options;
-using SlackAPI;
+﻿using SlackAPI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TCSlackbot{
+namespace TCSlackbot.Logic{
     public class BotClient : IBotClient {
-        private readonly AuthTokensSlack _authTokensSlack;
-
-        public BotClient(IOptions<AuthTokensSlack> authTokensSlack) {
-            _authTokensSlack = authTokensSlack.Value ?? throw new ArgumentException(nameof(AuthTokensSlack));
-        }
-        public void Test() {
+        public void Test(AuthTokensSlack _authTokensSlack) {
             ManualResetEventSlim clientReady = new ManualResetEventSlim(false);
             SlackSocketClient client = new SlackSocketClient(_authTokensSlack.UserAuthToken);
             client.Connect((connected) => {

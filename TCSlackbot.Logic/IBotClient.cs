@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace TCSlackbot {
+namespace TCSlackbot.Logic {
     public interface IBotClient {
-        public void Test();
+        public void Test(AuthTokensSlack _authTokensSlack);
     }
 }
