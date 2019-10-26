@@ -1,7 +1,9 @@
-﻿namespace TCSlackbot.Logic
+﻿using System.Threading.Tasks;
+
+namespace TCSlackbot.Logic
 {
     public interface IBotClient
     {
-        void Test(SlackConfig config);
+        Task Test(SlackConfig config);
     }
 }
