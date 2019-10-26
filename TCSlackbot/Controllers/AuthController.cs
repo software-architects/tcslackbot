@@ -12,18 +12,27 @@ namespace TCSlackbot.Controllers
         private readonly ILogger<AuthController> _logger;
         private readonly IConfiguration _configuration;
         private readonly ISecretManager _secretManager;
+        private readonly IBotClient _botClient;
 
-        public AuthController(ILogger<AuthController> logger, IConfiguration config, ISecretManager secretManager)
+        public AuthController(ILogger<AuthController> logger, IConfiguration config, ISecretManager secretManager, IBotClient botClient)
         {
             _logger = logger;
             _configuration = config;
             _secretManager = secretManager;
+            _botClient = botClient;
         }
 
         [HttpGet]
         public IActionResult Authenticate()
         {
             return Ok(_secretManager.GetSecret("mySecret"));
+        }
+
+        [HttpGet]
+        [Route("startBot")]
+        public IActionResult Login() {
+            _botClient.Test();
+            return Ok("Started Bot");
         }
     }
 }
