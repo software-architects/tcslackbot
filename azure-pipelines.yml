@@ -3,6 +3,7 @@ pool:
 
 variables:
   BuildConfiguration: 'Release'
+  TestProject: 'TCSlackbot.Tests'
 
 steps:
 # Use dotnet30
@@ -34,7 +35,7 @@ steps:
     arguments: '--configuration $(BuildConfiguration)'
 
 # Publish test results
-- script: dotnet test <test-project> --logger trx
+- script: dotnet test <$(TestProject) --logger trx
 - task: PublishTestResults@2
   condition: succeededOrFailed()
   inputs:
