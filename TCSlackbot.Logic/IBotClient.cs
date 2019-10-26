@@ -2,6 +2,6 @@
 {
     public interface IBotClient
     {
-        void Test(SlackSecret authTokensSlack);
+        void Test(SlackSecrets slackSecrets);
     }
 }

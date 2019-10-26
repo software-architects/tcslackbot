@@ -6,10 +6,10 @@ namespace TCSlackbot.Logic
 {
     public class BotClient : IBotClient
     {
-        public void Test(SlackSecret authTokensSlack)
+        public void Test(SlackSecrets slackSecrets)
         {
             var clientReady = new ManualResetEventSlim(false);
-            var client = new SlackSocketClient(authTokensSlack.UserAuthToken);
+            var client = new SlackSocketClient(slackSecrets.UserAuthToken);
 
             client.Connect(connected =>
             {
