@@ -22,7 +22,7 @@ namespace TCSlackbot
             services.AddTransient<ISecretManager, SecretManager>();
             services.AddTransient<IBotClient, BotClient>();
 
-            services.Configure<AuthTokensSlack>(Configuration.GetSection("AuthTokensSlack"));
+            services.Configure<SlackSecret>(Configuration.GetSection("AuthTokensSlack"));
 
             services.AddControllers();
         }

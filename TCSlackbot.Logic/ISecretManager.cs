@@ -2,6 +2,6 @@
 {
     public interface ISecretManager
     {
-        public string GetSecret(string key);
+        string GetSecret(string key);
     }
 }

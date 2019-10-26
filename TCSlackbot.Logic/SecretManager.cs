@@ -8,7 +8,7 @@ namespace TCSlackbot.Logic
 
         public SecretManager(IConfiguration configuration)
         {
-            this._configuration = configuration;
+            _configuration = configuration;
         }
 
         public string GetSecret(string key)
