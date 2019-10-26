@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
+using System.Threading.Tasks;
 using TCSlackbot.Logic;
 
 namespace TCSlackbot.Controllers
@@ -28,8 +30,11 @@ namespace TCSlackbot.Controllers
         }
 
         [HttpGet]
-        public IActionResult Authenticate()
+        public async Task<IActionResult> Authenticate()
         {
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            Console.WriteLine(accessToken);
+
             return Ok(_secretManager.GetSecret("mySecret"));
         }
 
