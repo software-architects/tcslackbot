@@ -1,6 +1,6 @@
 namespace TCSlackbot.Logic
 {
-    public class SlackSecrets
+    public class SlackConfig
     {
         public string UserAuthToken { get; set; }
         public string BotAuthToken { get; set; }

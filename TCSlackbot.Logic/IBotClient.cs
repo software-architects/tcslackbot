@@ -2,6 +2,6 @@
 {
     public interface IBotClient
     {
-        void Test(SlackSecrets slackSecrets);
+        void Test(SlackConfig config);
     }
 }

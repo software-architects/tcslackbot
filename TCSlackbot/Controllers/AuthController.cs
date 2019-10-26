@@ -16,15 +16,15 @@ namespace TCSlackbot.Controllers
         private readonly ISecretManager _secretManager;
         private readonly IBotClient _botClient;
 
-        private readonly SlackSecrets _slackSecrets;
+        private readonly SlackConfig _slackConfig;
 
-        public AuthController(ILogger<AuthController> logger, IConfiguration config, ISecretManager secretManager, IBotClient botClient, IOptions<SlackSecrets> slackSecrets)
+        public AuthController(ILogger<AuthController> logger, IConfiguration config, ISecretManager secretManager, IBotClient botClient, IOptions<SlackConfig> slackConfig)
         {
             _logger = logger;
             _configuration = config;
             _secretManager = secretManager;
             _botClient = botClient;
-            _slackSecrets = slackSecrets.Value ?? throw new ArgumentException(nameof(SlackSecrets));
+            _slackConfig = slackConfig.Value ?? throw new ArgumentException(nameof(SlackConfig));
         }
 
         [HttpGet]
@@ -37,7 +37,7 @@ namespace TCSlackbot.Controllers
         [Route("startBot")]
         public IActionResult Login()
         {
-            _botClient.Test(_slackSecrets);
+            _botClient.Test(_slackConfig);
             return Ok("Started Bot");
         }
     }
