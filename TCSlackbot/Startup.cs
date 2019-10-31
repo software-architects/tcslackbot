@@ -67,7 +67,6 @@ namespace TCSlackbot
                 });
 
             services.AddTransient<ISecretManager, SecretManager>();
-            services.AddTransient<IBotClient, BotClient>();
 
             services.Configure<SlackConfig>(Configuration.GetSection("SlackConfig"));
             services.Configure<AuthenticationConfig>(Configuration.GetSection("AuthenticationConfig"));

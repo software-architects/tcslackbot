@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Slack.Webhooks;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -21,17 +22,14 @@ namespace TCSlackbot.Controllers
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _factory;
         private readonly ISecretManager _secretManager;
-        private readonly IBotClient _botClient;
-
         private readonly SlackConfig _slackConfig;
 
-        public AuthController(ILogger<AuthController> logger, IConfiguration config, IHttpClientFactory factory, ISecretManager secretManager, IBotClient botClient, IOptions<SlackConfig> slackConfig)
+        public AuthController(ILogger<AuthController> logger, IConfiguration config, ISecretManager secretManager, IOptions<SlackConfig> slackConfig)
         {
             _logger = logger;
             _configuration = config;
             _factory = factory;
             _secretManager = secretManager;
-            _botClient = botClient;
             _slackConfig = slackConfig.Value ?? throw new ArgumentException(nameof(SlackConfig));
         }
 
@@ -50,13 +48,6 @@ namespace TCSlackbot.Controllers
             var token = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
             return Ok(token);
         }
-
-        [HttpGet]
-        [Route("startBot")]
-        public IActionResult Login()
-        {
-            _botClient.Test(_slackConfig);
-            return Ok("Started Bot");
-        }
+        
     }
 }
