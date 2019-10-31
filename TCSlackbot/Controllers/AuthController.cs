@@ -1,9 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slack.Webhooks;
 using System;
+using System.Net.Http;
+using System.Threading.Tasks;
 using TCSlackbot.Logic;
 
 namespace TCSlackbot.Controllers
@@ -14,6 +20,7 @@ namespace TCSlackbot.Controllers
     {
         private readonly ILogger<AuthController> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _factory;
         private readonly ISecretManager _secretManager;
         private readonly SlackConfig _slackConfig;
 
@@ -21,14 +28,25 @@ namespace TCSlackbot.Controllers
         {
             _logger = logger;
             _configuration = config;
+            _factory = factory;
             _secretManager = secretManager;
             _slackConfig = slackConfig.Value ?? throw new ArgumentException(nameof(SlackConfig));
         }
 
         [HttpGet]
-        public IActionResult Authenticate()
+        [Route("login")]
+        public ActionResult Authenticate([FromQuery] string ReturnUrl = "/")
         {
-            return Ok(_secretManager.GetSecret("mySecret"));
+            return Challenge(new AuthenticationProperties { RedirectUri = ReturnUrl }, OpenIdConnectDefaults.AuthenticationScheme);
+        }
+
+        [Authorize, HttpGet]
+        [Route("test")]
+        public async Task<IActionResult> SomeFunction()
+        {
+            var httpClient = _factory.CreateClient("APIClient");
+            var token = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
+            return Ok(token);
         }
         
     }
