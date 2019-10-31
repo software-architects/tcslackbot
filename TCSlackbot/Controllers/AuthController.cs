@@ -40,8 +40,8 @@ namespace TCSlackbot.Controllers
         }
 
         [Authorize, HttpGet]
-        [Route("test")]
-        public async Task<IActionResult> SomeFunction()
+        [Route("link")]
+        public async Task<IActionResult> LinkAccounts([FromQuery] string uuid)
         {
             var httpClient = _factory.CreateClient("APIClient");
             var token = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
