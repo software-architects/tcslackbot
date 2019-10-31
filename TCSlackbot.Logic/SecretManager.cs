@@ -15,5 +15,10 @@ namespace TCSlackbot.Logic
         {
             return _configuration[key];
         }
+
+        public void SetSecret(string key, string value)
+        {
+            _configuration[key] = value;
+        }
     }
 }

@@ -43,9 +43,13 @@ namespace TCSlackbot.Controllers
         [Route("link")]
         public async Task<IActionResult> LinkAccounts([FromQuery] string uuid)
         {
-            var httpClient = _factory.CreateClient("APIClient");
-            var token = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
-            return Ok(token);
+            var refreshToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "refresh_token");
+
+            // TODO: Decrypt uuid with DataProtection
+
+            _secretManager.SetSecret(uuid, refreshToken);
+
+            return Ok(refreshToken);
         }
 
     }
