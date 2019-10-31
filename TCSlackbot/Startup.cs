@@ -39,35 +39,31 @@ namespace TCSlackbot
                 })
                 .AddCookie(options =>
                 {
-                    options.LoginPath = "/signin-oidc";
+                    options.LoginPath = "/auth/login";
                     options.AccessDeniedPath = "/error";
                 })
                 .AddOpenIdConnect(options =>
                 {
+                    options.Authority = "https://auth.timecockpit.com/";
                     options.ClientId = authenticationConfig.ClientId;
                     options.ClientSecret = authenticationConfig.ClientSecret;
 
+                    options.UsePkce = true;
+                    options.SaveTokens = true;
                     options.RequireHttpsMetadata = true;
                     options.GetClaimsFromUserInfoEndpoint = true;
-                    options.SaveTokens = true;
 
                     // Use the authorization code flow.
                     options.ResponseType = OpenIdConnectResponseType.Code;
                     options.AuthenticationMethod = OpenIdConnectRedirectBehavior.RedirectGet;
 
-                    options.Authority = "https://auth.timecockpit.com";
-
                     options.Scope.Add("openid");
                     options.Scope.Add("offline_access");
-                    //options.Scope.Add("email");
 
                     options.SecurityTokenValidator = new JwtSecurityTokenHandler
                     {
-                        // Disable the built-in JWT claims mapping feature.
                         InboundClaimTypeMap = new Dictionary<string, string>()
                     };
-
-                    //options.TokenValidationParameters.NameClaimType = "name";
                 });
 
             services.AddTransient<ISecretManager, SecretManager>();

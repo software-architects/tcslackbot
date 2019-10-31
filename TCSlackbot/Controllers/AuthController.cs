@@ -14,6 +14,7 @@ using TCSlackbot.Logic;
 namespace TCSlackbot.Controllers
 {
     [ApiController]
+    [Route("auth")]
     public class AuthController : ControllerBase
     {
         private readonly ILogger<AuthController> _logger;
@@ -34,31 +35,21 @@ namespace TCSlackbot.Controllers
             _slackConfig = slackConfig.Value ?? throw new ArgumentException(nameof(SlackConfig));
         }
 
-
-        [HttpGet("~/signin")]
-        public ActionResult SignIn()
-        {
-            return Challenge(new AuthenticationProperties { RedirectUri = "/" }, OpenIdConnectDefaults.AuthenticationScheme);
-        }
-
-
         [HttpGet]
-        [Route("signin-oidc")]
-        public async Task<IActionResult> PostCallback()
+        [Route("login")]
+        public ActionResult Authenticate(string redirectUri = "/")
         {
-            var httpClient = _factory.CreateClient("APIClient");
-            var token = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
-            return Ok();
+            return Challenge(new AuthenticationProperties { RedirectUri = redirectUri }, OpenIdConnectDefaults.AuthenticationScheme);
         }
 
-        [Authorize, HttpPost("~/")]
+        [Authorize, HttpGet]
+        [Route("test")]
         public async Task<IActionResult> SomeFunction()
         {
             var httpClient = _factory.CreateClient("APIClient");
             var token = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
-            return Ok();
+            return Ok(token);
         }
-
 
         [HttpGet]
         [Route("startBot")]
