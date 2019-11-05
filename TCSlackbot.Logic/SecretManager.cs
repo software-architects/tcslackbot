@@ -4,7 +4,7 @@ namespace TCSlackbot.Logic
 {
     public class SecretManager : ISecretManager
     {
-        private IConfiguration _configuration;
+        private readonly IConfiguration _configuration;
 
         public SecretManager(IConfiguration configuration)
         {
