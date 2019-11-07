@@ -37,11 +37,12 @@ namespace TCSlackbot.Controllers
 
         [HttpPost]
         [Route("login")]
+        [Consumes("application/x-www-form-urlencoded")]
         public IActionResult Login([FromForm] SlackSlashCommand ssc)
         {
             if (System.Diagnostics.Debugger.IsAttached)
             {
-                return Ok("https://ngroksomething.com/auth/link/?uuid=" + _protector.Protect(ssc.UserId));
+                return Ok("https://localhost:6001/auth/link/?uuid=" + _protector.Protect(ssc.Token)); // eigentlich ssc.UserId ist aber im moment null
             } else
             {
                 return Ok("https://tcslackbot.azurewebsites.net:6001/auth/link/?" + _protector.Protect(ssc.UserId));
