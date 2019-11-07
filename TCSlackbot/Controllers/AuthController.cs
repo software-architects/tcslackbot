@@ -66,6 +66,8 @@ namespace TCSlackbot.Controllers
 
                 await keyVaultClient.SetSecretAsync(Program.GetKeyVaultEndpoint(), decrypedUuid, refreshToken);
 
+                // Reload the configuration because we added new secrets
+                ((IConfigurationRoot)_configuration).Reload();
             }
             catch (Exception)
             {

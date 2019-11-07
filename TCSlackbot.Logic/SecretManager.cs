@@ -20,8 +20,5 @@ namespace TCSlackbot.Logic
         {
             _configuration[key] = value;
         }
-
-        // https://docs.microsoft.com/en-us/aspnet/core/security/key-vault-configuration?view=aspnetcore-3.0
-        // Reload to update the keys: Configuration.Reload();
     }
 }
