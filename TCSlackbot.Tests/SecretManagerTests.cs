@@ -1,15 +1,13 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using TCSlackbot.Logic;
+using Xunit;
 
 namespace TCSlackbot.Tests
 {
-    // https://docs.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test
-    [TestClass]
     public class SecretManagerTests
     {
-        [TestMethod]
+        [Fact]
         public void ValidSecret()
         {
             var dict = new Dictionary<string, string>
@@ -24,11 +22,11 @@ namespace TCSlackbot.Tests
 
             SecretManager secretManager = new SecretManager(configuration);
 
-            Assert.AreEqual("value1", secretManager.GetSecret("key1"));
-            Assert.AreEqual("value2", secretManager.GetSecret("key2"));
+            Assert.Equal("value1", secretManager.GetSecret("key1"));
+            Assert.Equal("value2", secretManager.GetSecret("key2"));
         }
 
-        [TestMethod]
+        [Fact]
         public void InvalidSecret()
         {
             var dict = new Dictionary<string, string>
@@ -43,10 +41,10 @@ namespace TCSlackbot.Tests
 
             SecretManager secretManager = new SecretManager(configuration);
 
-            Assert.IsNull(secretManager.GetSecret("wrong_key"));
+            Assert.Null(secretManager.GetSecret("wrong_key"));
         }
 
-        [TestMethod]
+        [Fact]
         public void ChangedSecret()
         {
             var dict = new Dictionary<string, string>
@@ -63,10 +61,10 @@ namespace TCSlackbot.Tests
 
             secretManager.SetSecret("key1", "mynewvalue");
 
-            Assert.AreEqual("mynewvalue", secretManager.GetSecret("key1"));
+            Assert.Equal("mynewvalue", secretManager.GetSecret("key1"));
         }
 
-        [TestMethod]
+        [Fact]
         public void NewSecret()
         {
             var dict = new Dictionary<string, string>
@@ -83,7 +81,7 @@ namespace TCSlackbot.Tests
 
             secretManager.SetSecret("key3", "value3");
 
-            Assert.AreEqual("value3", secretManager.GetSecret("key3"));
+            Assert.Equal("value3", secretManager.GetSecret("key3"));
         }
     }
 }
