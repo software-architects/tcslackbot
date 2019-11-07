@@ -23,7 +23,11 @@ namespace TCSlackbot.Controllers
         private readonly ISecretManager _secretManager;
         private readonly SlackConfig _slackConfig;
 
-        public AuthController(ILogger<AuthController> logger, IConfiguration config, IHttpClientFactory factory, ISecretManager secretManager, IOptions<SlackConfig> slackConfig)
+        public AuthController(ILogger<AuthController> logger,
+            IConfiguration config,
+            IHttpClientFactory factory,
+            ISecretManager secretManager,
+            IOptions<SlackConfig> slackConfig)
         {
             _logger = logger;
             _configuration = config;

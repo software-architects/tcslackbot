@@ -77,6 +77,8 @@ namespace TCSlackbot
             {
                 client.BaseAddress = new Uri("https://api.timecockpit.com");
             });
+
+            services.AddDataProtection();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

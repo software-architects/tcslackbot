@@ -5,6 +5,7 @@ using TCSlackbot.Logic;
 
 namespace TCSlackbot.Tests
 {
+    // https://docs.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test
     [TestClass]
     public class SecretManagerTests
     {
