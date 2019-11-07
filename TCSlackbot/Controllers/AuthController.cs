@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.KeyVault;
+using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -21,23 +23,23 @@ namespace TCSlackbot.Controllers
         private readonly ILogger<AuthController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _factory;
-        private readonly ISecretManager _secretManager;
         private readonly SlackConfig _slackConfig;
         private readonly IDataProtector _protector;
+        private readonly ISecretManager _secretManager;
 
         public AuthController(ILogger<AuthController> logger,
             IConfiguration config,
             IHttpClientFactory factory,
-            ISecretManager secretManager,
             IOptions<SlackConfig> slackConfig,
-            IDataProtectionProvider provider)
+            IDataProtectionProvider provider,
+            ISecretManager secretManager)
         {
             _logger = logger;
             _configuration = config;
             _factory = factory;
-            _secretManager = secretManager;
             _slackConfig = slackConfig.Value ?? throw new ArgumentException(nameof(SlackConfig));
             _protector = provider.CreateProtector("UUIDProtector");
+            _secretManager = secretManager;
         }
 
         [HttpGet]
@@ -59,7 +61,11 @@ namespace TCSlackbot.Controllers
                 string decrypedUuid = _protector.Unprotect(encryptedUuid);
 
                 // Associate the uuid with the refresh token
-                _secretManager.SetSecret(decrypedUuid, refreshToken);
+                var azureServiceTokenProvider = new AzureServiceTokenProvider();
+                var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+
+                await keyVaultClient.CreateKeyAsync(Program.GetKeyVaultEndpoint(), decrypedUuid, refreshToken);
+
             }
             catch (Exception)
             {

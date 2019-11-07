@@ -18,8 +18,6 @@ namespace TCSlackbot
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-
-            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
         }
 
         public IConfiguration Configuration { get; }
@@ -66,18 +64,17 @@ namespace TCSlackbot
                     };
                 });
 
+            services.AddHttpClient("APIClient", client =>
+            {
+                client.BaseAddress = new Uri("https://api.timecockpit.com");
+            });
+
             services.AddTransient<ISecretManager, SecretManager>();
 
             services.Configure<SlackConfig>(Configuration.GetSection("SlackConfig"));
             services.Configure<AuthenticationConfig>(Configuration.GetSection("AuthenticationConfig"));
 
             services.AddControllers();
-
-            services.AddHttpClient("APIClient", client =>
-            {
-                client.BaseAddress = new Uri("https://api.timecockpit.com");
-            });
-
             services.AddDataProtection();
         }
 
