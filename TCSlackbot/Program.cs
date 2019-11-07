@@ -33,6 +33,6 @@ namespace TCSlackbot
                     webBuilder.UseStartup<Startup>();
                 });
 
-        public static string GetKeyVaultEndpoint() => "https://tcslackbot-key-vault.vault.azure.net";
+        public static string GetKeyVaultEndpoint() => "https://tcslackbot-key-vault.vault.azure.net/";
     }
 }

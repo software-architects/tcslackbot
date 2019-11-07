@@ -64,7 +64,7 @@ namespace TCSlackbot.Controllers
                 var azureServiceTokenProvider = new AzureServiceTokenProvider();
                 var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
 
-                await keyVaultClient.CreateKeyAsync(Program.GetKeyVaultEndpoint(), decrypedUuid, refreshToken);
+                await keyVaultClient.SetSecretAsync(Program.GetKeyVaultEndpoint(), "Test1", "Test1");
 
             }
             catch (Exception)
