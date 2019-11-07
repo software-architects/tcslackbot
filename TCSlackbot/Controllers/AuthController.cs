@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -22,18 +23,21 @@ namespace TCSlackbot.Controllers
         private readonly IHttpClientFactory _factory;
         private readonly ISecretManager _secretManager;
         private readonly SlackConfig _slackConfig;
+        private readonly IDataProtector _protector;
 
         public AuthController(ILogger<AuthController> logger,
             IConfiguration config,
             IHttpClientFactory factory,
             ISecretManager secretManager,
-            IOptions<SlackConfig> slackConfig)
+            IOptions<SlackConfig> slackConfig,
+            IDataProtectionProvider provider)
         {
             _logger = logger;
             _configuration = config;
             _factory = factory;
             _secretManager = secretManager;
             _slackConfig = slackConfig.Value ?? throw new ArgumentException(nameof(SlackConfig));
+            _protector = provider.CreateProtector("UUIDProtector");
         }
 
         [HttpGet]
@@ -45,16 +49,24 @@ namespace TCSlackbot.Controllers
 
         [Authorize, HttpGet]
         [Route("link")]
-        public async Task<IActionResult> LinkAccounts([FromQuery] string uuid)
+        public async Task<IActionResult> LinkAccounts([FromQuery(Name = "uuid")] string encryptedUuid)
         {
             var refreshToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "refresh_token");
 
-            // TODO: Decrypt uuid with DataProtection
+            try
+            {
+                // Decrypt the uuid
+                string decrypedUuid = _protector.Unprotect(encryptedUuid);
 
-            _secretManager.SetSecret(uuid, refreshToken);
+                // Associate the uuid with the refresh token
+                _secretManager.SetSecret(decrypedUuid, refreshToken);
+            }
+            catch (Exception)
+            {
+                return BadRequest();
+            }
 
-            return Ok(refreshToken);
+            return Ok();
         }
-
     }
 }
