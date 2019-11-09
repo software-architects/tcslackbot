@@ -23,7 +23,6 @@ namespace TCSlackbot.Controllers
         private readonly ILogger<AuthController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _factory;
-        private readonly SlackConfig _slackConfig;
         private readonly IDataProtector _protector;
         private readonly ISecretManager _secretManager;
 
