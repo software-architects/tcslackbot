@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
 
@@ -75,6 +76,22 @@ namespace TCSlackbot.Controllers
             }
 
             return Ok();
+        }
+
+        [Route("test")]
+        public async Task<IActionResult> TestingAsync()
+        {
+            //var refreshToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "refresh_token");
+            //Console.WriteLine(refreshToken);
+
+            var accessToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
+            //Console.WriteLine(accessToken);
+
+            var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            var content = await client.GetStringAsync("https://api.timecockpit.com/odata/$metadata");
+
+            return Ok(content);
         }
     }
 }
