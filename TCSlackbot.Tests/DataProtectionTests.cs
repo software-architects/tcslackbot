@@ -32,12 +32,25 @@ namespace TCSlackbot.Tests
         public void DataDecrypt()
         {
             var _protectionProvider = _serviceProvider.GetDataProtectionProvider();
+            var _protector = _protectionProvider.CreateProtector("UUIDProtector");
 
             string password = "password123";
 
+
+            Assert.NotEqual(password, _protector.Protect(password));
+        }
+
+        [Fact]
+        public void DataEncrypt()
+        {
+            var _protectionProvider = _serviceProvider.GetDataProtectionProvider();
             var _protector = _protectionProvider.CreateProtector("UUIDProtector");
 
-            Assert.Equal(password, _protector.Protect(password)); // False
+            string password = "password123";
+            var encryptedPassword = _protector.Protect(password);
+
+            Assert.NotEqual(encryptedPassword, _protector.Protect(encryptedPassword));
+            Assert.NotNull(_protector.Unprotect(encryptedPassword));
         }
     }
 }
