@@ -8,7 +8,6 @@ using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -31,14 +30,12 @@ namespace TCSlackbot.Controllers
         public AuthController(ILogger<AuthController> logger,
             IConfiguration config,
             IHttpClientFactory factory,
-            IOptions<SlackConfig> slackConfig,
             IDataProtectionProvider provider,
             ISecretManager secretManager)
         {
             _logger = logger;
             _configuration = config;
             _factory = factory;
-            _slackConfig = slackConfig.Value ?? throw new ArgumentException(nameof(SlackConfig));
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
         }
