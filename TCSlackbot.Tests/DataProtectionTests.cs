@@ -49,8 +49,8 @@ namespace TCSlackbot.Tests
             string password = "password123";
             var encryptedPassword = _protector.Protect(password);
 
-            Assert.NotEqual(encryptedPassword, _protector.Protect(encryptedPassword));
             Assert.NotNull(_protector.Unprotect(encryptedPassword));
+            Assert.Equal(password, _protector.Unprotect(encryptedPassword));
         }
     }
 }
