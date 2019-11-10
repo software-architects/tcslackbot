@@ -66,8 +66,9 @@ namespace TCSlackbot.Controllers
                 // Reload the configuration because we added new secrets
                 ((IConfigurationRoot)_configuration).Reload();
             }
-            catch (Exception)
+            catch (Exception exception)
             {
+                _logger.LogCritical(exception.ToString());
                 return BadRequest();
             }
 
