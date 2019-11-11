@@ -78,13 +78,10 @@ namespace TCSlackbot.Controllers
         [Route("test")]
         public async Task<IActionResult> TestingAsync()
         {
-            //var refreshToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "refresh_token");
-            //Console.WriteLine(refreshToken);
-
             var accessToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
             //Console.WriteLine(accessToken);
 
-            var client = new HttpClient();
+            var client = _factory.CreateClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var content = await client.GetStringAsync("https://api.timecockpit.com/odata/$metadata");
 
