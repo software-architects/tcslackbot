@@ -12,7 +12,6 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using TCSlackbot.Logic;
 
 namespace TCSlackbot.Controllers
 {
@@ -24,19 +23,16 @@ namespace TCSlackbot.Controllers
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _factory;
         private readonly IDataProtector _protector;
-        private readonly ISecretManager _secretManager;
 
         public AuthController(ILogger<AuthController> logger,
             IConfiguration config,
             IHttpClientFactory factory,
-            IDataProtectionProvider provider,
-            ISecretManager secretManager)
+            IDataProtectionProvider provider)
         {
             _logger = logger;
             _configuration = config;
             _factory = factory;
             _protector = provider.CreateProtector("UUIDProtector");
-            _secretManager = secretManager;
         }
 
         [HttpGet]
@@ -63,19 +59,19 @@ namespace TCSlackbot.Controllers
 
                 await keyVaultClient.SetSecretAsync(Program.GetKeyVaultEndpoint(), decrypedUuid, refreshToken);
 
-                // Reload the configuration because we added new secrets
+                // Reload the configuration because we added a new secret
                 ((IConfigurationRoot)_configuration).Reload();
             }
             catch (Exception exception)
             {
                 _logger.LogCritical(exception.ToString());
-                return BadRequest();
+                return BadRequest("Failed to login.");
             }
 
-            return Ok();
+            return Ok("Successfully logged in.");
         }
 
-        [Route("test")]
+        [Authorize, Route("test")]
         public async Task<IActionResult> TestingAsync()
         {
             var accessToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
@@ -83,7 +79,7 @@ namespace TCSlackbot.Controllers
 
             var client = _factory.CreateClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            var content = await client.GetStringAsync("https://api.timecockpit.com/odata/$metadata");
+            var content = await client.GetStringAsync("https://web.timecockpit.com/odata/$metadata");
 
             return Ok(content);
         }

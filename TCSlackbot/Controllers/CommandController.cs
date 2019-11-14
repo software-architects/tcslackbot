@@ -1,15 +1,10 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Hosting.Internal;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using TCSlackbot.Logic;
 
 namespace TCSlackbot.Controllers
 {
-    
+
     [ApiController]
     [Route("command")]
     public class CommandController : ControllerBase
@@ -19,6 +14,17 @@ namespace TCSlackbot.Controllers
         public CommandController(IDataProtectionProvider provider)
         {
             _protector = provider.CreateProtector("UUIDProtector");
+        }
+
+        [HttpPost]
+        [Route("status")]
+        public JsonResult GetStatus() // [FromForm] SlackSlashCommand ssc
+        {
+            var dict = HttpContext.Request.Form;
+
+            System.Console.WriteLine(dict["token"]);
+
+            return new JsonResult(dict);
         }
 
         [HttpPost]
@@ -43,11 +49,12 @@ namespace TCSlackbot.Controllers
             if (System.Diagnostics.Debugger.IsAttached)
             {
                 return Ok("https://localhost:6001/auth/link/?uuid=" + _protector.Protect(ssc.Token)); // eigentlich ssc.UserId ist aber im moment null
-            } else
+            }
+            else
             {
                 return Ok("https://tcslackbot.azurewebsites.net:6001/auth/link/?" + _protector.Protect(ssc.UserId));
             }
-            
+
         }
     }
 }
