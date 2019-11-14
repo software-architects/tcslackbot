@@ -9,9 +9,6 @@ using TCSlackbot.Logic;
 
 namespace TCSlackbot.Controllers
 {
-
-
-
     [ApiController]
     [Route("command")]
     public class CommandController : ControllerBase
@@ -49,10 +46,10 @@ namespace TCSlackbot.Controllers
 
             if (System.Diagnostics.Debugger.IsAttached)
             {
-                return Ok("https://localhost:6001/auth/link/?uuid=" + _protector.Protect(context["user_id"])); // eigentlich ssc.UserId ist aber im moment null
+                return Ok("https://localhost:6001/auth/link/?uuid=" + _protector.Protect(context["user_id"]));
             } else
             {
-                return Ok("https://tcslackbot.azurewebsites.net:6001/auth/link/?" + _protector.Protect(context["user_id"]));
+                return Ok("https://tcslackbot.azurewebsites.net:6001/auth/link/?uuid=" + _protector.Protect(context["user_id"]));
             }
             
         }
