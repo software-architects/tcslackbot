@@ -5,9 +5,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="AccessTokenCache.cs~RFf788c83.TMP" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.0.0" />
     <PackageReference Include="Slack.Webhooks" Version="1.0.6" />
     <PackageReference Include="SlackAPI" Version="1.1.2" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.6.0" />
   </ItemGroup>
 
 </Project>

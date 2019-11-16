@@ -12,6 +12,7 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using TCSlackbot.Logic;
 
 namespace TCSlackbot.Controllers
 {
@@ -19,6 +20,8 @@ namespace TCSlackbot.Controllers
     [Route("auth")]
     public class AuthController : ControllerBase
     {
+        public static readonly AccessTokenCache accessTokenCache = new AccessTokenCache();
+
         private readonly ILogger<AuthController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _factory;
@@ -74,8 +77,20 @@ namespace TCSlackbot.Controllers
         [Authorize, Route("test")]
         public async Task<IActionResult> TestingAsync()
         {
-            var accessToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
-            //Console.WriteLine(accessToken);
+            string accessToken;
+
+            // 
+            // Check if there's already a cached access token
+            // 
+            if (accessTokenCache.HasValidToken("placeholder_user_id"))
+            {
+                accessToken = accessTokenCache.Get("placeholder_user_id");
+            }
+            else
+            {
+                accessToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
+                accessTokenCache.Add("placeholder_user_id", accessToken);
+            }
 
             var client = _factory.CreateClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
