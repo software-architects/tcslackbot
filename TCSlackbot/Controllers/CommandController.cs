@@ -49,7 +49,7 @@ namespace TCSlackbot.Controllers
             switch (request.Event.Text)
             {
                 case "login": reply["text"] = LoginEventsAPI(request); secret = true; break;
-                case "": break;
+                case "link": reply["text"] = LoginEventsAPI(request); secret = true; break;
                 default: break;
             }
             await SendPostRequest(reply, secret);
@@ -114,11 +114,11 @@ namespace TCSlackbot.Controllers
         {
             if (System.Diagnostics.Debugger.IsAttached)
             {
-                return "https://localhost:6001/auth/link/?uuid=" + _protector.Protect(request.Event.User);
+                return "<https://localhost:6001/auth/link/?uuid=" + _protector.Protect(request.Event.User) + "|Link TimeCockpit Account>";
             }
             else
             {
-                return "https://tcslackbot.azurewebsites.net/auth/link/?uuid=" + _protector.Protect(request.Event.User);
+                return "<https://tcslackbot.azurewebsites.net/auth/link/?uuid=" + _protector.Protect(request.Event.User) + "|Link TimeCockpit Account>";
             }
         }
     }
