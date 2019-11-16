@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using IdentityModel.Client;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
@@ -74,8 +75,9 @@ namespace TCSlackbot.Controllers
             return Ok("Successfully logged in.");
         }
 
-        [Authorize, Route("test")]
-        public async Task<IActionResult> TestingAsync()
+        [Authorize, HttpGet]
+        [Route("access_token")]
+        public async Task<IActionResult> AccessTokenTestingAsync()
         {
             string accessToken;
 
@@ -99,10 +101,46 @@ namespace TCSlackbot.Controllers
             return Ok(content);
         }
 
-
-        private static (string, string) RenewTokens(string refreshToken)
+        [Authorize, HttpGet]
+        [Route("refresh_token")]
+        public async Task<IActionResult> RefreshTokenTestingAsync()
         {
-            return default;
+            var refreshToken = await HttpContext.GetTokenAsync("refresh_token");
+
+            return Ok(await RenewTokensAsync(refreshToken));
+        }
+
+        private async Task<(string, string)> RenewTokensAsync(string rfToken)
+        {
+            var client = _factory.CreateClient();
+
+            //
+            // Find the discovery endpoint
+            //
+            var discoveryResponse = await client.GetDiscoveryDocumentAsync("https://auth.timecockpit.com/");
+
+            //
+            // Send request to the auth endpoint
+            //
+            // FIXME: Returns invalid_grant
+            var response = await client.RequestRefreshTokenAsync(new RefreshTokenRequest
+            {
+                Address = discoveryResponse.TokenEndpoint,
+                ClientId = _configuration["TimeCockpit-ClientId"],
+                ClientSecret = _configuration["TimeCockpit-ClientSecret"],
+                Scope = "openid offline_access",
+                GrantType = "refresh_token",
+                RefreshToken = rfToken,
+                ClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader
+            });
+
+            //
+            // Get the new access and refresh token
+            //
+            var accessToken = response.AccessToken;
+            var refreshToken = response.RefreshToken;
+
+            return (accessToken, refreshToken);
         }
     }
 }
