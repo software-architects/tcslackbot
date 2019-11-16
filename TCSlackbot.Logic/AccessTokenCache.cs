@@ -57,7 +57,16 @@ namespace TCSlackbot.Logic
                 return default;
             }
 
-            return IsValidToken(token) ? token : default;
+            //
+            // Delete the token if it's not valid
+            //
+            if (!IsValidToken(token))
+            {
+                _dictionary.Remove(userId);
+                return default;
+            }
+
+            return token;
         }
 
         /// <summary>

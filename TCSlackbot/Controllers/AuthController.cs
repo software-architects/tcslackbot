@@ -98,5 +98,11 @@ namespace TCSlackbot.Controllers
 
             return Ok(content);
         }
+
+
+        private static (string, string) RenewTokens(string refreshToken)
+        {
+            return default;
+        }
     }
 }
