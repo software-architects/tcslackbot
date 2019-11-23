@@ -14,6 +14,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
+using TCSlackbot.Logic.Utils;
 
 namespace TCSlackbot.Controllers
 {
@@ -27,16 +28,19 @@ namespace TCSlackbot.Controllers
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _factory;
         private readonly IDataProtector _protector;
+        private readonly ICosmosManager _cosmosManager;
 
         public AuthController(ILogger<AuthController> logger,
             IConfiguration config,
             IHttpClientFactory factory,
-            IDataProtectionProvider provider)
+            IDataProtectionProvider provider,
+            ICosmosManager cosmosManager)
         {
             _logger = logger;
             _configuration = config;
             _factory = factory;
             _protector = provider.CreateProtector("UUIDProtector");
+            _cosmosManager = cosmosManager;
         }
 
         [HttpGet]
@@ -108,6 +112,19 @@ namespace TCSlackbot.Controllers
             var refreshToken = await HttpContext.GetTokenAsync("refresh_token");
 
             return Ok(await RenewTokensAsync(refreshToken));
+        }
+
+        [Authorize, HttpGet]
+        [Route("cosmos")]
+        public async Task<IActionResult> TestCosmosManagerAsync()
+        {
+            var response = (dynamic)await _cosmosManager.CreateDocumentAsync("testing1", new SlackUser { UserId = "5763" });
+            response.UserId = "test";
+
+            await _cosmosManager.ReplaceDocumentAsync(response);
+            var user = _cosmosManager.GetSlackUser("testing1", "test");
+
+            return Ok();
         }
 
         private async Task<(string, string)> RenewTokensAsync(string rfToken)
