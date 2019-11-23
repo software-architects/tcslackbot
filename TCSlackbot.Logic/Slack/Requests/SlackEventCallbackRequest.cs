@@ -1,13 +1,9 @@
-﻿
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
-namespace TCSlackbot.Logic
+namespace TCSlackbot.Logic.Slack
 {
-    public class Event
+    public class SlackEvent : SlackBaseRequest
     {
-        [JsonProperty("type")]
-        public string Type { get; set; }
-
         [JsonProperty("channel")]
         public string Channel { get; set; }
 
@@ -27,7 +23,7 @@ namespace TCSlackbot.Logic
         public string ChannelType { get; set; }
     }
 
-    public class SlackRequest
+    public class SlackEventCallbackRequest : SlackBaseRequest
     {
         [JsonProperty("token")]
         public string Token { get; set; }
@@ -39,10 +35,7 @@ namespace TCSlackbot.Logic
         public string ApiAppId { get; set; }
 
         [JsonProperty("event")]
-        public Event Event { get; set; }
-
-        [JsonProperty("type")]
-        public string Type { get; set; }
+        public SlackEvent Event { get; set; }
 
         [JsonProperty("authed_teams")]
         public string[] AuthedTeams { get; set; }

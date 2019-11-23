@@ -2,11 +2,11 @@
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
+using TCSlackbot.Logic.Slack;
 using TCSlackbot.Logic.Utils;
 
 namespace TCSlackbot.Controllers
@@ -16,6 +16,8 @@ namespace TCSlackbot.Controllers
     [Route("command")]
     public class CommandController : ControllerBase
     {
+        private const string CollectionId = "slack_users";
+
         private readonly IDataProtector _protector;
         private readonly ISecretManager _secretManager;
         private readonly ICosmosManager _cosmosManager;
@@ -29,43 +31,73 @@ namespace TCSlackbot.Controllers
             _httpClient = factory.CreateClient();
             _httpClient.BaseAddress = new Uri("https://slack.com/api/");
         }
-        /* Do not delete
+
         [HttpPost]
-        public IActionResult CheckChallenge([FromBody]SlackChallengeToken sct)
+        public async Task<IActionResult> HandleRequestAsync([FromBody] dynamic body)
         {
-            Console.WriteLine("test");
-            return Ok(sct.Challenge);
-        }
-        */
-        [HttpPost]
-        public async Task<IActionResult> HandleIncomingSlackRequest([FromBody]SlackRequest request)
-        {
-            if (request.Event.Type == "message")
+            var request = Deserialize<SlackBaseRequest>(body.ToString());
+
+            switch (request.Type)
             {
-                var reply = new Dictionary<string, string>();
-                bool secret = false; // If secret is true then a ephemeral message will be 
-                                     // sent, which can only be seen by the one who wrote the message
+                case "url_verification":
+                    return HandleSlackChallenge(Deserialize<SlackChallenge>(body.ToString()));
 
-                reply["user"] = request.Event.User;
-                reply["token"] = _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken");
-                reply["channel"] = request.Event.Channel;
-                //reply["attachments"] = "[{\"fallback\":\"dummy\", \"text\":\"this is an attachment\"}]";
+                case "event_callback":
+                    return await HandleEventCallbackAsync(Deserialize<SlackEventCallbackRequest>(body.ToString()));
 
-                switch (request.Event.Text.ToLower())
-                {
-                    case "login": reply["text"] = LoginEventsAPI(request); secret = true; break;
-                    case "link": reply["text"] = LoginEventsAPI(request); secret = true; break;
-                    case "start": reply["text"] = StartWorktime(request); break;
-                    case "pause": reply["text"] = PauseWorktime(request); break;
-                    default: break;
-                }
-                await SendPostRequest(reply, secret);
-                return Ok("Worked");
+                default:
+                    Console.WriteLine($"Received unhandled request: {request.Type}.");
+                    break;
             }
-            return Ok();
+
+            return NotFound();
         }
 
-        private string PauseWorktime(SlackRequest request)
+        public async Task<IActionResult> HandleEventCallbackAsync(SlackEventCallbackRequest request)
+        {
+            switch (request.Event.Type)
+            {
+                case "message":
+                    // TODO: Only pass the event
+                    return await HandleSlackMessage(request);
+
+                default:
+                    break;
+            }
+
+            return NotFound();
+        }
+
+
+        public IActionResult HandleSlackChallenge(SlackChallenge request)
+        {
+            return Ok(request.Challenge);
+        }
+
+        public async Task<IActionResult> HandleSlackMessage(SlackEventCallbackRequest request)
+        {
+            var reply = new Dictionary<string, string>();
+            bool secret = false; // If secret is true then a ephemeral message will be 
+                                 // sent, which can only be seen by the one who wrote the message
+
+            reply["user"] = request.Event.User;
+            reply["token"] = _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken");
+            reply["channel"] = request.Event.Channel;
+            //reply["attachments"] = "[{\"fallback\":\"dummy\", \"text\":\"this is an attachment\"}]";
+
+            switch (request.Event.Text.ToLower())
+            {
+                case "login": reply["text"] = LoginEventsAPI(request); secret = true; break;
+                case "link": reply["text"] = LoginEventsAPI(request); secret = true; break;
+                case "start": reply["text"] = StartWorktime(request); break;
+                case "pause": reply["text"] = PauseWorktime(request); break;
+                default: break;
+            }
+            await SendPostRequest(reply, secret);
+            return Ok("Worked");
+        }
+
+        private string PauseWorktime(SlackEventCallbackRequest request)
         {
             if (IsLoggedIn(request) && IsWorking(request) && !IsOnBreak(request))
             {
@@ -78,7 +110,7 @@ namespace TCSlackbot.Controllers
             return "You shouldn't get this message.";
         }
 
-        private string StartWorktime(SlackRequest request)
+        private string StartWorktime(SlackEventCallbackRequest request)
         {
             if (IsLoggedIn(request))
             {
@@ -87,23 +119,23 @@ namespace TCSlackbot.Controllers
                     UserId = request.Event.User,
                     StartTime = DateTime.Now
                 };
-                    
-                _cosmosManager.CreateDocumentAsync("Slack_users", user);
+
+                _cosmosManager.CreateDocumentAsync(CollectionId, user);
                 return "StartTime has been set!";
             }
             return "You have to login before you can use this bot!\nType login or link to get the login link.";
         }
 
-        private bool IsLoggedIn(SlackRequest request)
+        private bool IsLoggedIn(SlackEventCallbackRequest request)
         {
             return _secretManager.GetSecret(request.Event.User) != null;
         }
-        private bool IsWorking(SlackRequest request)
+        private bool IsWorking(SlackEventCallbackRequest request)
         {
             // Check in CosmosDB is user has start time set
             throw new NotImplementedException();
         }
-        private bool IsOnBreak(SlackRequest request)
+        private bool IsOnBreak(SlackEventCallbackRequest request)
         {
             throw new NotImplementedException();
 
@@ -123,7 +155,7 @@ namespace TCSlackbot.Controllers
         }
 
         [NonAction]
-        public string LoginEventsAPI(SlackRequest request)
+        public string LoginEventsAPI(SlackEventCallbackRequest request)
         {
             if (System.Diagnostics.Debugger.IsAttached)
             {
@@ -146,8 +178,10 @@ namespace TCSlackbot.Controllers
             return new JsonResult(dict);
         }
 
-
-
+        private static T Deserialize<T>(string content)
+        {
+            return JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
     }
 }
 
