@@ -1,13 +1,17 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using IdentityModel.Client;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.KeyVault;
+using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
 
@@ -17,19 +21,22 @@ namespace TCSlackbot.Controllers
     [Route("auth")]
     public class AuthController : ControllerBase
     {
+        public static readonly AccessTokenCache accessTokenCache = new AccessTokenCache();
+
         private readonly ILogger<AuthController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _factory;
-        private readonly ISecretManager _secretManager;
-        private readonly SlackConfig _slackConfig;
+        private readonly IDataProtector _protector;
 
-        public AuthController(ILogger<AuthController> logger, IConfiguration config, IHttpClientFactory factory, ISecretManager secretManager, IOptions<SlackConfig> slackConfig)
+        public AuthController(ILogger<AuthController> logger,
+            IConfiguration config,
+            IHttpClientFactory factory,
+            IDataProtectionProvider provider)
         {
             _logger = logger;
             _configuration = config;
             _factory = factory;
-            _secretManager = secretManager;
-            _slackConfig = slackConfig.Value ?? throw new ArgumentException(nameof(SlackConfig));
+            _protector = provider.CreateProtector("UUIDProtector");
         }
 
         [HttpGet]
@@ -40,13 +47,100 @@ namespace TCSlackbot.Controllers
         }
 
         [Authorize, HttpGet]
-        [Route("test")]
-        public async Task<IActionResult> SomeFunction()
+        [Route("link")]
+        public async Task<IActionResult> LinkAccounts([FromQuery(Name = "uuid")] string encryptedUuid)
         {
-            var httpClient = _factory.CreateClient("APIClient");
-            var token = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
-            return Ok(token);
+            var refreshToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "refresh_token");
+
+            try
+            {
+                // Decrypt the uuid
+                string decrypedUuid = _protector.Unprotect(encryptedUuid);
+
+                // Associate the uuid with the refresh token
+                var azureServiceTokenProvider = new AzureServiceTokenProvider();
+                var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+
+                await keyVaultClient.SetSecretAsync(Program.GetKeyVaultEndpoint(), decrypedUuid, refreshToken);
+
+                // Reload the configuration because we added a new secret
+                ((IConfigurationRoot)_configuration).Reload();
+            }
+            catch (Exception exception)
+            {
+                _logger.LogCritical(exception.ToString());
+                return BadRequest("Failed to login.");
+            }
+
+            return Ok("Successfully logged in.");
         }
 
+        [Authorize, HttpGet]
+        [Route("access_token")]
+        public async Task<IActionResult> AccessTokenTestingAsync()
+        {
+            string accessToken;
+
+            // 
+            // Check if there's already a cached access token
+            // 
+            if (accessTokenCache.HasValidToken("placeholder_user_id"))
+            {
+                accessToken = accessTokenCache.Get("placeholder_user_id");
+            }
+            else
+            {
+                accessToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
+                accessTokenCache.Add("placeholder_user_id", accessToken);
+            }
+
+            var client = _factory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            var content = await client.GetStringAsync("https://web.timecockpit.com/odata/$metadata");
+
+            return Ok(content);
+        }
+
+        [Authorize, HttpGet]
+        [Route("refresh_token")]
+        public async Task<IActionResult> RefreshTokenTestingAsync()
+        {
+            var refreshToken = await HttpContext.GetTokenAsync("refresh_token");
+
+            return Ok(await RenewTokensAsync(refreshToken));
+        }
+
+        private async Task<(string, string)> RenewTokensAsync(string rfToken)
+        {
+            var client = _factory.CreateClient();
+
+            //
+            // Find the discovery endpoint
+            //
+            var discoveryResponse = await client.GetDiscoveryDocumentAsync("https://auth.timecockpit.com/");
+
+            //
+            // Send request to the auth endpoint
+            //
+            // FIXME: Returns invalid_grant
+            var response = await client.RequestRefreshTokenAsync(new RefreshTokenRequest
+            {
+                Address = discoveryResponse.TokenEndpoint,
+                ClientId = _configuration["TimeCockpit-ClientId"],
+                ClientSecret = _configuration["TimeCockpit-ClientSecret"],
+                Scope = "openid offline_access",
+                GrantType = "refresh_token",
+                RefreshToken = rfToken,
+                ClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader
+            });
+
+            //
+            // Get the new access and refresh token
+            //
+            var accessToken = response.AccessToken;
+            var refreshToken = response.RefreshToken;
+
+            return (accessToken, refreshToken);
+        }
     }
 }

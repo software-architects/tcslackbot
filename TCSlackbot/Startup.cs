@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using TCSlackbot.Logic;
 
@@ -18,8 +19,6 @@ namespace TCSlackbot
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-
-            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
         }
 
         public IConfiguration Configuration { get; }
@@ -29,10 +28,12 @@ namespace TCSlackbot
         {
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
-            var authenticationConfig = Configuration.GetSection("AuthenticationConfig").Get<AuthenticationConfig>();
+            var clientId = Configuration["TimeCockpit-ClientId"];
+            var clientSecret = Configuration["TimeCockpit-ClientSecret"];
 
-            // https://github.com/onelogin/openid-connect-dotnet-core-sample
-            // https://github.com/KevinDockx/OpenIDConnectInDepth/blob/master/src/Sample.WebClient/Startup.cs
+            Debug.Assert(!string.IsNullOrEmpty(clientId));
+            Debug.Assert(!string.IsNullOrEmpty(clientSecret));
+
             services.AddAuthentication(options =>
                 {
                     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -45,8 +46,8 @@ namespace TCSlackbot
                 .AddOpenIdConnect(options =>
                 {
                     options.Authority = "https://auth.timecockpit.com/";
-                    options.ClientId = authenticationConfig.ClientId;
-                    options.ClientSecret = authenticationConfig.ClientSecret;
+                    options.ClientId = clientId;
+                    options.ClientSecret = clientSecret;
 
                     options.UsePkce = true;
                     options.SaveTokens = true;
@@ -66,17 +67,18 @@ namespace TCSlackbot
                     };
                 });
 
-            services.AddTransient<ISecretManager, SecretManager>();
-
-            services.Configure<SlackConfig>(Configuration.GetSection("SlackConfig"));
-            services.Configure<AuthenticationConfig>(Configuration.GetSection("AuthenticationConfig"));
-
-            services.AddControllers();
-
             services.AddHttpClient("APIClient", client =>
             {
                 client.BaseAddress = new Uri("https://api.timecockpit.com");
             });
+            services.AddHttpClient("BotClient", client =>
+            {
+                client.BaseAddress = new Uri("httpls://slack.com/api");
+            });
+            services.AddTransient<ISecretManager, SecretManager>();
+
+            services.AddControllers();
+            services.AddDataProtection();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
