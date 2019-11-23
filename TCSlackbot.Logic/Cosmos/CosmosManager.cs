@@ -46,12 +46,12 @@ namespace TCSlackbot.Logic.Utils
         }
 
 
-        public async Task<Document> GetDocumentAsync<T>(string collectionName, string documentId)
+        public async Task<Document> GetDocumentAsync(string collectionName, string documentId)
         {
             var uri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, documentId);
             var response = await client.ReadDocumentAsync(uri);
 
-            return (dynamic)response.Resource;
+            return response.Resource;
         }
 
         public async Task<Document> CreateDocumentAsync<T>(string collectionName, T document)
@@ -61,15 +61,16 @@ namespace TCSlackbot.Logic.Utils
             var collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, collectionName);
             var response = await client.CreateDocumentAsync(collectionUri, document);
 
-            return (dynamic)response.Resource;
+            return response.Resource;
         }
 
         public async Task<Document> ReplaceDocumentAsync(Document document)
         {
             var response = await client.ReplaceDocumentAsync(document);
 
-            return (dynamic)response.Resource;
+            return response.Resource;
         }
+
 
         public SlackUser GetSlackUser(string collectionName, string userId)
         {
@@ -128,14 +129,6 @@ namespace TCSlackbot.Logic.Utils
                     throw;
                 }
             }
-        }
-
-        public async Task<SlackUser> ReplaceSlackUserAsync(string collectionName, SlackUser slackUser)
-        {
-            var documentUri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, slackUser.UserId);
-            var response = await client.ReplaceDocumentAsync(documentUri, slackUser);
-
-            return (dynamic)response.Resource;
         }
     }
 }
