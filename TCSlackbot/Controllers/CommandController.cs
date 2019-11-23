@@ -51,12 +51,13 @@ namespace TCSlackbot.Controllers
                 reply["channel"] = request.Event.Channel;
                 //reply["attachments"] = "[{\"fallback\":\"dummy\", \"text\":\"this is an attachment\"}]";
 
-                switch (request.Event.Text.ToLower())
+                switch (request.Event.Text.ToLower().Trim())
                 {
-                    case "login": reply["text"] = LoginEventsAPI(request); secret = true; break;
-                    case "link": reply["text"] = LoginEventsAPI(request); secret = true; break;
+                    case "login": case "link": reply["text"] = LoginEventsAPI(request); secret = true; break;
                     case "start": reply["text"] = StartWorktime(request); break;
-                    case "pause": reply["text"] = PauseWorktime(request); break;
+                    case "pause": case "break": reply["text"] = PauseWorktime(request); break;
+                    case "resume": reply["text"] = ResumeWorktime(request); break;
+                    case "starttime": case "get time": reply["text"] = ResumeWorktime(request); break;
                     default: break;
                 }
                 await SendPostRequest(reply, secret);
@@ -64,12 +65,19 @@ namespace TCSlackbot.Controllers
             }
             return Ok();
         }
-
+        //TODO
+        private string ResumeWorktime(SlackRequest request)
+        {
+            var curBreakTime = _cosmosManager.GetSlackUser("Slack_users", request.Event.User).BreakTime;
+            return "Started at: " + _cosmosManager.GetSlackUser("Slack_users", request.Event.User).BreakTime;
+        }
+        //TODO
         private string PauseWorktime(SlackRequest request)
         {
             if (IsLoggedIn(request) && IsWorking(request) && !IsOnBreak(request))
             {
-                // Somehow insert into the db that the user is on break
+                var curBreakTime = _cosmosManager.GetSlackUser("Slack_users", request.Event.User).OnBreak;
+
                 return "Break has been set. You can now relax.";
             }
             if (!IsLoggedIn(request)) return "You have to login before you can use this bot!\nType login or link to get the login link.";
@@ -100,14 +108,11 @@ namespace TCSlackbot.Controllers
         }
         private bool IsWorking(SlackRequest request)
         {
-            // Check in CosmosDB is user has start time set
-            throw new NotImplementedException();
+            return _cosmosManager.GetSlackUser("Slack_users", request.Event.User).StartTime != null;
         }
         private bool IsOnBreak(SlackRequest request)
         {
-            throw new NotImplementedException();
-
-            //return _cosmosManager.GetDocumentAsync<SlackUser>()
+            return _cosmosManager.GetSlackUser("Slack_users", request.Event.User).OnBreak;
         }
 
         private async Task SendPostRequest(Dictionary<string, string> dict, bool secret)
@@ -141,7 +146,7 @@ namespace TCSlackbot.Controllers
         {
             var dict = HttpContext.Request.Form;
 
-            System.Console.WriteLine(dict["token"]);
+            Console.WriteLine(dict["token"]);
 
             return new JsonResult(dict);
         }
