@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using TCSlackbot.Logic;
+using TCSlackbot.Logic.Utils;
 
 namespace TCSlackbot
 {
@@ -76,6 +77,7 @@ namespace TCSlackbot
                 client.BaseAddress = new Uri("httpls://slack.com/api");
             });
             services.AddTransient<ISecretManager, SecretManager>();
+            services.AddTransient<ICosmosManager, CosmosManager>();
 
             services.AddControllers();
             services.AddDataProtection();

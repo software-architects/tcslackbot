@@ -1,8 +1,13 @@
-﻿namespace TCSlackbot.Logic.Utils
+﻿using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Client;
+using System.Threading.Tasks;
+
+namespace TCSlackbot.Logic.Utils
 {
-    class ICosmosManager
+    public interface ICosmosManager
     {
-        // public T ReadDocument<T>();
-        // public void WriteDocument<T>(T document);
+        public Task<T> GetDocumentAsync<T>(string collectionName, string documentId);
+
+        public Task<ResourceResponse<Document>> CreateDocumentAsync<T>(string collectionName, T document);
     }
 }
