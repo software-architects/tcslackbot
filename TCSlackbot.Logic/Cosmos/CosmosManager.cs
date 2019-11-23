@@ -3,6 +3,7 @@ using Microsoft.Azure.Documents.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace TCSlackbot.Logic.Utils
@@ -30,7 +31,7 @@ namespace TCSlackbot.Logic.Utils
                 client = new DocumentClient(new Uri(uri), key);
 
                 // Create database if it does not exist yet
-                client.CreateDatabaseIfNotExistsAsync(new Database { Id = DatabaseName }).Wait();
+                CreateDatabaseIfNotExistsAsync(DatabaseName).Wait();
             }
             catch (DocumentClientException de)
             {
@@ -44,6 +45,7 @@ namespace TCSlackbot.Logic.Utils
             }
         }
 
+
         public async Task<T> GetDocumentAsync<T>(string collectionName, string documentId)
         {
             var uri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, documentId);
@@ -52,12 +54,73 @@ namespace TCSlackbot.Logic.Utils
             return (T)(dynamic)response.Resource;
         }
 
-        public async Task<ResourceResponse<Document>> CreateDocumentAsync<T>(string collectionName, T document)
+        public async Task<T> CreateDocumentAsync<T>(string collectionName, T document)
         {
+            await CreateCollectionIfNotExistsAsync(DatabaseName, collectionName);
+
             var collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, collectionName);
             var response = await client.CreateDocumentAsync(collectionUri, document);
 
-            return response;
+            return (T)(dynamic)response.Resource;
+        }
+
+        public SlackUser GetSlackUser(string collectionName, string userId)
+        {
+            var collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, collectionName);
+            var result = client.CreateDocumentQuery<SlackUser>(collectionUri)
+                .Where(user => user.UserId == userId).ToList();
+
+            // 
+            // More than one user with the same id found -> Should never happen
+            // 
+            if (result.Count() > 1)
+            {
+                return default;
+            }
+
+            return result.FirstOrDefault();
+        }
+
+
+        private static async Task CreateDatabaseIfNotExistsAsync(string databaseId)
+        {
+            try
+            {
+                await client.ReadDatabaseAsync(UriFactory.CreateDatabaseUri(databaseId));
+            }
+            catch (DocumentClientException e)
+            {
+                if (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    await client.CreateDatabaseAsync(new Database { Id = databaseId });
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+
+        private static async Task CreateCollectionIfNotExistsAsync(string databaseId, string collectionId)
+        {
+            try
+            {
+                await client.ReadDocumentCollectionAsync(UriFactory.CreateDocumentCollectionUri(databaseId, collectionId));
+            }
+            catch (DocumentClientException e)
+            {
+                if (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    await client.CreateDocumentCollectionAsync(
+                        UriFactory.CreateDatabaseUri(databaseId),
+                        new DocumentCollection { Id = collectionId },
+                        new RequestOptions { OfferThroughput = 1000 });
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
     }
 }
