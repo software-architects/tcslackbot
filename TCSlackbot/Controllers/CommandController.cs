@@ -16,18 +16,20 @@ namespace TCSlackbot.Controllers
     [Route("command")]
     public class CommandController : ControllerBase
     {
-        private const string CollectionId = "slack_users";
+        
 
         private readonly IDataProtector _protector;
         private readonly ISecretManager _secretManager;
         private readonly ICosmosManager _cosmosManager;
         private readonly HttpClient _httpClient;
+        private readonly CommandHandler commandHandler;
 
         public CommandController(IDataProtectionProvider provider, ISecretManager secretManager, ICosmosManager cosmosManager, IHttpClientFactory factory)
         {
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
             _cosmosManager = cosmosManager;
+            commandHandler = new CommandHandler(_cosmosManager, _secretManager);
             _httpClient = factory.CreateClient();
             _httpClient.BaseAddress = new Uri("https://slack.com/api/");
         }
@@ -88,65 +90,15 @@ namespace TCSlackbot.Controllers
             switch (request.Event.Text.ToLower().Trim())
             {
                 case "login": case "link": reply["text"] = LoginEventsAPI(request); secret = true; break;
-                case "start": reply["text"] = StartWorktime(request); break;
-                case "pause": case "break": reply["text"] = PauseWorktime(request); break;
-                case "resume": reply["text"] = ResumeWorktime(request); break;
-                case "starttime": case "get time": reply["text"] = ResumeWorktime(request); break;
+                case "start": reply["text"] = commandHandler.StartWorktime(request); break;
+                case "pause": case "break": reply["text"] = commandHandler.PauseWorktime(request); break;
+                case "resume": reply["text"] = commandHandler.ResumeWorktime(request); break;
+                case "starttime": case "gettime": reply["text"] = commandHandler.GetWorktime(request); break;
                 default: break;
             }
 
             await SendPostRequest(reply, secret);
             return Ok("Worked");
-        }
-
-        //TODO
-        private string ResumeWorktime(SlackEventCallbackRequest request)
-        {
-            var curBreakTime = _cosmosManager.GetSlackUser("Slack_users", request.Event.User).BreakTime;
-            return "Started at: " + _cosmosManager.GetSlackUser("Slack_users", request.Event.User).BreakTime;
-        }
-
-        private string PauseWorktime(SlackEventCallbackRequest request)
-        {
-            if (IsLoggedIn(request) && IsWorking(request) && !IsOnBreak(request))
-            {
-                var curBreakTime = _cosmosManager.GetSlackUser("Slack_users", request.Event.User).OnBreak;
-
-                return "Break has been set. You can now relax.";
-            }
-            if (!IsLoggedIn(request)) return "You have to login before you can use this bot!\nType login or link to get the login link.";
-            if (!IsWorking(request)) return "You are not working at the moment. Did you forget to type start?";
-            if (IsOnBreak(request)) return "You are already on break. Did you forget to unpause?";
-            return "You shouldn't get this message.";
-        }
-
-        private string StartWorktime(SlackEventCallbackRequest request)
-        {
-            if (IsLoggedIn(request))
-            {
-                var user = new SlackUser()
-                {
-                    UserId = request.Event.User,
-                    StartTime = DateTime.Now
-                };
-
-                _cosmosManager.CreateDocumentAsync(CollectionId, user);
-                return "StartTime has been set!";
-            }
-            return "You have to login before you can use this bot!\nType login or link to get the login link.";
-        }
-
-        private bool IsLoggedIn(SlackEventCallbackRequest request)
-        {
-            return _secretManager.GetSecret(request.Event.User) != null;
-        }
-        private bool IsWorking(SlackEventCallbackRequest request)
-        {
-            return _cosmosManager.GetSlackUser("Slack_users", request.Event.User).StartTime != null;
-        }
-        private bool IsOnBreak(SlackEventCallbackRequest request)
-        {
-            return _cosmosManager.GetSlackUser("Slack_users", request.Event.User).OnBreak;
         }
 
         private async Task SendPostRequest(Dictionary<string, string> dict, bool secret)

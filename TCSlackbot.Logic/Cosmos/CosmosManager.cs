@@ -75,18 +75,28 @@ namespace TCSlackbot.Logic.Utils
         public SlackUser GetSlackUser(string collectionName, string userId)
         {
             var collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, collectionName);
-            var result = client.CreateDocumentQuery<SlackUser>(collectionUri)
-                .Where(user => user.UserId == userId).ToList();
-
-            // 
-            // More than one user with the same id found -> Should never happen
-            // 
-            if (result.Count() > 1)
+            try
             {
-                return default;
-            }
+                var result = client.CreateDocumentQuery<SlackUser>(collectionUri)
+                    .Where(user => user.UserId == userId).ToList();
+                // 
+                // More than one user with the same id found -> Should never happen
+                // 
+                if (result.Count() > 1)
+                {
+                    return default;
+                }
 
-            return result.FirstOrDefault();
+                return result.FirstOrDefault();
+            }
+            catch (AggregateException ex)
+            {
+                //Ignore it
+            }
+           
+            
+            return null;
+            
         }
 
 
