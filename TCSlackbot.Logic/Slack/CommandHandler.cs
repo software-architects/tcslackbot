@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using TCSlackbot.Logic.Utils;
 
 namespace TCSlackbot.Logic.Slack
@@ -20,21 +18,21 @@ namespace TCSlackbot.Logic.Slack
 
         public string GetWorktime(SlackEventCallbackRequest request)
         {
-            return "Started at: " + _cosmosManager.GetSlackUser("Slack_users", request.Event.User).StartTime;
+            return "Started at: " + _cosmosManager.GetSlackUser(CollectionId, request.Event.User).StartTime;
         }
 
         //TODO
         public string ResumeWorktime(SlackEventCallbackRequest request)
         {
-            var curBreakTime = _cosmosManager.GetSlackUser("Slack_users", request.Event.User).BreakTime;
-            return "Break has ended." + _cosmosManager.GetSlackUser("Slack_users", request.Event.User).BreakTime; // No
+            var curBreakTime = _cosmosManager.GetSlackUser(CollectionId, request.Event.User).BreakTime;
+            return "Break has ended." + _cosmosManager.GetSlackUser(CollectionId, request.Event.User).BreakTime; // No
         }
 
         public string PauseWorktime(SlackEventCallbackRequest request)
         {
             if (IsLoggedIn(request) && IsWorking(request) && !IsOnBreak(request))
             {
-                var curBreakTime = _cosmosManager.GetSlackUser("Slack_users", request.Event.User).OnBreak;
+                var curBreakTime = _cosmosManager.GetSlackUser(CollectionId, request.Event.User).OnBreak;
 
                 return "Break has been set. You can now relax.";
             }
@@ -46,7 +44,7 @@ namespace TCSlackbot.Logic.Slack
 
         public string StartWorktime(SlackEventCallbackRequest request)
         {
-            if (IsLoggedIn(request)&&!IsWorking(request))
+            if (IsLoggedIn(request) && !IsWorking(request))
             {
                 var user = new SlackUser()
                 {
@@ -66,7 +64,7 @@ namespace TCSlackbot.Logic.Slack
         }
         public bool IsWorking(SlackEventCallbackRequest request)
         {
-            var user = _cosmosManager.GetSlackUser("Slack_users", request.Event.User);
+            var user = _cosmosManager.GetSlackUser(CollectionId, request.Event.User);
             if (user != null)
             {
                 return user.StartTime != null;
@@ -75,7 +73,7 @@ namespace TCSlackbot.Logic.Slack
         }
         public bool IsOnBreak(SlackEventCallbackRequest request)
         {
-            return _cosmosManager.GetSlackUser("Slack_users", request.Event.User).OnBreak;
+            return _cosmosManager.GetSlackUser(CollectionId, request.Event.User).OnBreak;
         }
     }
 }
