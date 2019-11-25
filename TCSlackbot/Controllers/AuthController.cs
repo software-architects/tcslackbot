@@ -116,6 +116,5 @@ namespace TCSlackbot.Controllers
 
             return Ok();
         }
-
     }
 }

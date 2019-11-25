@@ -102,15 +102,36 @@ namespace TCSlackbot.Controllers
 
             switch (request.Event.Text.ToLower().Trim())
             {
-                case "login": case "link": reply["text"] = LoginEventsAPI(request); secret = true; break;
-                case "start": reply["text"] = commandHandler.StartWorktime(request); break;
-                case "pause": case "break": reply["text"] = commandHandler.PauseWorktime(request); break;
-                case "resume": reply["text"] = commandHandler.ResumeWorktime(request); break;
-                case "starttime": case "gettime": reply["text"] = commandHandler.GetWorktime(request); break;
-                default: break;
+                case "login":
+                case "link":
+                    reply["text"] = LoginEventsAPI(request);
+                    secret = true;
+                    break;
+
+                case "start":
+                    reply["text"] = commandHandler.StartWorktime(request);
+                    break;
+
+                case "pause":
+                case "break":
+                    reply["text"] = commandHandler.PauseWorktime(request);
+                    break;
+
+                case "resume":
+                    reply["text"] = commandHandler.ResumeWorktime(request);
+                    break;
+
+                case "starttime":
+                case "gettime":
+                    reply["text"] = commandHandler.GetWorktime(request);
+                    break;
+
+                default:
+                    break;
             }
 
             await SendPostRequest(reply, secret);
+
             return Ok("Worked");
         }
 
@@ -126,7 +147,6 @@ namespace TCSlackbot.Controllers
             }
         }
 
-        [NonAction]
         public string LoginEventsAPI(SlackEventCallbackRequest request)
         {
             if (System.Diagnostics.Debugger.IsAttached)
@@ -138,7 +158,6 @@ namespace TCSlackbot.Controllers
                 return "<https://tcslackbot.azurewebsites.net/auth/link/?uuid=" + _protector.Protect(request.Event.User) + "|Link TimeCockpit Account>";
             }
         }
-
 
         private bool IsValidSignature(string body, IHeaderDictionary headers)
         {

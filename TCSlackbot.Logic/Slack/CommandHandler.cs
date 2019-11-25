@@ -69,11 +69,7 @@ namespace TCSlackbot.Logic.Slack
         public bool IsWorking(SlackEventCallbackRequest request)
         {
             var user = _cosmosManager.GetSlackUser(CollectionId, request.Event.User);
-            if (user != null)
-            {
-                return user.StartTime != null;
-            }
-            return false;
+            return user?.StartTime != null;
         }
         public bool IsOnBreak(SlackEventCallbackRequest request)
         {
