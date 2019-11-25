@@ -111,6 +111,7 @@ namespace TCSlackbot.Controllers
         {
             var refreshToken = await HttpContext.GetTokenAsync("refresh_token");
 
+            // FIXME: Refresh token does not get updated automatically, thus when you renew it, it'll become invalid. (Response: 'invalid_grant')
             return Ok(await RenewTokensAsync(refreshToken));
         }
 
@@ -146,7 +147,6 @@ namespace TCSlackbot.Controllers
                 ClientId = _configuration["TimeCockpit-ClientId"],
                 ClientSecret = _configuration["TimeCockpit-ClientSecret"],
                 Scope = "openid offline_access",
-                GrantType = "refresh_token",
                 RefreshToken = rfToken,
                 ClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader
             });
@@ -154,6 +154,7 @@ namespace TCSlackbot.Controllers
             //
             // Get the new access and refresh token
             //
+
             var accessToken = response.AccessToken;
             var refreshToken = response.RefreshToken;
 
