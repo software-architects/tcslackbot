@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -40,24 +41,17 @@ namespace TCSlackbot.Controllers
         {
             var request = Deserialize<SlackBaseRequest>(body.ToString());
 
-            var timestamp = HttpContext.Request.Headers["X-Slack-Request-Timestamp"];
-            var slack_signature = HttpContext.Request.Headers["X-Slack-Signature"];
-            var sig_basestring = "v0:" + timestamp + ":" + body;
-            var help = new HMACSHA256();
-            help.Key = Encoding.UTF8.GetBytes(_secretManager.GetSecret("Slack-SigningSecret"));
-            var hexdigest = new HMACSHA1();
-
-            var my_signature = "v0=" + hexdigest.ComputeHash(help.ComputeHash(Encoding.UTF8.GetBytes(sig_basestring)));
-
-            if (my_signature.Equals(slack_signature))
+            //
+            // Verify slack request
+            //
+            if (!IsValidSignature(body.ToString(), HttpContext.Request.Headers))
             {
-                Console.WriteLine("It really worked");
-            }
-            else
-            {
-                Console.WriteLine("My Signature" + my_signature + ",Slack Signature" + slack_signature);
+                return BadRequest();
             }
 
+            //
+            // Handle the request
+            //
             switch (request.Type)
             {
                 case "url_verification":
@@ -143,6 +137,21 @@ namespace TCSlackbot.Controllers
             {
                 return "<https://tcslackbot.azurewebsites.net/auth/link/?uuid=" + _protector.Protect(request.Event.User) + "|Link TimeCockpit Account>";
             }
+        }
+
+
+        private bool IsValidSignature(string body, IHeaderDictionary headers)
+        {
+            var timestamp = headers["X-Slack-Request-Timestamp"];
+            var signature = headers["X-Slack-Signature"];
+            var signingSecret = _secretManager.GetSecret("Slack-SigningSecret");
+
+            var encoding = new UTF8Encoding();
+            using var hmac = new HMACSHA256(encoding.GetBytes(signingSecret));
+            var hash = hmac.ComputeHash(encoding.GetBytes($"v0:{timestamp}:{body}"));
+            var ownSignature = $"v0={BitConverter.ToString(hash).Replace("-", "").ToLower()}";
+
+            return ownSignature.Equals(signature);
         }
 
         private static T Deserialize<T>(string content)
