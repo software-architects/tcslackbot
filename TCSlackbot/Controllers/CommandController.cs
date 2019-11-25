@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
@@ -37,6 +39,24 @@ namespace TCSlackbot.Controllers
         public async Task<IActionResult> HandleRequestAsync([FromBody] dynamic body)
         {
             var request = Deserialize<SlackBaseRequest>(body.ToString());
+
+            var timestamp = HttpContext.Request.Headers["X-Slack-Request-Timestamp"];
+            var slack_signature = HttpContext.Request.Headers["X-Slack-Signature"];
+            var sig_basestring = "v0:" + timestamp + ":" + body;
+            var help = new HMACSHA256();
+            help.Key = Encoding.UTF8.GetBytes(_secretManager.GetSecret("Slack-SigningSecret"));
+            var hexdigest = new HMACSHA1();
+
+            var my_signature = "v0=" + hexdigest.ComputeHash(help.ComputeHash(Encoding.UTF8.GetBytes(sig_basestring)));
+
+            if (my_signature.Equals(slack_signature))
+            {
+                Console.WriteLine("It really worked");
+            }
+            else
+            {
+                Console.WriteLine("My Signature" + my_signature + ",Slack Signature" + slack_signature);
+            }
 
             switch (request.Type)
             {
