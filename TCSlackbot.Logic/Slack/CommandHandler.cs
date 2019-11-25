@@ -18,7 +18,11 @@ namespace TCSlackbot.Logic.Slack
 
         public string GetWorktime(SlackEventCallbackRequest request)
         {
-            return "Started at: " + _cosmosManager.GetSlackUser(CollectionId, request.Event.User).StartTime;
+            if (IsWorking(request))
+            {
+                return "Started at: " + _cosmosManager.GetSlackUser(CollectionId, request.Event.User)?.StartTime;
+            }
+            return "You are not working!";
         }
 
         //TODO
