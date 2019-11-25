@@ -16,7 +16,7 @@ namespace TCSlackbot.Controllers
     [Route("command")]
     public class CommandController : ControllerBase
     {
-        
+
 
         private readonly IDataProtector _protector;
         private readonly ISecretManager _secretManager;
@@ -30,8 +30,7 @@ namespace TCSlackbot.Controllers
             _secretManager = secretManager;
             _cosmosManager = cosmosManager;
             commandHandler = new CommandHandler(_cosmosManager, _secretManager);
-            _httpClient = factory.CreateClient();
-            _httpClient.BaseAddress = new Uri("https://slack.com/api/");
+            _httpClient = factory.CreateClient("BotClient");
         }
 
         [HttpPost]

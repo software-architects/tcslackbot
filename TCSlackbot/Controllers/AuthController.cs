@@ -105,13 +105,6 @@ namespace TCSlackbot.Controllers
         }
 
         [Authorize, HttpGet]
-        [Route("refresh_token")]
-        public async Task<IActionResult> RefreshTokenTestingAsync()
-        {
-
-        }
-
-        [Authorize, HttpGet]
         [Route("cosmos")]
         public async Task<IActionResult> TestCosmosManagerAsync()
         {
