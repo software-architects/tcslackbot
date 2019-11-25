@@ -1,5 +1,4 @@
-﻿using IdentityModel.Client;
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
@@ -109,10 +108,7 @@ namespace TCSlackbot.Controllers
         [Route("refresh_token")]
         public async Task<IActionResult> RefreshTokenTestingAsync()
         {
-            var refreshToken = await HttpContext.GetTokenAsync("refresh_token");
 
-            // FIXME: Refresh token does not get updated automatically, thus when you renew it, it'll become invalid. (Response: 'invalid_grant')
-            return Ok(await RenewTokensAsync(refreshToken));
         }
 
         [Authorize, HttpGet]
@@ -128,37 +124,5 @@ namespace TCSlackbot.Controllers
             return Ok();
         }
 
-        private async Task<(string, string)> RenewTokensAsync(string rfToken)
-        {
-            var client = _factory.CreateClient();
-
-            //
-            // Find the discovery endpoint
-            //
-            var discoveryResponse = await client.GetDiscoveryDocumentAsync("https://auth.timecockpit.com/");
-
-            //
-            // Send request to the auth endpoint
-            //
-            // FIXME: Returns invalid_grant
-            var response = await client.RequestRefreshTokenAsync(new RefreshTokenRequest
-            {
-                Address = discoveryResponse.TokenEndpoint,
-                ClientId = _configuration["TimeCockpit-ClientId"],
-                ClientSecret = _configuration["TimeCockpit-ClientSecret"],
-                Scope = "openid offline_access",
-                RefreshToken = rfToken,
-                ClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader
-            });
-
-            //
-            // Get the new access and refresh token
-            //
-
-            var accessToken = response.AccessToken;
-            var refreshToken = response.RefreshToken;
-
-            return (accessToken, refreshToken);
-        }
     }
 }

@@ -72,12 +72,15 @@ namespace TCSlackbot
             {
                 client.BaseAddress = new Uri("https://api.timecockpit.com");
             });
+
             services.AddHttpClient("BotClient", client =>
             {
-                client.BaseAddress = new Uri("httpls://slack.com/api");
+                client.BaseAddress = new Uri("https://slack.com/api");
             });
+
             services.AddTransient<ISecretManager, SecretManager>();
             services.AddTransient<ICosmosManager, CosmosManager>();
+            services.AddTransient<ITokenManager, TokenManager>();
 
             services.AddControllers();
             services.AddDataProtection();
