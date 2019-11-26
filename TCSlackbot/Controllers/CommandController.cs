@@ -109,21 +109,21 @@ namespace TCSlackbot.Controllers
                     break;
 
                 case "start":
-                    reply["text"] = commandHandler.StartWorktime(request);
+                    reply["text"] = await commandHandler.StartWorktimeAsync(request);
                     break;
 
                 case "pause":
                 case "break":
-                    reply["text"] = commandHandler.PauseWorktime(request);
+                    reply["text"] = await commandHandler.PauseWorktimeAsync(request);
                     break;
 
                 case "resume":
-                    reply["text"] = commandHandler.ResumeWorktime(request);
+                    reply["text"] = await commandHandler.ResumeWorktimeAsync(request);
                     break;
 
                 case "starttime":
                 case "gettime":
-                    reply["text"] = commandHandler.GetWorktime(request);
+                    reply["text"] = await commandHandler.GetWorktimeAsync(request);
                     break;
 
                 default:

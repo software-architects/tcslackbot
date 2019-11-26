@@ -111,8 +111,7 @@ namespace TCSlackbot.Controllers
             var response = (dynamic)await _cosmosManager.CreateDocumentAsync("testing1", new SlackUser { UserId = "5763" });
             response.UserId = "test";
 
-            await _cosmosManager.ReplaceDocumentAsync(response);
-            var user = _cosmosManager.GetSlackUser("testing1", "test");
+            await _cosmosManager.ReplaceDocumentAsync("testing1", response, response.UserId);
 
             return Ok();
         }
