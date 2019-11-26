@@ -3,7 +3,6 @@ using Microsoft.Azure.Documents.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace TCSlackbot.Logic.Utils
@@ -46,57 +45,30 @@ namespace TCSlackbot.Logic.Utils
         }
 
 
-        public async Task<Document> GetDocumentAsync(string collectionName, string documentId)
+        public async Task<T> GetDocumentAsync<T>(string collectionName, string documentId)
         {
-            var uri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, documentId);
-            var response = await client.ReadDocumentAsync(uri);
+            var documentUri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, documentId);
+            var response = await client.ReadDocumentAsync(documentUri);
 
-            return response.Resource;
+            return (T)(dynamic)response.Resource;
         }
 
-        public async Task<Document> CreateDocumentAsync<T>(string collectionName, T document)
+        public async Task<T> CreateDocumentAsync<T>(string collectionName, T document)
         {
             await CreateCollectionIfNotExistsAsync(DatabaseName, collectionName);
 
             var collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, collectionName);
             var response = await client.CreateDocumentAsync(collectionUri, document);
 
-            return response.Resource;
+            return (T)(dynamic)response.Resource;
         }
 
-        public async Task<Document> ReplaceDocumentAsync(Document document)
+        public async Task<T> ReplaceDocumentAsync<T>(string collectionName, T document, string documentId)
         {
-            var response = await client.ReplaceDocumentAsync(document);
+            var documentUri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, documentId);
+            var response = await client.ReplaceDocumentAsync(documentUri, document);
 
-            return response.Resource;
-        }
-
-
-        public SlackUser GetSlackUser(string collectionName, string userId)
-        {
-            var collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, collectionName);
-            try
-            {
-                var result = client.CreateDocumentQuery<SlackUser>(collectionUri)
-                    .Where(user => user.UserId == userId).ToList();
-                // 
-                // More than one user with the same id found -> Should never happen
-                // 
-                if (result.Count() > 1)
-                {
-                    return default;
-                }
-
-                return result.FirstOrDefault();
-            }
-            catch (AggregateException ex)
-            {
-                //Ignore it
-            }
-           
-            
-            return null;
-            
+            return (T)(dynamic)response.Resource;
         }
 
 
