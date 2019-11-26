@@ -67,7 +67,7 @@ namespace TCSlackbot.Controllers
 
             return NotFound();
         }
-
+       
         public async Task<IActionResult> HandleEventCallbackAsync(SlackEventCallbackRequest request)
         {
             switch (request.Event.Type)

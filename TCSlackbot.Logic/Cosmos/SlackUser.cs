@@ -8,12 +8,19 @@ namespace TCSlackbot.Logic
         [JsonProperty(PropertyName = "id")]
         public string UserId { get; set; }
 
-        public DateTime StartTime { get; set; }
+        public DateTime? StartTime { get; set; }
 
         public DateTime BreakTime { get; set; }
 
         public DateTime EndTime { get; set; }
 
-        public bool OnBreak { get; set; } = false;
+        public bool IsOnBreak { get; set; } = false;
+
+        [JsonIgnore]
+        public bool IsWorking
+        {
+            get => StartTime != null;
+            set => StartTime = value ? DateTime.Now : (DateTime?)null;
+        }
     }
 }
