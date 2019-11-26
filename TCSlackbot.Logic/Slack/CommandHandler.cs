@@ -109,13 +109,23 @@ namespace TCSlackbot.Logic.Slack
         }
 
         /// <summary>
-        /// Returns the user for the specified userId.
+        /// Returns the user for the specified userId or creates it.
         /// </summary>
         /// <param name="userId">The id of the user</param>
         /// <returns>The object of the slack user</returns>
         private async Task<SlackUser> GetSlackUserAsync(string userId)
         {
-            return await _cosmosManager.GetDocumentAsync<SlackUser>(CollectionId, userId);
+            var user = await _cosmosManager.GetDocumentAsync<SlackUser>(CollectionId, userId);
+
+            //
+            // Create a new user if it's not found
+            //
+            if (user is null)
+            {
+                user = await _cosmosManager.CreateDocumentAsync(CollectionId, new SlackUser { UserId = userId });
+            }
+
+            return user;
         }
     }
 }
