@@ -19,9 +19,12 @@ namespace TCSlackbot.Logic.Slack
 
         public async Task<string> GetWorktimeAsync(SlackEventCallbackRequest request)
         {
-            if (await IsWorkingAsync(request))
+            var user = request.Event.User;
+            var slackUser = await GetSlackUserAsync(user);
+
+            if (slackUser.IsWorking)
             {
-                return "Started at: " + (await GetSlackUserAsync(request.Event.User))?.StartTime;
+                return "Started at: " + slackUser?.StartTime;
             }
 
             return "You are not working!";
@@ -37,27 +40,42 @@ namespace TCSlackbot.Logic.Slack
 
         public async Task<string> PauseWorktimeAsync(SlackEventCallbackRequest request)
         {
-            if (IsLoggedIn(request) && await IsWorkingAsync(request) && !await IsOnBreakAsync(request))
+            var user = request.Event.User;
+            var slackUser = await GetSlackUserAsync(user);
+            
+            //
+            if (!IsLoggedIn(user))
             {
-                var user = await GetSlackUserAsync(request.Event.User);
-                var curBreakTime = user.OnBreak;
-
-                return "Break has been set. You can now relax.";
+                return "You have to login before you can use this bot!\nType login or link to get the login link.";
             }
-            if (!IsLoggedIn(request)) return "You have to login before you can use this bot!\nType login or link to get the login link.";
-            if (!await IsWorkingAsync(request)) return "You are not working at the moment. Did you forget to type start?";
-            if (await IsOnBreakAsync(request)) return "You are already on break. Did you forget to unpause?";
-            return "You shouldn't get this message.";
+            //
+            if (!slackUser.IsWorking)
+            {
+                return "You are not working at the moment. Did you forget to type start?";
+            }
+            //
+            if (slackUser.IsOnBreak)
+            {
+                return "You are already on break. Did you forget to unpause?";
+            }
+            
+            var curBreakTime = slackUser.IsOnBreak;
+
+            return "Break has been set. You can now relax.";
+            
+            
         }
 
         public async Task<string> StartWorktimeAsync(SlackEventCallbackRequest request)
         {
-            if (!IsLoggedIn(request))
+            var user = request.Event.User;
+            var slackUser = await GetSlackUserAsync(user);
+            if (!IsLoggedIn(user))
             {
                 return "You have to login before you can use this bot!\nType login or link to get the login link.";
             }
-
-            if (await IsWorkingAsync(request))
+            
+            if (slackUser.IsWorking)
             {
                 return "You are already working.";
             }
@@ -65,7 +83,6 @@ namespace TCSlackbot.Logic.Slack
             //
             // Get the user from the database
             //
-            var user = await GetSlackUserAsync(request.Event.User);
             if (user is null)
             {
                 // User already logged in but no user in the database -> Should never happen
@@ -75,7 +92,7 @@ namespace TCSlackbot.Logic.Slack
             //
             // Tampered userid detected
             //
-            if (user.UserId != request.Event.User)
+            if (slackUser.UserId != user)
             {
                 return "Something went wrong. Please login again.";
             }
@@ -83,29 +100,16 @@ namespace TCSlackbot.Logic.Slack
             //
             // LoggedIn && !IsWorking
             //
-            user.StartTime = DateTime.Now;
+            slackUser.StartTime = DateTime.Now;
 
-            await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
+            await _cosmosManager.ReplaceDocumentAsync(CollectionId, slackUser, slackUser.UserId);
 
             return "You started working.";
         }
 
-        public bool IsLoggedIn(SlackEventCallbackRequest request)
+        public bool IsLoggedIn(string user)
         {
-            return _secretManager.GetSecret(request.Event.User) != null;
-        }
-
-        // TODO: Maybe only pass a SlackUser object
-        public async Task<bool> IsWorkingAsync(SlackEventCallbackRequest request)
-        {
-            var user = await GetSlackUserAsync(request.Event.User);
-            return user?.StartTime != null;
-        }
-
-        // TODO: Might not even be required: just check IsOnBreak in the SlackUser object
-        public async Task<bool> IsOnBreakAsync(SlackEventCallbackRequest request)
-        {
-            return (await _cosmosManager.GetDocumentAsync<SlackUser>(CollectionId, request.Event.User)).OnBreak;
+            return _secretManager.GetSecret(user) != null;
         }
 
         /// <summary>
