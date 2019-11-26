@@ -9,11 +9,8 @@ using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
-using TCSlackbot.Logic.Utils;
 
 namespace TCSlackbot.Controllers
 {
@@ -25,21 +22,15 @@ namespace TCSlackbot.Controllers
 
         private readonly ILogger<AuthController> _logger;
         private readonly IConfiguration _configuration;
-        private readonly IHttpClientFactory _factory;
         private readonly IDataProtector _protector;
-        private readonly ICosmosManager _cosmosManager;
 
         public AuthController(ILogger<AuthController> logger,
             IConfiguration config,
-            IHttpClientFactory factory,
-            IDataProtectionProvider provider,
-            ICosmosManager cosmosManager)
+            IDataProtectionProvider provider)
         {
             _logger = logger;
             _configuration = config;
-            _factory = factory;
             _protector = provider.CreateProtector("UUIDProtector");
-            _cosmosManager = cosmosManager;
         }
 
         [HttpGet]
@@ -76,44 +67,6 @@ namespace TCSlackbot.Controllers
             }
 
             return Ok("Successfully logged in.");
-        }
-
-        [Authorize, HttpGet]
-        [Route("access_token")]
-        public async Task<IActionResult> AccessTokenTestingAsync()
-        {
-            string accessToken;
-
-            // 
-            // Check if there's already a cached access token
-            // 
-            if (accessTokenCache.HasValidToken("placeholder_user_id"))
-            {
-                accessToken = accessTokenCache.Get("placeholder_user_id");
-            }
-            else
-            {
-                accessToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
-                accessTokenCache.Add("placeholder_user_id", accessToken);
-            }
-
-            var client = _factory.CreateClient();
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            var content = await client.GetStringAsync("https://web.timecockpit.com/odata/$metadata");
-
-            return Ok(content);
-        }
-
-        [Authorize, HttpGet]
-        [Route("cosmos")]
-        public async Task<IActionResult> TestCosmosManagerAsync()
-        {
-            var response = (dynamic)await _cosmosManager.CreateDocumentAsync("testing1", new SlackUser { UserId = "5763" });
-            response.UserId = "test";
-
-            await _cosmosManager.ReplaceDocumentAsync("testing1", response, response.UserId);
-
-            return Ok();
         }
     }
 }
