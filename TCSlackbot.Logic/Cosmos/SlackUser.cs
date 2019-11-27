@@ -10,17 +10,28 @@ namespace TCSlackbot.Logic
 
         public DateTime? StartTime { get; set; }
 
-        public DateTime BreakTime { get; set; }
+        public DateTime? EndTime { get; set; }
 
-        public DateTime EndTime { get; set; }
+        public DateTime BreakTime { get; set; }
 
         public bool IsOnBreak { get; set; } = false;
 
         [JsonIgnore]
         public bool IsWorking
         {
-            get => StartTime != null;
-            set => StartTime = value ? DateTime.Now : (DateTime?)null;
+            get => !(StartTime is null);
+            set
+            {
+                if (value is true)
+                {
+                    StartTime = DateTime.Now;
+                }
+                else
+                {
+                    StartTime = null;
+                    EndTime = null;
+                }
+            }
         }
     }
 }

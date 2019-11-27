@@ -67,7 +67,7 @@ namespace TCSlackbot.Controllers
 
             return NotFound();
         }
-       
+
         public async Task<IActionResult> HandleEventCallbackAsync(SlackEventCallbackRequest request)
         {
             switch (request.Event.Type)
@@ -109,7 +109,11 @@ namespace TCSlackbot.Controllers
                     break;
 
                 case "start":
-                    reply["text"] = await commandHandler.StartWorktimeAsync(request);
+                    reply["text"] = await commandHandler.StartWorkingAsync(request);
+                    break;
+
+                case "stop":
+                    reply["text"] = await commandHandler.StopWorkingAsync(request);
                     break;
 
                 case "pause":
