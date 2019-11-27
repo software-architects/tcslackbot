@@ -47,28 +47,73 @@ namespace TCSlackbot.Logic.Utils
 
         public async Task<T> GetDocumentAsync<T>(string collectionName, string documentId)
         {
-            var documentUri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, documentId);
-            var response = await client.ReadDocumentAsync(documentUri);
+            try
+            {
+                var documentUri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, documentId);
+                var response = await client.ReadDocumentAsync(documentUri);
 
-            return (T)(dynamic)response.Resource;
+                return (T)(dynamic)response.Resource;
+            }
+            catch (DocumentClientException de)
+            {
+                Exception baseException = de.GetBaseException();
+                _logger.LogCritical("{0} error occurred: {1}, Message: {2}", de.StatusCode, de.Message, baseException.Message);
+            }
+            catch (Exception e)
+            {
+                Exception baseException = e.GetBaseException();
+                _logger.LogCritical("Error: {0}, Message: {1}", e.Message, baseException.Message);
+            }
+
+            return default;
         }
 
         public async Task<T> CreateDocumentAsync<T>(string collectionName, T document)
         {
             await CreateCollectionIfNotExistsAsync(DatabaseName, collectionName);
 
-            var collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, collectionName);
-            var response = await client.CreateDocumentAsync(collectionUri, document);
+            try
+            {
+                var collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, collectionName);
+                var response = await client.CreateDocumentAsync(collectionUri, document);
 
-            return (T)(dynamic)response.Resource;
+                return (T)(dynamic)response.Resource;
+            }
+            catch (DocumentClientException de)
+            {
+                Exception baseException = de.GetBaseException();
+                _logger.LogCritical("{0} error occurred: {1}, Message: {2}", de.StatusCode, de.Message, baseException.Message);
+            }
+            catch (Exception e)
+            {
+                Exception baseException = e.GetBaseException();
+                _logger.LogCritical("Error: {0}, Message: {1}", e.Message, baseException.Message);
+            }
+
+            return default;
         }
 
         public async Task<T> ReplaceDocumentAsync<T>(string collectionName, T document, string documentId)
         {
-            var documentUri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, documentId);
-            var response = await client.ReplaceDocumentAsync(documentUri, document);
+            try
+            {
+                var documentUri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, documentId);
+                var response = await client.ReplaceDocumentAsync(documentUri, document);
 
-            return (T)(dynamic)response.Resource;
+                return (T)(dynamic)response.Resource;
+            }
+            catch (DocumentClientException de)
+            {
+                Exception baseException = de.GetBaseException();
+                _logger.LogCritical("{0} error occurred: {1}, Message: {2}", de.StatusCode, de.Message, baseException.Message);
+            }
+            catch (Exception e)
+            {
+                Exception baseException = e.GetBaseException();
+                _logger.LogCritical("Error: {0}, Message: {1}", e.Message, baseException.Message);
+            }
+
+            return default;
         }
 
 
