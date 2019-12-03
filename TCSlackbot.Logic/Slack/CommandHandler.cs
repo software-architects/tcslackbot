@@ -31,47 +31,7 @@ namespace TCSlackbot.Logic.Slack
             return "You are not working!";
         }
 
-        //TODO
-        public async Task<string> ResumeWorktimeAsync(SlackEventCallbackRequest request)
-        {
-            var user = await GetSlackUserAsync(request.Event.User);
-
-            return "Break has ended." + user.BreakTime; // No
-        }
-
-        // TODO: Set break time? Maybe with a list of breaks?
-        public async Task<string> PauseWorktimeAsync(SlackEventCallbackRequest request)
-        {
-            var userId = request.Event.User;
-
-            var user = await GetSlackUserAsync(userId);
-            if (user is null)
-            {
-                // User already logged in but no user in the database -> Should never happen
-                return "Something went wrong. Please login again.";
-            }
-
-            if (!IsLoggedIn(userId))
-            {
-                return "You have to login before you can use this bot!\nType login or link to get the login link.";
-            }
-
-            if (!user.IsWorking)
-            {
-                return "You are not working at the moment. Did you forget to type start?";
-            }
-
-            if (user.IsOnBreak)
-            {
-                return "You are already on break. Did you forget to unpause?";
-            }
-
-            var curBreakTime = user.IsOnBreak;
-
-            return "Break has been set. You can now relax.";
-
-
-        }
+        
 
         public async Task<string> StartWorkingAsync(SlackEventCallbackRequest request)
         {
@@ -139,7 +99,64 @@ namespace TCSlackbot.Logic.Slack
 
             return "You stopped working.";
         }
+        //NOT TESTED YET
+        public async Task<string> ResumeWorktimeAsync(SlackEventCallbackRequest request)
+        {
+            var userId = request.Event.User;
+            var user = await GetSlackUserAsync(request.Event.User);
 
+            if (!IsLoggedIn(userId))
+            {
+                return "You have to login before you can use this bot!\nType login or link to get the login link.";
+            }
+
+            if (!user.IsWorking)
+            {
+                return "You are not working at the moment. Did you forget to type start?";
+            }
+
+            if (!user.IsOnBreak)
+            {
+                return "You are not on break. Did you forget to pause?";
+            }
+            user.TotalBreakTime = (DateTime.Now.Minute - user.BreakTime.Value.Minute);
+            await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
+            return "Break has ended." + user.BreakTime; // No
+        }
+
+        // TODO: Set break time? Maybe with a list of breaks?
+        public async Task<string> PauseWorktimeAsync(SlackEventCallbackRequest request)
+        {
+            var userId = request.Event.User;
+
+            var user = await GetSlackUserAsync(userId);
+            if (user is null)
+            {
+                // User already logged in but no user in the database -> Should never happen
+                return "Something went wrong. Please login again.";
+            }
+
+            if (!IsLoggedIn(userId))
+            {
+                return "You have to login before you can use this bot!\nType login or link to get the login link.";
+            }
+
+            if (!user.IsWorking)
+            {
+                return "You are not working at the moment. Did you forget to type start?";
+            }
+
+            if (user.IsOnBreak)
+            {
+                return "You are already on break. Did you forget to unpause?";
+            }
+
+            user.BreakTime = DateTime.Now;
+            await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
+            return "Break has been set. You can now relax.";
+
+
+        }
         public bool IsLoggedIn(string userId)
         {
             return _secretManager.GetSecret(userId) != null;

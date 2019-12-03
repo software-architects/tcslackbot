@@ -12,9 +12,8 @@ namespace TCSlackbot.Logic
 
         public DateTime? EndTime { get; set; }
 
-        public DateTime BreakTime { get; set; }
 
-        public bool IsOnBreak { get; set; } = false;
+        public decimal TotalBreakTime { get; set; } //In Minutes
 
         [JsonIgnore]
         public bool IsWorking
@@ -33,5 +32,13 @@ namespace TCSlackbot.Logic
                 }
             }
         }
+        [JsonIgnore]
+        public DateTime? BreakTime { get; set; }
+        [JsonIgnore]
+        public bool IsOnBreak
+        {
+            get => !(BreakTime is null);
+        }
+
     }
 }
