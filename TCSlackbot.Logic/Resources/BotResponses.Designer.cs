@@ -61,11 +61,11 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to This is a test..
+        ///   Looks up a localized string similar to You are already logged in..
         /// </summary>
-        public static string Test {
+        public static string AlreadyLoggedIn {
             get {
-                return ResourceManager.GetString("Test", resourceCulture);
+                return ResourceManager.GetString("AlreadyLoggedIn", resourceCulture);
             }
         }
     }

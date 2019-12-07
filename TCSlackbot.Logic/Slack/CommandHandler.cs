@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
 using System;
 using System.Threading.Tasks;
+using TCSlackbot.Logic.Resources;
 using TCSlackbot.Logic.Utils;
 
 namespace TCSlackbot.Logic.Slack
@@ -129,6 +130,19 @@ namespace TCSlackbot.Logic.Slack
 
         public string GetLoginLink(SlackEvent slackEvent)
         {
+            var userId = slackEvent.User;
+
+            //
+            // Check if already logged in
+            //
+            if (IsLoggedIn(userId))
+            {
+                return BotResponses.AlreadyLoggedIn;
+            }
+
+            //
+            // Send the login link
+            //
             if (System.Diagnostics.Debugger.IsAttached)
             {
                 return "<https://localhost:6001/auth/link/?uuid=" + _protector.Protect(slackEvent.User) + "|Link TimeCockpit Account>";
