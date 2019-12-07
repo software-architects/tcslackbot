@@ -75,7 +75,8 @@ namespace TCSlackbot.Controllers
                 case "message":
                     // TODO: Only pass the event
                     return await HandleSlackMessage(request);
-
+                case "app_mention":
+                    return await HandleSlackMessage(request);
                 default:
                     break;
             }
