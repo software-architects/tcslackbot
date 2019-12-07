@@ -19,12 +19,11 @@ namespace TCSlackbot.Controllers
     [Route("command")]
     public class CommandController : ControllerBase
     {
-
-
         private readonly IDataProtector _protector;
         private readonly ISecretManager _secretManager;
         private readonly ICosmosManager _cosmosManager;
         private readonly HttpClient _httpClient;
+
         private readonly CommandHandler commandHandler;
 
         public CommandController(IDataProtectionProvider provider, ISecretManager secretManager, ICosmosManager cosmosManager, IHttpClientFactory factory)
@@ -32,8 +31,9 @@ namespace TCSlackbot.Controllers
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
             _cosmosManager = cosmosManager;
-            commandHandler = new CommandHandler(_cosmosManager, _secretManager);
             _httpClient = factory.CreateClient("BotClient");
+
+            commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager);
         }
 
         [HttpPost]
@@ -74,9 +74,11 @@ namespace TCSlackbot.Controllers
             {
                 case "message":
                     // TODO: Only pass the event
-                    return await HandleSlackMessage(request);
+                    return await HandleSlackMessage(request.Event);
+
                 case "app_mention":
-                    return await HandleSlackMessage(request);
+                    return await HandleSlackMessage(request.Event);
+
                 default:
                     break;
             }
@@ -90,45 +92,45 @@ namespace TCSlackbot.Controllers
             return Ok(request.Challenge);
         }
 
-        public async Task<IActionResult> HandleSlackMessage(SlackEventCallbackRequest request)
+        public async Task<IActionResult> HandleSlackMessage(SlackEvent slackEvent)
         {
             var reply = new Dictionary<string, string>();
             bool secret = false; // If secret is true then a ephemeral message will be 
                                  // sent, which can only be seen by the one who wrote the message
 
-            reply["user"] = request.Event.User;
+            reply["user"] = slackEvent.User;
             reply["token"] = _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken");
-            reply["channel"] = request.Event.Channel;
+            reply["channel"] = slackEvent.Channel;
             //reply["attachments"] = "[{\"fallback\":\"dummy\", \"text\":\"this is an attachment\"}]";
 
-            switch (request.Event.Text.ToLower().Trim())
+            switch (slackEvent.Text.ToLower().Trim())
             {
                 case "login":
                 case "link":
-                    reply["text"] = LoginEventsAPI(request);
+                    reply["text"] = commandHandler.GetLoginLink(slackEvent);
                     secret = true;
                     break;
 
                 case "start":
-                    reply["text"] = await commandHandler.StartWorkingAsync(request);
+                    reply["text"] = await commandHandler.StartWorkingAsync(slackEvent);
                     break;
 
                 case "stop":
-                    reply["text"] = await commandHandler.StopWorkingAsync(request);
+                    reply["text"] = await commandHandler.StopWorkingAsync(slackEvent);
                     break;
 
                 case "pause":
                 case "break":
-                    reply["text"] = await commandHandler.PauseWorktimeAsync(request);
+                    reply["text"] = await commandHandler.PauseWorktimeAsync(slackEvent);
                     break;
 
                 case "resume":
-                    reply["text"] = await commandHandler.ResumeWorktimeAsync(request);
+                    reply["text"] = await commandHandler.ResumeWorktimeAsync(slackEvent);
                     break;
 
                 case "starttime":
                 case "gettime":
-                    reply["text"] = await commandHandler.GetWorktimeAsync(request);
+                    reply["text"] = await commandHandler.GetWorktimeAsync(slackEvent);
                     break;
 
                 default:
@@ -149,18 +151,6 @@ namespace TCSlackbot.Controllers
             else
             {
                 await _httpClient.PostAsync("chat.postMessage", new FormUrlEncodedContent(dict));
-            }
-        }
-
-        public string LoginEventsAPI(SlackEventCallbackRequest request)
-        {
-            if (System.Diagnostics.Debugger.IsAttached)
-            {
-                return "<https://localhost:6001/auth/link/?uuid=" + _protector.Protect(request.Event.User) + "|Link TimeCockpit Account>";
-            }
-            else
-            {
-                return "<https://tcslackbot.azurewebsites.net/auth/link/?uuid=" + _protector.Protect(request.Event.User) + "|Link TimeCockpit Account>";
             }
         }
 

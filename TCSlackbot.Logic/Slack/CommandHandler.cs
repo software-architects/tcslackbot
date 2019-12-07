@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.DataProtection;
+using System;
 using System.Threading.Tasks;
 using TCSlackbot.Logic.Utils;
 
@@ -8,18 +9,21 @@ namespace TCSlackbot.Logic.Slack
     {
         private const string CollectionId = "slack_users";
 
+        private readonly IDataProtector _protector;
         private readonly ICosmosManager _cosmosManager;
         private readonly ISecretManager _secretManager;
 
-        public CommandHandler(ICosmosManager cosmosManager, ISecretManager secretManager)
+        public CommandHandler(IDataProtector protector, ICosmosManager cosmosManager, ISecretManager secretManager)
         {
+            _protector = protector;
             _cosmosManager = cosmosManager;
             _secretManager = secretManager;
         }
 
-        public async Task<string> GetWorktimeAsync(SlackEventCallbackRequest request)
+
+        public async Task<string> GetWorktimeAsync(SlackEvent slackEvent)
         {
-            var userId = request.Event.User;
+            var userId = slackEvent.User;
             var user = await GetSlackUserAsync(userId);
 
             if (user.IsWorking && user.StartTime != null)
@@ -31,11 +35,9 @@ namespace TCSlackbot.Logic.Slack
             return "You are not working!";
         }
 
-        
-
-        public async Task<string> StartWorkingAsync(SlackEventCallbackRequest request)
+        public async Task<string> StartWorkingAsync(SlackEvent slackEvent)
         {
-            var userId = request.Event.User;
+            var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
             if (user is null)
@@ -63,9 +65,9 @@ namespace TCSlackbot.Logic.Slack
             return "You started working.";
         }
 
-        public async Task<string> StopWorkingAsync(SlackEventCallbackRequest request)
+        public async Task<string> StopWorkingAsync(SlackEvent slackEvent)
         {
-            var userId = request.Event.User;
+            var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
             if (userId is null)
@@ -99,11 +101,12 @@ namespace TCSlackbot.Logic.Slack
 
             return "You stopped working.";
         }
+
         //NOT TESTED YET
-        public async Task<string> ResumeWorktimeAsync(SlackEventCallbackRequest request)
+        public async Task<string> ResumeWorktimeAsync(SlackEvent slackEvent)
         {
-            var userId = request.Event.User;
-            var user = await GetSlackUserAsync(request.Event.User);
+            var userId = slackEvent.User;
+            var user = await GetSlackUserAsync(userId);
 
             if (!IsLoggedIn(userId))
             {
@@ -124,10 +127,22 @@ namespace TCSlackbot.Logic.Slack
             return "Break has ended." + user.BreakTime; // No
         }
 
-        // TODO: Set break time? Maybe with a list of breaks?
-        public async Task<string> PauseWorktimeAsync(SlackEventCallbackRequest request)
+        public string GetLoginLink(SlackEvent slackEvent)
         {
-            var userId = request.Event.User;
+            if (System.Diagnostics.Debugger.IsAttached)
+            {
+                return "<https://localhost:6001/auth/link/?uuid=" + _protector.Protect(slackEvent.User) + "|Link TimeCockpit Account>";
+            }
+            else
+            {
+                return "<https://tcslackbot.azurewebsites.net/auth/link/?uuid=" + _protector.Protect(slackEvent.User) + "|Link TimeCockpit Account>";
+            }
+        }
+
+        // TODO: Set break time? Maybe with a list of breaks?
+        public async Task<string> PauseWorktimeAsync(SlackEvent slackEvent)
+        {
+            var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
             if (user is null)
@@ -157,6 +172,7 @@ namespace TCSlackbot.Logic.Slack
 
 
         }
+
         public bool IsLoggedIn(string userId)
         {
             return _secretManager.GetSecret(userId) != null;
