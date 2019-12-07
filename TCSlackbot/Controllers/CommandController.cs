@@ -75,10 +75,8 @@ namespace TCSlackbot.Controllers
                 case "message":
                     // TODO: Only pass the event
                     return await HandleSlackMessage(request.Event);
-
                 case "app_mention":
                     return await HandleSlackMessage(request.Event);
-
                 default:
                     break;
             }
@@ -103,7 +101,7 @@ namespace TCSlackbot.Controllers
             reply["channel"] = slackEvent.Channel;
             //reply["attachments"] = "[{\"fallback\":\"dummy\", \"text\":\"this is an attachment\"}]";
 
-            switch (slackEvent.Text.ToLower().Trim())
+            switch (slackEvent.Text.Replace("<@UJZLBL7BL> ", "").ToLower().Trim())
             {
                 case "login":
                 case "link":
