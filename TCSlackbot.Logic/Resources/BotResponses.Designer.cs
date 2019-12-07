@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace TCSlackbot.Resources {
+namespace TCSlackbot.Logic.Resources {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace TCSlackbot.Resources {
         public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("TCSlackbot.Resources.BotResponses", typeof(BotResponses).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("TCSlackbot.Logic.Resources.BotResponses", typeof(BotResponses).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
