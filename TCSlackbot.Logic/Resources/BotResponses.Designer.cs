@@ -68,5 +68,41 @@ namespace TCSlackbot.Logic.Resources {
                 return ResourceManager.GetString("AlreadyLoggedIn", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You are already on break. Did you forget to unpause?.
+        /// </summary>
+        public static string AlreadyOnBreak {
+            get {
+                return ResourceManager.GetString("AlreadyOnBreak", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You have to login before you can use this bot!\nType login or link to get the login link..
+        /// </summary>
+        public static string HaveToLogin {
+            get {
+                return ResourceManager.GetString("HaveToLogin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You are not on break. Did you forget to pause?.
+        /// </summary>
+        public static string NotOnBreak {
+            get {
+                return ResourceManager.GetString("NotOnBreak", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You are not working at the moment. Did you forget to type start?.
+        /// </summary>
+        public static string NotWorking {
+            get {
+                return ResourceManager.GetString("NotWorking", resourceCulture);
+            }
+        }
     }
 }

@@ -9,7 +9,6 @@ namespace TCSlackbot.Logic.Slack
     public class CommandHandler
     {
         private const string CollectionId = "slack_users";
-
         private readonly IDataProtector _protector;
         private readonly ICosmosManager _cosmosManager;
         private readonly ISecretManager _secretManager;
@@ -62,8 +61,8 @@ namespace TCSlackbot.Logic.Slack
             //
             user.IsWorking = true;
             await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
-
             return "You started working.";
+
         }
 
         public async Task<string> StopWorkingAsync(SlackEvent slackEvent)
@@ -97,6 +96,22 @@ namespace TCSlackbot.Logic.Slack
             //
             // Stop working (reset the start and end time)
             //
+            // This will maybe be done with Slack Modal 
+            //
+            var message = slackEvent.Text.Split(" ");
+            try
+            {
+                // user.Project = message[1];
+                if (slackEvent.Text.Split(" ").Length > 2)
+                {
+                    // user.Description = message[2];
+                }
+            }
+            catch (IndexOutOfRangeException e)
+            {
+                Console.WriteLine(e.Message);
+                return "Wrong Syntax";
+            }
             user.IsWorking = false;
             await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
 
@@ -111,21 +126,64 @@ namespace TCSlackbot.Logic.Slack
 
             if (!IsLoggedIn(userId))
             {
-                return "You have to login before you can use this bot!\nType login or link to get the login link.";
+                return BotResponses.HaveToLogin;
             }
 
             if (!user.IsWorking)
             {
-                return "You are not working at the moment. Did you forget to type start?";
+                return BotResponses.NotWorking;
             }
 
             if (!user.IsOnBreak)
             {
-                return "You are not on break. Did you forget to pause?";
+                return BotResponses.NotOnBreak;
             }
+            Console.WriteLine(user.BreakTime.Value);
             user.TotalBreakTime = (DateTime.Now.Minute - user.BreakTime.Value.Minute);
+            user.BreakTime = null;
             await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
-            return "Break has ended." + user.BreakTime; // No
+            return "Break has ended. Total Break Time: " + user.TotalBreakTime + "min"; // No
+        }
+
+       
+
+        // TODO: Set break time? Maybe with a list of breaks?
+        public async Task<string> PauseWorktimeAsync(SlackEvent slackEvent)
+        {
+            var userId = slackEvent.User;
+
+            var user = await GetSlackUserAsync(userId);
+            if (user is null)
+            {
+                // User already logged in but no user in the database -> Should never happen
+                return "Something went wrong. Please login again.";
+            }
+
+            if (!IsLoggedIn(userId))
+            {
+                return BotResponses.HaveToLogin;
+            }
+
+            if (!user.IsWorking)
+            {
+                return BotResponses.NotWorking;
+            }
+
+            if (user.IsOnBreak)
+            {
+                return BotResponses.AlreadyOnBreak;
+            }
+
+            user.BreakTime = DateTime.Now;
+            await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
+            return "Break has been set. You can now relax.";
+
+
+        }
+
+        public bool IsLoggedIn(string userId)
+        {
+            return _secretManager.GetSecret(userId) != null;
         }
 
         public string GetLoginLink(SlackEvent slackEvent)
@@ -151,45 +209,6 @@ namespace TCSlackbot.Logic.Slack
             {
                 return "<https://tcslackbot.azurewebsites.net/auth/link/?uuid=" + _protector.Protect(slackEvent.User) + "|Link TimeCockpit Account>";
             }
-        }
-
-        // TODO: Set break time? Maybe with a list of breaks?
-        public async Task<string> PauseWorktimeAsync(SlackEvent slackEvent)
-        {
-            var userId = slackEvent.User;
-
-            var user = await GetSlackUserAsync(userId);
-            if (user is null)
-            {
-                // User already logged in but no user in the database -> Should never happen
-                return "Something went wrong. Please login again.";
-            }
-
-            if (!IsLoggedIn(userId))
-            {
-                return "You have to login before you can use this bot!\nType login or link to get the login link.";
-            }
-
-            if (!user.IsWorking)
-            {
-                return "You are not working at the moment. Did you forget to type start?";
-            }
-
-            if (user.IsOnBreak)
-            {
-                return "You are already on break. Did you forget to unpause?";
-            }
-
-            user.BreakTime = DateTime.Now;
-            await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
-            return "Break has been set. You can now relax.";
-
-
-        }
-
-        public bool IsLoggedIn(string userId)
-        {
-            return _secretManager.GetSecret(userId) != null;
         }
 
         /// <summary>

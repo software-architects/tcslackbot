@@ -120,4 +120,16 @@
   <data name="AlreadyLoggedIn" xml:space="preserve">
     <value>You are already logged in.</value>
   </data>
+  <data name="AlreadyOnBreak" xml:space="preserve">
+    <value>You are already on break. Did you forget to unpause?</value>
+  </data>
+  <data name="HaveToLogin" xml:space="preserve">
+    <value>You have to login before you can use this bot!\nType login or link to get the login link.</value>
+  </data>
+  <data name="NotOnBreak" xml:space="preserve">
+    <value>You are not on break. Did you forget to pause?</value>
+  </data>
+  <data name="NotWorking" xml:space="preserve">
+    <value>You are not working at the moment. Did you forget to type start?</value>
+  </data>
 </root>
