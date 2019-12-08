@@ -7,15 +7,14 @@ namespace TCSlackbot.Logic.Utils
 {
     public class TokenManager : ITokenManager
     {
+        private static readonly HttpClient client = new HttpClient();
         public static readonly AccessTokenCache accessTokenCache = new AccessTokenCache();
 
         private readonly IConfiguration _configuration;
         private readonly ISecretManager _secretManager;
-        private readonly IHttpClientFactory _factory;
 
-        public TokenManager(IHttpClientFactory factory, IConfiguration configuration, ISecretManager secretManager)
+        public TokenManager(IConfiguration configuration, ISecretManager secretManager)
         {
-            _factory = factory;
             _configuration = configuration;
             _secretManager = secretManager;
         }
@@ -67,8 +66,6 @@ namespace TCSlackbot.Logic.Utils
 
         public async Task<(string, string)> RenewTokensAsync(string oldRefreshToken)
         {
-            var client = _factory.CreateClient();
-
             //
             // Find the discovery endpoint
             //
