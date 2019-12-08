@@ -76,10 +76,8 @@ namespace TCSlackbot.Controllers
                 case "message":
                     // TODO: Only pass the event
                     return await HandleSlackMessage(request.Event);
-
                 case "app_mention":
                     return await HandleSlackMessage(request.Event);
-
                 default:
                     break;
             }
@@ -99,6 +97,8 @@ namespace TCSlackbot.Controllers
             bool secret = false; // If secret is true then a ephemeral message will be 
                                  // sent, which can only be seen by the one who wrote the message
 
+            var text = slackEvent.Text.Replace("<@UJZLBL7BL> ", "").ToLower().Trim().Split("");
+
             reply["user"] = slackEvent.User;
             reply["token"] = _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken");
             reply["channel"] = slackEvent.Channel;
@@ -112,6 +112,7 @@ namespace TCSlackbot.Controllers
                     secret = true;
                     break;
 
+                // TODO: Reminder after 4h to take a break    
                 case "start":
                     reply["text"] = await commandHandler.StartWorkingAsync(slackEvent);
                     break;
@@ -119,7 +120,7 @@ namespace TCSlackbot.Controllers
                 case "stop":
                     reply["text"] = await commandHandler.StopWorkingAsync(slackEvent);
                     break;
-
+                // stop@13:00 Maybe add 10 minute break for every 4h
                 case "pause":
                 case "break":
                     reply["text"] = await commandHandler.PauseWorktimeAsync(slackEvent);
