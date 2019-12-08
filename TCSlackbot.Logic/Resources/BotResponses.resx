@@ -120,4 +120,7 @@
   <data name="AlreadyLoggedIn" xml:space="preserve">
     <value>You are already logged in.</value>
   </data>
+  <data name="FilterObjectNotFound" xml:space="preserve">
+    <value>Specified object not found.</value>
+  </data>
 </root>

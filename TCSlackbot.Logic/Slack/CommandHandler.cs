@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using TCSlackbot.Logic.Resources;
 using TCSlackbot.Logic.Utils;
@@ -151,6 +152,33 @@ namespace TCSlackbot.Logic.Slack
             {
                 return "<https://tcslackbot.azurewebsites.net/auth/link/?uuid=" + _protector.Protect(slackEvent.User) + "|Link TimeCockpit Account>";
             }
+        }
+
+        public string FilterObjects(SlackEvent slackEvent)
+        {
+            var text = slackEvent.Text.ToLower().Trim().Split(" ");
+
+            switch (text.ElementAtOrDefault(1))
+            {
+                case "projects":
+                case "project":
+                    // Send request to the TimeCockpit API
+                    // Return the list with the data
+
+                    break;
+
+                case "tasks":
+                case "task":
+                    // Send request to the TimeCockpit API
+                    // Return the list with the data
+
+                    break;
+
+                default:
+                    return BotResponses.FilterObjectNotFound;
+            }
+
+            return BotResponses.FilterObjectNotFound;
         }
 
         // TODO: Set break time? Maybe with a list of breaks?

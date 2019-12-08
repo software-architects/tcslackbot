@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
@@ -103,7 +104,7 @@ namespace TCSlackbot.Controllers
             reply["channel"] = slackEvent.Channel;
             //reply["attachments"] = "[{\"fallback\":\"dummy\", \"text\":\"this is an attachment\"}]";
 
-            switch (slackEvent.Text.ToLower().Trim())
+            switch (slackEvent.Text.ToLower().Trim().Split(" ").FirstOrDefault())
             {
                 case "login":
                 case "link":
@@ -133,13 +134,17 @@ namespace TCSlackbot.Controllers
                     reply["text"] = await commandHandler.GetWorktimeAsync(slackEvent);
                     break;
 
+                case "filter":
+                    reply["text"] = commandHandler.FilterObjects(slackEvent);
+                    break;
+
                 default:
                     break;
             }
 
             await SendPostRequest(reply, secret);
 
-            return Ok("Worked");
+            return Ok();
         }
 
         private async Task SendPostRequest(Dictionary<string, string> dict, bool secret)

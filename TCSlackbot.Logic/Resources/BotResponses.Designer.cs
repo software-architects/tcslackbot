@@ -68,5 +68,14 @@ namespace TCSlackbot.Logic.Resources {
                 return ResourceManager.GetString("AlreadyLoggedIn", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specified object not found..
+        /// </summary>
+        public static string FilterObjectNotFound {
+            get {
+                return ResourceManager.GetString("FilterObjectNotFound", resourceCulture);
+            }
+        }
     }
 }
