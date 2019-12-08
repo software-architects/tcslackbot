@@ -70,20 +70,29 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Specified object not found..
-        /// </summary>
-        public static string FilterObjectNotFound {
-            get {
-                return ResourceManager.GetString("FilterObjectNotFound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to You are already on break. Did you forget to unpause?.
         /// </summary>
         public static string AlreadyOnBreak {
             get {
                 return ResourceManager.GetString("AlreadyOnBreak", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You are already working..
+        /// </summary>
+        public static string AlreadyWorking {
+            get {
+                return ResourceManager.GetString("AlreadyWorking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specified object not found..
+        /// </summary>
+        public static string FilterObjectNotFound {
+            get {
+                return ResourceManager.GetString("FilterObjectNotFound", resourceCulture);
             }
         }
         
@@ -111,6 +120,15 @@ namespace TCSlackbot.Logic.Resources {
         public static string NotWorking {
             get {
                 return ResourceManager.GetString("NotWorking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Something went wrong. Please login again..
+        /// </summary>
+        public static string UserNotFoundError {
+            get {
+                return ResourceManager.GetString("UserNotFoundError", resourceCulture);
             }
         }
     }

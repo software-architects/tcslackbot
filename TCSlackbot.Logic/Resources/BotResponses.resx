@@ -135,4 +135,10 @@
   <data name="NotWorking" xml:space="preserve">
     <value>You are not working at the moment. Did you forget to type start?</value>
   </data>
+  <data name="AlreadyWorking" xml:space="preserve">
+    <value>You are already working.</value>
+  </data>
+  <data name="UserNotFoundError" xml:space="preserve">
+    <value>Something went wrong. Please login again.</value>
+  </data>
 </root>

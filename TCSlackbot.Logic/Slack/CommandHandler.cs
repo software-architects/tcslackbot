@@ -44,17 +44,17 @@ namespace TCSlackbot.Logic.Slack
             if (user is null)
             {
                 // User already logged in but no user in the database -> Should never happen
-                return "Something went wrong. Please login again.";
+                return BotResponses.UserNotFoundError;
             }
 
             if (!IsLoggedIn(userId))
             {
-                return "You have to login before you can use this bot!\nType login or link to get the login link.";
+                return BotResponses.HaveToLogin;
             }
 
             if (user.IsWorking)
             {
-                return "You are already working.";
+                return BotResponses.AlreadyWorking;
             }
 
             //
@@ -74,17 +74,17 @@ namespace TCSlackbot.Logic.Slack
             if (userId is null)
             {
                 // User already logged in but no user in the database -> Should never happen
-                return "Something went wrong. Please login again.";
+                return BotResponses.UserNotFoundError;
             }
 
             if (!IsLoggedIn(userId))
             {
-                return "You have to login before you can use this bot!\nType login or link to get the login link.";
+                return BotResponses.HaveToLogin;
             }
 
             if (!user.IsWorking)
             {
-                return "You have to be working.";
+                return BotResponses.NotWorking;
             }
 
             //
