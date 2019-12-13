@@ -70,15 +70,6 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Specified object not found..
-        /// </summary>
-        public static string FilterObjectNotFound {
-            get {
-                return ResourceManager.GetString("FilterObjectNotFound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to You are already on break. Did you forget to unpause?.
         /// </summary>
         public static string AlreadyOnBreak {
@@ -88,11 +79,29 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to You are already working..
+        /// </summary>
+        public static string AlreadyWorking {
+            get {
+                return ResourceManager.GetString("AlreadyWorking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specified object not found..
+        /// </summary>
+        public static string FilterObjectNotFound {
+            get {
+                return ResourceManager.GetString("FilterObjectNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to You have to login before you can use this bot!\nType login or link to get the login link..
         /// </summary>
-        public static string HaveToLogin {
+        public static string NotLoggedIn {
             get {
-                return ResourceManager.GetString("HaveToLogin", resourceCulture);
+                return ResourceManager.GetString("NotLoggedIn", resourceCulture);
             }
         }
         
@@ -111,6 +120,33 @@ namespace TCSlackbot.Logic.Resources {
         public static string NotWorking {
             get {
                 return ResourceManager.GetString("NotWorking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Break has been set. You can now relax..
+        /// </summary>
+        public static string StartedBreak {
+            get {
+                return ResourceManager.GetString("StartedBreak", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You started working..
+        /// </summary>
+        public static string StartedWorking {
+            get {
+                return ResourceManager.GetString("StartedWorking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You stopped working..
+        /// </summary>
+        public static string StoppedWorking {
+            get {
+                return ResourceManager.GetString("StoppedWorking", resourceCulture);
             }
         }
     }

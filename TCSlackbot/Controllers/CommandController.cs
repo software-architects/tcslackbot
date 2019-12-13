@@ -37,6 +37,11 @@ namespace TCSlackbot.Controllers
             commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager);
         }
 
+        /// <summary>
+        /// Handles the incoming requests (only if they have a valid slack signature).
+        /// </summary>
+        /// <param name="body">The dynamic request body</param>
+        /// <returns></returns>
         [HttpPost]
         public async Task<IActionResult> HandleRequestAsync([FromBody] dynamic body)
         {
@@ -69,6 +74,11 @@ namespace TCSlackbot.Controllers
             return NotFound();
         }
 
+        /// <summary>
+        /// Handles the requests with the type 'event_callback' and calls the specified event handler.
+        /// </summary>
+        /// <param name="request">The event request data</param>
+        /// <returns></returns>
         public async Task<IActionResult> HandleEventCallbackAsync(SlackEventCallbackRequest request)
         {
             switch (request.Event.Type)
@@ -86,31 +96,43 @@ namespace TCSlackbot.Controllers
             return NotFound();
         }
 
-
+        /// <summary>
+        /// Handles the slack challenge (Needed for setting up event subscriptions). 
+        /// </summary>
+        /// <param name="request">The slack challenge request</param>
+        /// <returns>The challenge property of the challenge request</returns>
         public IActionResult HandleSlackChallenge(SlackChallenge request)
         {
             return Ok(request.Challenge);
         }
 
+        /// <summary>
+        /// Handles all slack messages and calls the specified command handler if it is a command.
+        /// </summary>
+        /// <param name="slackEvent"></param>
+        /// <returns></returns>
         public async Task<IActionResult> HandleSlackMessage(SlackEvent slackEvent)
         {
             var reply = new Dictionary<string, string>();
-            bool secret = false; // If secret is true then a ephemeral message will be 
-                                 // sent, which can only be seen by the one who wrote the message
+            var directMessage = false;
 
-            var text = slackEvent.Text.Replace("<@UJZLBL7BL> ", "").ToLower().Trim().Split("");
-
-            reply["user"] = slackEvent.User;
+            //
+            // Set the reply data
+            //
             reply["token"] = _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken");
             reply["channel"] = slackEvent.Channel;
-            //reply["attachments"] = "[{\"fallback\":\"dummy\", \"text\":\"this is an attachment\"}]";
+            reply["user"] = slackEvent.User;
 
+            //
+            // Handle the command
+            //
+            var text = slackEvent.Text.Replace("<@UJZLBL7BL> ", "").ToLower().Trim().Split("");
             switch (slackEvent.Text.ToLower().Trim().Split(" ").FirstOrDefault())
             {
                 case "login":
                 case "link":
                     reply["text"] = commandHandler.GetLoginLink(slackEvent);
-                    secret = true;
+                    directMessage = true;
                     break;
 
                 // TODO: Reminder after 4h to take a break    
@@ -121,6 +143,7 @@ namespace TCSlackbot.Controllers
                 case "stop":
                     reply["text"] = await commandHandler.StopWorkingAsync(slackEvent);
                     break;
+
                 // stop@13:00 Maybe add 10 minute break for every 4h
                 case "pause":
                 case "break":
@@ -144,23 +167,38 @@ namespace TCSlackbot.Controllers
                     break;
             }
 
-            await SendPostRequest(reply, secret);
+            await SendReplyAsync(reply, directMessage);
 
             return Ok();
         }
 
-        private async Task SendPostRequest(Dictionary<string, string> dict, bool secret)
+        /// <summary>
+        /// Sends a reply either in the group channel or via direct message.
+        /// </summary>
+        /// <param name="replyData">The data of the reply (message, channel, ...)</param>
+        /// <param name="directMessage">True when it should be sent via direct message</param>
+        /// <returns></returns>
+        private async Task SendReplyAsync(Dictionary<string, string> replyData, bool directMessage)
         {
-            if (secret)
+            string requestUri = "chat.postMessage";
+
+            //
+            // Use a different uri for the direct message
+            //
+            if (directMessage)
             {
-                await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(dict));
+                requestUri = "chat.postEphemeral";
             }
-            else
-            {
-                await _httpClient.PostAsync("chat.postMessage", new FormUrlEncodedContent(dict));
-            }
+
+            await _httpClient.PostAsync(requestUri, new FormUrlEncodedContent(replyData));
         }
 
+        /// <summary>
+        /// Validates the signature of the slack request.
+        /// </summary>
+        /// <param name="body">The request body</param>
+        /// <param name="headers">The request headers</param>
+        /// <returns>True if the signature is valid</returns>
         private bool IsValidSignature(string body, IHeaderDictionary headers)
         {
             var timestamp = headers["X-Slack-Request-Timestamp"];
@@ -175,6 +213,12 @@ namespace TCSlackbot.Controllers
             return ownSignature.Equals(signature);
         }
 
+        /// <summary>
+        /// Deserializes the specified content to the specified type.
+        /// </summary>
+        /// <typeparam name="T">The type of the deserialized data</typeparam>
+        /// <param name="content">The serialized content</param>
+        /// <returns>The deserialized object of the specified type</returns>
         private static T Deserialize<T>(string content)
         {
             return JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });

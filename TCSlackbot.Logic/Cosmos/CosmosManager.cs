@@ -44,7 +44,7 @@ namespace TCSlackbot.Logic.Utils
             }
         }
 
-
+        /// <inheritdoc/>
         public async Task<T> GetDocumentAsync<T>(string collectionName, string documentId)
         {
             try
@@ -64,6 +64,7 @@ namespace TCSlackbot.Logic.Utils
             }
         }
 
+        /// <inheritdoc/>
         public async Task<T> CreateDocumentAsync<T>(string collectionName, T document)
         {
             await CreateCollectionIfNotExistsAsync(DatabaseName, collectionName);
@@ -85,6 +86,7 @@ namespace TCSlackbot.Logic.Utils
             }
         }
 
+        /// <inheritdoc/>
         public async Task<T> ReplaceDocumentAsync<T>(string collectionName, T document, string documentId)
         {
             try
@@ -104,7 +106,11 @@ namespace TCSlackbot.Logic.Utils
             }
         }
 
-
+        /// <summary>
+        /// Creates the specified database if it does not yet exist.
+        /// </summary>
+        /// <param name="databaseId">The name of the database</param>
+        /// <returns></returns>
         private static async Task CreateDatabaseIfNotExistsAsync(string databaseId)
         {
             try
@@ -124,6 +130,12 @@ namespace TCSlackbot.Logic.Utils
             }
         }
 
+        /// <summary>
+        /// Creates the specified collection if it does not yet exist.
+        /// </summary>
+        /// <param name="databaseId">The name of the database</param>
+        /// <param name="collectionId">The name of the collection</param>
+        /// <returns></returns>
         private static async Task CreateCollectionIfNotExistsAsync(string databaseId, string collectionId)
         {
             try

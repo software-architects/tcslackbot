@@ -21,21 +21,35 @@ namespace TCSlackbot.Logic.Slack
             _secretManager = secretManager;
         }
 
-
+        /// <summary>
+        /// The user wants to get the duration of the current work session.
+        /// </summary>
+        /// <param name="slackEvent"></param>
+        /// <returns>The bot response message</returns>
         public async Task<string> GetWorktimeAsync(SlackEvent slackEvent)
         {
             var userId = slackEvent.User;
-            var user = await GetSlackUserAsync(userId);
 
-            if (user.IsWorking && user.StartTime != null)
+            var user = await GetSlackUserAsync(userId);
+            if (user is null)
             {
-                // TODO: Maybe show a duration instead
-                return "Started at: " + user.StartTime;
+                return BotResponses.NotLoggedIn;
             }
 
-            return "You are not working!";
+            if (!user.IsWorking)
+            {
+                return BotResponses.NotWorking;
+            }
+
+            // TODO: Maybe show a duration instead
+            return "Started at: " + user.StartTime;
         }
 
+        /// <summary>
+        /// The user wants to start working.
+        /// </summary>
+        /// <param name="slackEvent"></param>
+        /// <returns>The bot response message</returns>
         public async Task<string> StartWorkingAsync(SlackEvent slackEvent)
         {
             var userId = slackEvent.User;
@@ -43,29 +57,30 @@ namespace TCSlackbot.Logic.Slack
             var user = await GetSlackUserAsync(userId);
             if (user is null)
             {
-                // User already logged in but no user in the database -> Should never happen
-                return "Something went wrong. Please login again.";
-            }
-
-            if (!IsLoggedIn(userId))
-            {
-                return "You have to login before you can use this bot!\nType login or link to get the login link.";
+                return BotResponses.NotLoggedIn;
             }
 
             if (user.IsWorking)
             {
-                return "You are already working.";
+                return BotResponses.AlreadyWorking;
             }
 
             //
             // Start working
             //
             user.IsWorking = true;
+
             await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
-            return "You started working.";
+
+            return BotResponses.StartedWorking;
 
         }
 
+        /// <summary>
+        /// The user wants to stop working.
+        /// </summary>
+        /// <param name="slackEvent"></param>
+        /// <returns>The bot response message</returns>
         public async Task<string> StopWorkingAsync(SlackEvent slackEvent)
         {
             var userId = slackEvent.User;
@@ -73,18 +88,12 @@ namespace TCSlackbot.Logic.Slack
             var user = await GetSlackUserAsync(userId);
             if (userId is null)
             {
-                // User already logged in but no user in the database -> Should never happen
-                return "Something went wrong. Please login again.";
-            }
-
-            if (!IsLoggedIn(userId))
-            {
-                return "You have to login before you can use this bot!\nType login or link to get the login link.";
+                return BotResponses.NotLoggedIn;
             }
 
             if (!user.IsWorking)
             {
-                return "You have to be working.";
+                return BotResponses.NotWorking;
             }
 
             //
@@ -97,8 +106,13 @@ namespace TCSlackbot.Logic.Slack
             //
             // Stop working (reset the start and end time)
             //
+            user.IsWorking = false;
+            await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
+
+            //
             // This will maybe be done with Slack Modal 
             //
+            // TODO: Implement
             var message = slackEvent.Text.Split(" ");
             try
             {
@@ -113,21 +127,23 @@ namespace TCSlackbot.Logic.Slack
                 Console.WriteLine(e.Message);
                 return "Wrong Syntax";
             }
-            user.IsWorking = false;
-            await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
 
-            return "You stopped working.";
+            return BotResponses.StoppedWorking;
         }
 
-        //NOT TESTED YET
+        /// <summary>
+        /// The user wants to resume working.
+        /// </summary>
+        /// <param name="slackEvent"></param>
+        /// <returns>The bot response message</returns>
         public async Task<string> ResumeWorktimeAsync(SlackEvent slackEvent)
         {
             var userId = slackEvent.User;
-            var user = await GetSlackUserAsync(userId);
 
-            if (!IsLoggedIn(userId))
+            var user = await GetSlackUserAsync(userId);
+            if (user is null)
             {
-                return BotResponses.HaveToLogin;
+                return BotResponses.NotLoggedIn;
             }
 
             if (!user.IsWorking)
@@ -139,15 +155,20 @@ namespace TCSlackbot.Logic.Slack
             {
                 return BotResponses.NotOnBreak;
             }
-            Console.WriteLine(user.BreakTime.Value);
+
+            // TODO: Implement
+
             user.TotalBreakTime = (DateTime.Now.Minute - user.BreakTime.Value.Minute);
             user.BreakTime = null;
             await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
             return "Break has ended. Total Break Time: " + user.TotalBreakTime + "min"; // No
         }
 
-       
-
+        /// <summary>
+        /// The user wants a list of objects.
+        /// </summary>
+        /// <param name="slackEvent"></param>
+        /// <returns>The bot response message</returns>
         public string FilterObjects(SlackEvent slackEvent)
         {
             var text = slackEvent.Text.ToLower().Trim().Split(" ");
@@ -175,7 +196,11 @@ namespace TCSlackbot.Logic.Slack
             return BotResponses.FilterObjectNotFound;
         }
 
-        // TODO: Set break time? Maybe with a list of breaks?
+        /// <summary>
+        /// The user wants a break. 
+        /// </summary>
+        /// <param name="slackEvent"></param>
+        /// <returns>The bot response message</returns>
         public async Task<string> PauseWorktimeAsync(SlackEvent slackEvent)
         {
             var userId = slackEvent.User;
@@ -183,13 +208,7 @@ namespace TCSlackbot.Logic.Slack
             var user = await GetSlackUserAsync(userId);
             if (user is null)
             {
-                // User already logged in but no user in the database -> Should never happen
-                return "Something went wrong. Please login again.";
-            }
-
-            if (!IsLoggedIn(userId))
-            {
-                return BotResponses.HaveToLogin;
+                return BotResponses.NotLoggedIn;
             }
 
             if (!user.IsWorking)
@@ -202,18 +221,31 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.AlreadyOnBreak;
             }
 
+            // TODO: Set break time? Maybe with a list of breaks?
+
             user.BreakTime = DateTime.Now;
             await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
-            return "Break has been set. You can now relax.";
+
+            return BotResponses.StartedBreak;
 
 
         }
 
+        /// <summary>
+        /// Checks whether the specified user is logged in.
+        /// </summary>
+        /// <param name="userId">The id of the user</param>
+        /// <returns>True if already logged in</returns>
         public bool IsLoggedIn(string userId)
         {
             return _secretManager.GetSecret(userId) != null;
         }
 
+        /// <summary>
+        /// Generates a login link for the specified slack user.
+        /// </summary>
+        /// <param name="slackEvent">The event containing the user id</param>
+        /// <returns>The login link as a string</returns>
         public string GetLoginLink(SlackEvent slackEvent)
         {
             var userId = slackEvent.User;
@@ -246,11 +278,18 @@ namespace TCSlackbot.Logic.Slack
         /// <returns>The object of the slack user</returns>
         private async Task<SlackUser> GetSlackUserAsync(string userId)
         {
-            var user = await _cosmosManager.GetDocumentAsync<SlackUser>(CollectionId, userId);
+            //
+            // Check if the user is logged in
+            //
+            if (!IsLoggedIn(userId))
+            {
+                return default;
+            }
 
             //
-            // Create a new user if it's not found
+            // Create a new user if not found
             //
+            var user = await _cosmosManager.GetDocumentAsync<SlackUser>(CollectionId, userId);
             if (user is null)
             {
                 user = await _cosmosManager.CreateDocumentAsync(CollectionId, new SlackUser { UserId = userId });

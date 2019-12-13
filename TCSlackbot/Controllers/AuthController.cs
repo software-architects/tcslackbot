@@ -33,6 +33,11 @@ namespace TCSlackbot.Controllers
             _protector = provider.CreateProtector("UUIDProtector");
         }
 
+        /// <summary>
+        /// Authenticates the users with open id.
+        /// </summary>
+        /// <param name="ReturnUrl">The location to return to when authenticated</param>
+        /// <returns></returns>
         [HttpGet]
         [Route("login")]
         public ActionResult Authenticate([FromQuery] string ReturnUrl = "/")
@@ -40,6 +45,11 @@ namespace TCSlackbot.Controllers
             return Challenge(new AuthenticationProperties { RedirectUri = ReturnUrl }, OpenIdConnectDefaults.AuthenticationScheme);
         }
 
+        /// <summary>
+        /// Allows the user to link the slack with the TimeCockpit account.
+        /// </summary>
+        /// <param name="encryptedUuid">The encrypted id of the slack user</param>
+        /// <returns></returns>
         [Authorize, HttpGet]
         [Route("link")]
         public async Task<IActionResult> LinkAccounts([FromQuery(Name = "uuid")] string encryptedUuid)

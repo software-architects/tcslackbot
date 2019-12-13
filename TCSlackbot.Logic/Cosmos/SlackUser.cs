@@ -5,16 +5,35 @@ namespace TCSlackbot.Logic
 {
     public class SlackUser
     {
+        /// <summary>
+        /// The id of the user (and document). 
+        /// </summary>
         [JsonProperty(PropertyName = "id")]
         public string UserId { get; set; }
 
+        /// <summary>
+        /// The start time of the working session.
+        /// </summary>
         public DateTime? StartTime { get; set; }
 
+        /// <summary>
+        /// The end time of the working session.
+        /// </summary>
         public DateTime? EndTime { get; set; }
 
+        /// <summary>
+        /// The total break time in minutes.
+        /// </summary>
+        public decimal TotalBreakTime { get; set; } = 0;
 
-        public decimal TotalBreakTime { get; set; } = 0; //In Minutes
+        /// <summary>
+        /// The time the user went on break
+        /// </summary>
+        public DateTime? BreakTime { get; set; }
 
+        /// <summary>
+        /// Boolean whether the user is working.
+        /// </summary>
         [JsonIgnore]
         public bool IsWorking
         {
@@ -32,9 +51,10 @@ namespace TCSlackbot.Logic
                 }
             }
         }
-        // Time the user went on break
-        public DateTime? BreakTime { get; set; } 
 
+        /// <summary>
+        /// Boolean whether the user is on break.
+        /// </summary>
         [JsonIgnore]
         public bool IsOnBreak
         {
