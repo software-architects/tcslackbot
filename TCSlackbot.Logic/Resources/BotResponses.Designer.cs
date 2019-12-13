@@ -99,9 +99,9 @@ namespace TCSlackbot.Logic.Resources {
         /// <summary>
         ///   Looks up a localized string similar to You have to login before you can use this bot!\nType login or link to get the login link..
         /// </summary>
-        public static string NotLoggedIn {
+        public static string HaveToLogin {
             get {
-                return ResourceManager.GetString("NotLoggedIn", resourceCulture);
+                return ResourceManager.GetString("HaveToLogin", resourceCulture);
             }
         }
         
@@ -124,29 +124,11 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Break has been set. You can now relax..
+        ///   Looks up a localized string similar to Something went wrong. Please login again..
         /// </summary>
-        public static string StartedBreak {
+        public static string UserNotFoundError {
             get {
-                return ResourceManager.GetString("StartedBreak", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to You started working..
-        /// </summary>
-        public static string StartedWorking {
-            get {
-                return ResourceManager.GetString("StartedWorking", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to You stopped working..
-        /// </summary>
-        public static string StoppedWorking {
-            get {
-                return ResourceManager.GetString("StoppedWorking", resourceCulture);
+                return ResourceManager.GetString("UserNotFoundError", resourceCulture);
             }
         }
     }

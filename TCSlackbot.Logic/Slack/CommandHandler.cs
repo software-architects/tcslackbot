@@ -60,6 +60,11 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.NotLoggedIn;
             }
 
+            if (!IsLoggedIn(userId))
+            {
+                return "You have to login before you can use this bot!\nType login or link to get the login link.";
+            }
+
             if (user.IsWorking)
             {
                 return BotResponses.AlreadyWorking;
@@ -89,6 +94,11 @@ namespace TCSlackbot.Logic.Slack
             if (userId is null)
             {
                 return BotResponses.NotLoggedIn;
+            }
+
+            if (!IsLoggedIn(userId))
+            {
+                return "You have to login before you can use this bot!\nType login or link to get the login link.";
             }
 
             if (!user.IsWorking)

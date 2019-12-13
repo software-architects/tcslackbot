@@ -2,6 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <PropertyGroup>
+      <TargetFramework>netcoreapp3.1</TargetFramework>
+      <LangVersion>latest</LangVersion>
+      <UserSecretsId>2f7ccf09-8ccc-438f-9eac-ff8cdd33b9f4</UserSecretsId>
+      <StartupObject>TCSlackbot.Program</StartupObject>
+    </PropertyGroup>
     <UserSecretsId>2f7ccf09-8ccc-438f-9eac-ff8cdd33b9f4</UserSecretsId>
     <StartupObject>TCSlackbot.Program</StartupObject>
   </PropertyGroup>

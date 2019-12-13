@@ -126,7 +126,7 @@
   <data name="AlreadyOnBreak" xml:space="preserve">
     <value>You are already on break. Did you forget to unpause?</value>
   </data>
-  <data name="NotLoggedIn" xml:space="preserve">
+  <data name="HaveToLogin" xml:space="preserve">
     <value>You have to login before you can use this bot!\nType login or link to get the login link.</value>
   </data>
   <data name="NotOnBreak" xml:space="preserve">
@@ -138,13 +138,7 @@
   <data name="AlreadyWorking" xml:space="preserve">
     <value>You are already working.</value>
   </data>
-  <data name="StartedBreak" xml:space="preserve">
-    <value>Break has been set. You can now relax.</value>
-  </data>
-  <data name="StartedWorking" xml:space="preserve">
-    <value>You started working.</value>
-  </data>
-  <data name="StoppedWorking" xml:space="preserve">
-    <value>You stopped working.</value>
+  <data name="UserNotFoundError" xml:space="preserve">
+    <value>Something went wrong. Please login again.</value>
   </data>
 </root>
