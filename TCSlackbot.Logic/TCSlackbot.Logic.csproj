@@ -21,16 +21,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Resources\BotResponses.Designer.cs">
-      <DependentUpon>BotResponses.resx</DependentUpon>
+    <Compile Update="Resources\BotResponses_old.Designer.cs">
+      <DependentUpon>BotResponses_old.resx</DependentUpon>
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
     </Compile>
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Update="Resources\BotResponses.resx">
-      <LastGenOutput>BotResponses.Designer.cs</LastGenOutput>
+    <EmbeddedResource Update="Resources\BotResponses_old.resx">
+      <LastGenOutput>BotResponses_old.Designer.cs</LastGenOutput>
       <Generator>PublicResXFileCodeGenerator</Generator>
     </EmbeddedResource>
   </ItemGroup>
