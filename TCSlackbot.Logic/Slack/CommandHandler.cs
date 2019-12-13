@@ -60,11 +60,6 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.NotLoggedIn;
             }
 
-            if (!IsLoggedIn(userId))
-            {
-                return "You have to login before you can use this bot!\nType login or link to get the login link.";
-            }
-
             if (user.IsWorking)
             {
                 return BotResponses.AlreadyWorking;
@@ -94,11 +89,6 @@ namespace TCSlackbot.Logic.Slack
             if (userId is null)
             {
                 return BotResponses.NotLoggedIn;
-            }
-
-            if (!IsLoggedIn(userId))
-            {
-                return "You have to login before you can use this bot!\nType login or link to get the login link.";
             }
 
             if (!user.IsWorking)
@@ -179,8 +169,16 @@ namespace TCSlackbot.Logic.Slack
         /// </summary>
         /// <param name="slackEvent"></param>
         /// <returns>The bot response message</returns>
-        public string FilterObjects(SlackEvent slackEvent)
+        public async Task<string> FilterObjectsAsync(SlackEvent slackEvent)
         {
+            var userId = slackEvent.User;
+
+            var user = await GetSlackUserAsync(userId);
+            if (user is null)
+            {
+                return BotResponses.NotLoggedIn;
+            }
+
             var text = slackEvent.Text.ToLower().Trim().Split(" ");
 
             switch (text.ElementAtOrDefault(1))
@@ -237,8 +235,6 @@ namespace TCSlackbot.Logic.Slack
             await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
 
             return BotResponses.StartedBreak;
-
-
         }
 
         /// <summary>

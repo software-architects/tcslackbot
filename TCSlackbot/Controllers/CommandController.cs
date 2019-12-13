@@ -160,7 +160,7 @@ namespace TCSlackbot.Controllers
                     break;
 
                 case "filter":
-                    reply["text"] = commandHandler.FilterObjects(slackEvent);
+                    reply["text"] = await commandHandler.FilterObjectsAsync(slackEvent);
                     break;
 
                 default:
