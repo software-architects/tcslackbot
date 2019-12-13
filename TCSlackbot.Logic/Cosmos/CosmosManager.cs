@@ -54,18 +54,14 @@ namespace TCSlackbot.Logic.Utils
 
                 return (T)(dynamic)response.Resource;
             }
-            catch (DocumentClientException de)
+            catch (DocumentClientException)
             {
-                Exception baseException = de.GetBaseException();
-                _logger.LogCritical("{0} error occurred: {1}, Message: {2}", de.StatusCode, de.Message, baseException.Message);
+                return default;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Exception baseException = e.GetBaseException();
-                _logger.LogCritical("Error: {0}, Message: {1}", e.Message, baseException.Message);
+                throw;
             }
-
-            return default;
         }
 
         public async Task<T> CreateDocumentAsync<T>(string collectionName, T document)
@@ -79,18 +75,14 @@ namespace TCSlackbot.Logic.Utils
 
                 return (T)(dynamic)response.Resource;
             }
-            catch (DocumentClientException de)
+            catch (DocumentClientException)
             {
-                Exception baseException = de.GetBaseException();
-                _logger.LogCritical("{0} error occurred: {1}, Message: {2}", de.StatusCode, de.Message, baseException.Message);
+                return default;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Exception baseException = e.GetBaseException();
-                _logger.LogCritical("Error: {0}, Message: {1}", e.Message, baseException.Message);
+                throw;
             }
-
-            return default;
         }
 
         public async Task<T> ReplaceDocumentAsync<T>(string collectionName, T document, string documentId)
@@ -102,18 +94,14 @@ namespace TCSlackbot.Logic.Utils
 
                 return (T)(dynamic)response.Resource;
             }
-            catch (DocumentClientException de)
+            catch (DocumentClientException)
             {
-                Exception baseException = de.GetBaseException();
-                _logger.LogCritical("{0} error occurred: {1}, Message: {2}", de.StatusCode, de.Message, baseException.Message);
+                return default;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Exception baseException = e.GetBaseException();
-                _logger.LogCritical("Error: {0}, Message: {1}", e.Message, baseException.Message);
+                throw;
             }
-
-            return default;
         }
 
 

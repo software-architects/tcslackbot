@@ -74,10 +74,11 @@ namespace TCSlackbot.Controllers
             switch (request.Event.Type)
             {
                 case "message":
-                    // TODO: Only pass the event
                     return await HandleSlackMessage(request.Event);
+
                 case "app_mention":
                     return await HandleSlackMessage(request.Event);
+
                 default:
                     break;
             }
