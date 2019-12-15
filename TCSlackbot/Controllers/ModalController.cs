@@ -67,7 +67,9 @@ namespace TCSlackbot.Controllers
                     return await ViewModal(payload);
                 //case "block_action ": 
                 //    Console.WriteLine("This is a block action"); break;
+                case "view_submission":
 
+                    return await ProcessModalData(payload);
                 default:
                     Console.WriteLine($"Received unhandled request: {payload.Type}.");
                     break;
@@ -76,6 +78,7 @@ namespace TCSlackbot.Controllers
             return Ok();
         }
 
+
         public async Task<IActionResult> ViewModal(AppActionPayload payload)
         {
             string json = "{\"trigger_id\": \"" + payload.TriggerId + "\", \"view\": { \"type\": \"modal\", \"callback_id\": \"" + payload.CallbackId + "\",";
@@ -83,7 +86,10 @@ namespace TCSlackbot.Controllers
              await _httpClient.PostAsync("views.open", new StringContent(json, Encoding.UTF8, "application/json"));
             return Ok(json);
         }
-
+        public async Task<IActionResult> ProcessModalData(AppActionPayload payload)
+        {
+            throw new NotImplementedException();
+        }
         /// <summary>
         /// Validates the signature of the slack request.
         /// </summary>
