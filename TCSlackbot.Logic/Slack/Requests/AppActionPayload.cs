@@ -6,7 +6,8 @@ namespace TCSlackbot.Logic.Slack.Requests
     {
         [JsonPropertyName("trigger_id")]
         public string TriggerId { get; set; }
-
+        [JsonPropertyName("callback_id")]
+        public string CallbackId { get; set; }
         [JsonPropertyName("type")]
         public string Type { get; set; }
     }

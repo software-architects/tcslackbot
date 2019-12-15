@@ -2,66 +2,67 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace TCSlackbot.Logic.Slack.Requests
 {
     public partial class SlackViewSubmission
     {
-        [JsonProperty("type")]
+        [JsonPropertyName("type")]
         public string Type { get; set; }
 
-        [JsonProperty("user")]
+        [JsonPropertyName("user")]
         public SlackUser User { get; set; }
 
-        [JsonProperty("view")]
+        [JsonPropertyName("view")]
         public View View { get; set; }
     }
 
     public partial class View
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public string Id { get; set; }
 
-        [JsonProperty("type")]
+        [JsonPropertyName("type")]
         public string Type { get; set; }
 
-        [JsonProperty("private_metadata")]
+        [JsonPropertyName("private_metadata")]
         public string PrivateMetadata { get; set; }
 
-        [JsonProperty("callback_id")]
+        [JsonPropertyName("callback_id")]
         public string CallbackId { get; set; }
 
-        [JsonProperty("state")]
+        [JsonPropertyName("state")]
         public State State { get; set; }
 
-        [JsonProperty("hash")]
+        [JsonPropertyName("hash")]
         public string Hash { get; set; }
     }
 
     public partial class State
     {
-        [JsonProperty("values")]
+        [JsonPropertyName("values")]
         public Values Values { get; set; }
     }
 
     public partial class Values
     {
-        [JsonProperty("multi-line")]
+        [JsonPropertyName("multi-line")]
         public MultiLine MultiLine { get; set; }
     }
 
     public partial class MultiLine
     {
-        [JsonProperty("ml-value")]
+        [JsonPropertyName("ml-value")]
         public MlValue MlValue { get; set; }
     }
 
     public partial class MlValue
     {
-        [JsonProperty("type")]
+        [JsonPropertyName("type")]
         public string Type { get; set; }
 
-        [JsonProperty("value")]
+        [JsonPropertyName("value")]
         public string Value { get; set; }
     }
 }
