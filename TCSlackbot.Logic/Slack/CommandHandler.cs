@@ -282,7 +282,7 @@ namespace TCSlackbot.Logic.Slack
         /// </summary>
         /// <param name="userId">The id of the user</param>
         /// <returns>The object of the slack user</returns>
-        private async Task<SlackUser> GetSlackUserAsync(string userId)
+        public async Task<SlackUser> GetSlackUserAsync(string userId)
         {
             //
             // Check if the user is logged in

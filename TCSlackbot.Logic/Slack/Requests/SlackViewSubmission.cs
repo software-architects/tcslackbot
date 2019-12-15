@@ -12,57 +12,52 @@ namespace TCSlackbot.Logic.Slack.Requests
         public string Type { get; set; }
 
         [JsonPropertyName("user")]
-        public SlackUser User { get; set; }
+        public User User { get; set; }
+
+        [JsonPropertyName("trigger_id")]
+        public string TriggerId { get; set; }
 
         [JsonPropertyName("view")]
         public View View { get; set; }
     }
 
-    public partial class View
+    public partial class User
     {
         [JsonPropertyName("id")]
         public string Id { get; set; }
+    }
 
-        [JsonPropertyName("type")]
-        public string Type { get; set; }
-
-        [JsonPropertyName("private_metadata")]
-        public string PrivateMetadata { get; set; }
-
+    public partial class View
+    {
         [JsonPropertyName("callback_id")]
         public string CallbackId { get; set; }
 
         [JsonPropertyName("state")]
         public State State { get; set; }
-
-        [JsonPropertyName("hash")]
-        public string Hash { get; set; }
     }
 
     public partial class State
-    {
+    {  
         [JsonPropertyName("values")]
         public Values Values { get; set; }
     }
 
     public partial class Values
     {
-        [JsonPropertyName("multi-line")]
-        public MultiLine MultiLine { get; set; }
+        // Date, StartTime, EndTime, Description
+        // I dont know what JsonPropertyName i should put here as the string is random
+        // See TestViewSubmission.json
+        public Dictionary<string, Details> AllValues { get; set; }
     }
 
-    public partial class MultiLine
-    {
-        [JsonPropertyName("ml-value")]
-        public MlValue MlValue { get; set; }
-    }
-
-    public partial class MlValue
+    public partial class Details
     {
         [JsonPropertyName("type")]
         public string Type { get; set; }
-
         [JsonPropertyName("value")]
         public string Value { get; set; }
+        [JsonPropertyName("selected_date")]
+        public string Date { get; set; }
+
     }
 }

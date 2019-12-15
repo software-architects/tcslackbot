@@ -22,6 +22,11 @@ namespace TCSlackbot.Logic
         public DateTime? EndTime { get; set; }
 
         /// <summary>
+        /// The end time of the working session.
+        /// </summary>
+        public string Description { get; set; }
+
+        /// <summary>
         /// The total break time in minutes.
         /// </summary>
         public decimal TotalBreakTime { get; set; } = 0;

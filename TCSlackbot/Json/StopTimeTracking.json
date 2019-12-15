@@ -19,7 +19,8 @@
         "type": "plain_text",
         "text": "Select a date",
         "emoji": true
-      }
+      },
+      "action_id": "Date"
     },
     "label": {
       "type": "plain_text",
@@ -31,10 +32,10 @@
     "type": "input",
     "element": {
       "type": "plain_text_input",
-      "action_id": "title",
+      "action_id": "StartTime",
       "placeholder": {
         "type": "plain_text",
-        "text": "What do you want to ask of the world?"
+        "text": "StartTime"
       }
     },
     "label": {
@@ -45,7 +46,8 @@
   {
     "type": "input",
     "element": {
-      "type": "plain_text_input"
+      "type": "plain_text_input",
+      "action_id": "EndTime"
     },
     "label": {
       "type": "plain_text",
@@ -90,14 +92,16 @@
           },
           "value": "value-2"
         }
-      ]
+      ],
+      "action_id": "Project"
     }
   },
   {
     "type": "input",
     "element": {
       "type": "plain_text_input",
-      "multiline": true
+      "multiline": true,
+      "action_id": "Description"
     },
     "label": {
       "type": "plain_text",

@@ -1,0 +1,188 @@
+﻿{
+  "type": "view_submission",
+  "team": {
+    "id": "TJZL2R01Z",
+    "domain": "tcslackbot-testing"
+  },
+  "user": {
+    "id": "UKB2M0H45",
+    "username": "patrick.wegerer",
+    "name": "patrick.wegerer",
+    "team_id": "TJZL2R01Z"
+  },
+  "api_app_id": "AJZL5FC3U",
+  "token": "ho4P5JeDZzIO9B0ApOmqRBPP",
+  "trigger_id": "874245168944.645682850067.96dbbd8545903b76bbb060725a7a3e95",
+  "view": {
+    "id": "VRPP7BEFN",
+    "team_id": "TJZL2R01Z",
+    "type": "modal",
+    "blocks": [
+      {
+        "type": "input",
+        "block_id": "w=T",
+        "label": {
+          "type": "plain_text",
+          "text": "Date",
+          "emoji": true
+        },
+        "optional": false,
+        "element": {
+          "type": "datepicker",
+          "action_id": "Date",
+          "placeholder": {
+            "type": "plain_text",
+            "text": "Select a date",
+            "emoji": true
+          }
+        }
+      },
+      {
+        "type": "input",
+        "block_id": "xlll",
+        "label": {
+          "type": "plain_text",
+          "text": "Start Time",
+          "emoji": true
+        },
+        "optional": false,
+        "element": {
+          "type": "plain_text_input",
+          "action_id": "StartTime",
+          "placeholder": {
+            "type": "plain_text",
+            "text": "StartTime",
+            "emoji": true
+          }
+        }
+      },
+      {
+        "type": "input",
+        "block_id": "pAbvW",
+        "label": {
+          "type": "plain_text",
+          "text": "End Time",
+          "emoji": true
+        },
+        "optional": false,
+        "element": {
+          "type": "plain_text_input",
+          "action_id": "EndTime"
+        }
+      },
+      {
+        "type": "section",
+        "block_id": "cBK",
+        "text": {
+          "type": "mrkdwn",
+          "text": "Project",
+          "verbatim": false
+        },
+        "accessory": {
+          "type": "multi_static_select",
+          "action_id": "Project",
+          "placeholder": {
+            "type": "plain_text",
+            "text": "Select items",
+            "emoji": true
+          },
+          "options": [
+            {
+              "text": {
+                "type": "plain_text",
+                "text": "Choice 1",
+                "emoji": true
+              },
+              "value": "value-0"
+            },
+            {
+              "text": {
+                "type": "plain_text",
+                "text": "Choice 2",
+                "emoji": true
+              },
+              "value": "value-1"
+            },
+            {
+              "text": {
+                "type": "plain_text",
+                "text": "Choice 3",
+                "emoji": true
+              },
+              "value": "value-2"
+            }
+          ]
+        }
+      },
+      {
+        "type": "input",
+        "block_id": "e8\\/a",
+        "label": {
+          "type": "plain_text",
+          "text": "Description",
+          "emoji": true
+        },
+        "optional": false,
+        "element": {
+          "type": "plain_text_input",
+          "action_id": "Description",
+          "multiline": true
+        }
+      }
+    ],
+    "private_metadata": "",
+    "callback_id": "stopTracking",
+    "state": {
+      "values": {
+        "w=T": {
+          "Date": {
+            "type": "datepicker",
+            "selected_date": "2019-12-11"
+          }
+        },
+        "xlll": {
+          "StartTime": {
+            "type": "plain_text_input",
+            "value": "13:00"
+          }
+        },
+        "pAbvW": {
+          "EndTime": {
+            "type": "plain_text_input",
+            "value": "18:00"
+          }
+        },
+        "e8\\/a": {
+          "Description": {
+            "type": "plain_text_input",
+            "value": "Beschreibung"
+          }
+        }
+      }
+    },
+    "hash": "1576415586.8ed9e4c4",
+    "title": {
+      "type": "plain_text",
+      "text": "Stop Timetracking",
+      "emoji": true
+    },
+    "clear_on_close": false,
+    "notify_on_close": false,
+    "close": {
+      "type": "plain_text",
+      "text": "Cancel",
+      "emoji": true
+    },
+    "submit": {
+      "type": "plain_text",
+      "text": "Submit",
+      "emoji": true
+    },
+    "previous_view_id": null,
+    "root_view_id": "VRPP7BEFN",
+    "app_id": "AJZL5FC3U",
+    "external_id": "",
+    "app_installed_team_id": "TJZL2R01Z",
+    "bot_id": "BJZLBL75G"
+  }
+}

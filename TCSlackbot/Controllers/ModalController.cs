@@ -16,6 +16,7 @@ using TCSlackbot.Logic.Slack;
 using TCSlackbot.Logic.Slack.Requests;
 using TCSlackbot.Logic.Utils;
 using System.Net.Http.Headers;
+using TCSlackbot.Logic.Resources;
 
 namespace TCSlackbot.Controllers
 {
@@ -60,21 +61,48 @@ namespace TCSlackbot.Controllers
             // }
 
             var payload = Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
+            //
+            // Ignore unecessary requests
+            //
+            if (payload.Type == "block_actions" || payload.Type == "view_closed")
+                return Ok();
 
+            //
+            // Preparing reply for the user
+            // TODO: Somehow get the channel
+            // https://api.slack.com/types/im
+            //
+
+            // var replyData = new Dictionary<string, string>();
+            // replyData["channel"] = payload.Channel.Id;
+            // replyData["user"] = payload.User.Id;
+
+            //
+            // Check if user is logged in, working
+            //
+            var user = await commandHandler.GetSlackUserAsync(payload.User.Id);
+            if (user == null)
+            {
+                // replyData["text"] = BotResponses.NotLoggedIn;
+                // await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));
+                return Ok();
+            }
+            if (!user.IsWorking)
+            {
+                // replyData["text"] = BotResponses.NotWorking;
+                // await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));                
+                return Ok();
+            }
             switch (payload.Type)
             {
                 case "message_action": 
                     return await ViewModal(payload);
-                //case "block_action ": 
-                //    Console.WriteLine("This is a block action"); break;
                 case "view_submission":
-
-                    return await ProcessModalData(payload);
+                    return await ProcessModalData(user);    /* , replyData */
                 default:
                     Console.WriteLine($"Received unhandled request: {payload.Type}.");
                     break;
             }
-
             return Ok();
         }
 
@@ -86,9 +114,17 @@ namespace TCSlackbot.Controllers
              await _httpClient.PostAsync("views.open", new StringContent(json, Encoding.UTF8, "application/json"));
             return Ok(json);
         }
-        public async Task<IActionResult> ProcessModalData(AppActionPayload payload)
+        public async Task<IActionResult> ProcessModalData(SlackUser user)   /* , Dictionary<string,string> replyData */
         {
-            throw new NotImplementedException();
+            var payload = JsonSerializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
+            user.StartTime = DateTime.Parse(payload.View.State.Values.AllValues["StartTime"].Value);
+            user.EndTime = DateTime.Parse(payload.View.State.Values.AllValues["StopTime"].Value);
+            user.Description = payload.View.State.Values.AllValues["Description"].Value;
+            user.IsWorking = false;
+            await _cosmosManager.ReplaceDocumentAsync("slack_users", user, user.UserId);
+            // replyData["text"] = "Your time has been saved saved";
+            // await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));
+            return Ok();
         }
         /// <summary>
         /// Validates the signature of the slack request.

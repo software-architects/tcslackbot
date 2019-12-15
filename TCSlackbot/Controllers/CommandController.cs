@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -33,7 +34,7 @@ namespace TCSlackbot.Controllers
             _secretManager = secretManager;
             _cosmosManager = cosmosManager;
             _httpClient = factory.CreateClient("BotClient");
-
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken"));
             commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager);
         }
 
@@ -119,7 +120,8 @@ namespace TCSlackbot.Controllers
             //
             // Set the reply data
             //
-            reply["token"] = _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken");
+            
+            //reply["token"] = _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken");
             reply["channel"] = slackEvent.Channel;
             reply["user"] = slackEvent.User;
 
