@@ -1,16 +1,13 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
-using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Primitives;
 using TCSlackbot.Logic;
 using TCSlackbot.Logic.Slack;
 using TCSlackbot.Logic.Slack.Requests;
@@ -47,27 +44,27 @@ namespace TCSlackbot.Controllers
         [HttpPost]
         public async Task<IActionResult> HandleRequestAsync()
         {
-            string key = HttpContext.Request.Form.Keys.First().ToString();
-            StringValues output;
-            HttpContext.Request.Form.TryGetValue(key, out output);
-            
-            var payload = Deserialize<AppActionPayload>(output.ToString());
-
             //
             // Verify slack request
             //
             //if (!IsValidSignature(body.ToString(), HttpContext.Request.Headers))
             //{
             //    return BadRequest();
-            //}
+            //}        
+
+            dynamic data = HttpContext.Request.Form["payload"];
+            var payload = Deserialize<AppActionPayload>(data);
 
             //
             // Handle the request
             //
             switch (payload.Type)
             {
-                case "message_action": 
-                    Console.WriteLine("User used an app action"); break;
+                case "message_action":
+                    Console.WriteLine("User used an app action");
+                    await HandleMessageAction(payload);
+                    break;
+
                 //case "block_action ": 
                 //    Console.WriteLine("This is a block action"); break;
 
@@ -79,20 +76,25 @@ namespace TCSlackbot.Controllers
             return NotFound();
         }
 
-        public async Task<IActionResult> HandleSlackMessage(SlackEvent slackEvent)
+        public async Task<IActionResult> HandleMessageAction(AppActionPayload payload)
         {
             var reply = new Dictionary<string, string>();
+
             //
             // Set the reply data
             // https://api.slack.com/surfaces/modals/using 3.0 Opening a Modal
-           // reply[]
+
             //
-            // Handle the command
+            // Send the reply
             //
             //var json = await System.IO.File.ReadAllTextAsync("../Json/StopTimeTracking.json");
-            //var payload = JsonSerializer.Deserialize<AppActionPayload>(json);
+            //var data = JsonSerializer.Deserialize<AppActionPayload>(json);
 
-//            await _httpClient.PostAsync("views.open", new FormUrlEncodedContent(payload));
+            // TODO: Only use this for testing
+            var jsonData = "{\"trigger_id\":\"" + payload.TriggerId + "\",\"view\":{\"type\":\"modal\",\"title\":{\"type\":\"plain_text\",\"text\":\"StopTimetracking\",\"emoji\":true},\"submit\":{\"type\":\"plain_text\",\"text\":\"Submit\",\"emoji\":true},\"close\":{\"type\":\"plain_text\",\"text\":\"Cancel\",\"emoji\":true},\"blocks\":[{\"type\":\"input\",\"element\":{\"type\":\"datepicker\",\"placeholder\":{\"type\":\"plain_text\",\"text\":\"Selectadate\",\"emoji\":true}},\"label\":{\"type\":\"plain_text\",\"text\":\"Date\",\"emoji\":true}},{\"type\":\"input\",\"element\":{\"type\":\"plain_text_input\",\"action_id\":\"title\",\"placeholder\":{\"type\":\"plain_text\",\"text\":\"Whatdoyouwanttoaskoftheworld?\"}},\"label\":{\"type\":\"plain_text\",\"text\":\"StartTime\"}},{\"type\":\"input\",\"element\":{\"type\":\"plain_text_input\"},\"label\":{\"type\":\"plain_text\",\"text\":\"EndTime\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"Project\"},\"accessory\":{\"type\":\"multi_static_select\",\"placeholder\":{\"type\":\"plain_text\",\"text\":\"Selectitems\",\"emoji\":true},\"options\":[{\"text\":{\"type\":\"plain_text\",\"text\":\"Choice1\",\"emoji\":true},\"value\":\"value-0\"},{\"text\":{\"type\":\"plain_text\",\"text\":\"Choice2\",\"emoji\":true},\"value\":\"value-1\"},{\"text\":{\"type\":\"plain_text\",\"text\":\"Choice3\",\"emoji\":true},\"value\":\"value-2\"}]}},{\"type\":\"input\",\"element\":{\"type\":\"plain_text_input\",\"multiline\":true},\"label\":{\"type\":\"plain_text\",\"text\":\"Description\",\"emoji\":true}}]}}";
+
+            HttpContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+            await _httpClient.PostAsync("views.open", content);
 
             return Ok();
         }

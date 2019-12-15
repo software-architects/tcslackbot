@@ -1,15 +1,13 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text.Json.Serialization;
 
 namespace TCSlackbot.Logic.Slack.Requests
 {
     public class AppActionPayload
     {
-        [JsonProperty("trigger_id")]
-        public int TriggerId { get; set; }
-        [JsonProperty("type")]
+        [JsonPropertyName("trigger_id")]
+        public string TriggerId { get; set; }
+
+        [JsonPropertyName("type")]
         public string Type { get; set; }
     }
 }
