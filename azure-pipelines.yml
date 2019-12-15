@@ -9,7 +9,7 @@ steps:
 # Use dotnet30
 - task: UseDotNet@2
   inputs:
-    version: '3.0.x'
+    version: '3.1.x'
 
 # Restore dependencies
 - task: DotNetCoreCLI@2

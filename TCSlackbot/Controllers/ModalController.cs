@@ -15,6 +15,7 @@ using TCSlackbot.Logic;
 using TCSlackbot.Logic.Slack;
 using TCSlackbot.Logic.Slack.Requests;
 using TCSlackbot.Logic.Utils;
+using System.Net.Http.Headers;
 
 namespace TCSlackbot.Controllers
 {
@@ -35,6 +36,7 @@ namespace TCSlackbot.Controllers
             _secretManager = secretManager;
             _cosmosManager = cosmosManager;
             _httpClient = factory.CreateClient("BotClient");
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken"));
 
             commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager);
         }
@@ -47,27 +49,22 @@ namespace TCSlackbot.Controllers
         [HttpPost]
         public async Task<IActionResult> HandleRequestAsync()
         {
-            string key = HttpContext.Request.Form.Keys.First().ToString();
-            StringValues output;
-            HttpContext.Request.Form.TryGetValue(key, out output);
-            
-            var payload = Deserialize<AppActionPayload>(output.ToString());
-
             //
             // Verify slack request
             //
-            //if (!IsValidSignature(body.ToString(), HttpContext.Request.Headers))
-            //{
+            // TODO: Make it work in Modals
+            //
+            // if (!IsValidSignature(HttpContext.Request.Body.ToString(), HttpContext.Request.Headers))
+            // {
             //    return BadRequest();
-            //}
+            // }
 
-            //
-            // Handle the request
-            //
+            var payload = Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
+
             switch (payload.Type)
             {
                 case "message_action": 
-                    Console.WriteLine("User used an app action"); break;
+                    return await ViewModal(payload);
                 //case "block_action ": 
                 //    Console.WriteLine("This is a block action"); break;
 
@@ -76,25 +73,15 @@ namespace TCSlackbot.Controllers
                     break;
             }
 
-            return NotFound();
+            return Ok();
         }
 
-        public async Task<IActionResult> HandleSlackMessage(SlackEvent slackEvent)
+        public async Task<IActionResult> ViewModal(AppActionPayload payload)
         {
-            var reply = new Dictionary<string, string>();
-            //
-            // Set the reply data
-            // https://api.slack.com/surfaces/modals/using 3.0 Opening a Modal
-           // reply[]
-            //
-            // Handle the command
-            //
-            //var json = await System.IO.File.ReadAllTextAsync("../Json/StopTimeTracking.json");
-            //var payload = JsonSerializer.Deserialize<AppActionPayload>(json);
-
-//            await _httpClient.PostAsync("views.open", new FormUrlEncodedContent(payload));
-
-            return Ok();
+            string json = "{\"trigger_id\": \"" + payload.TriggerId + "\", \"view\": { \"type\": \"modal\", \"callback_id\": \"" + payload.CallbackId + "\",";
+            json += await System.IO.File.ReadAllTextAsync("Json/StopTimeTracking.json");
+             await _httpClient.PostAsync("views.open", new StringContent(json, Encoding.UTF8, "application/json"));
+            return Ok(json);
         }
 
         /// <summary>
