@@ -25,17 +25,19 @@ namespace TCSlackbot.Controllers
         private readonly ISecretManager _secretManager;
         private readonly ICosmosManager _cosmosManager;
         private readonly HttpClient _httpClient;
-
+        private readonly ITokenManager _tokenManager;
         private readonly CommandHandler commandHandler;
 
-        public CommandController(IDataProtectionProvider provider, ISecretManager secretManager, ICosmosManager cosmosManager, IHttpClientFactory factory)
+        public CommandController(IDataProtectionProvider provider, ISecretManager secretManager, ICosmosManager cosmosManager, IHttpClientFactory factory, ITokenManager tokenManager)
         {
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
             _cosmosManager = cosmosManager;
             _httpClient = factory.CreateClient("BotClient");
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken"));
-            commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager);
+            _tokenManager = tokenManager;
+
+            commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager);
         }
 
         /// <summary>
@@ -120,7 +122,7 @@ namespace TCSlackbot.Controllers
             //
             // Set the reply data
             //
-            
+
             //reply["token"] = _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken");
             reply["channel"] = slackEvent.Channel;
             reply["user"] = slackEvent.User;
@@ -163,6 +165,10 @@ namespace TCSlackbot.Controllers
 
                 case "filter":
                     reply["text"] = await commandHandler.FilterObjectsAsync(slackEvent);
+                    break;
+
+                case "test":
+                    reply["text"] = await commandHandler.DoSomething(slackEvent);
                     break;
 
                 default:

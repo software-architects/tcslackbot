@@ -10,16 +10,51 @@ namespace TCSlackbot.Logic.Slack
     public class CommandHandler
     {
         private const string CollectionId = "slack_users";
+
         private readonly IDataProtector _protector;
         private readonly ICosmosManager _cosmosManager;
         private readonly ISecretManager _secretManager;
+        private readonly ITokenManager _tokenManager;
 
-        public CommandHandler(IDataProtector protector, ICosmosManager cosmosManager, ISecretManager secretManager)
+        public CommandHandler(IDataProtector protector, ICosmosManager cosmosManager, ISecretManager secretManager, ITokenManager tokenManager)
         {
             _protector = protector;
             _cosmosManager = cosmosManager;
             _secretManager = secretManager;
+            _tokenManager = tokenManager;
         }
+
+        public async Task<string> DoSomething(SlackEvent slackEvent)
+        {
+            TCManager manager = new TCManager();
+
+            var userId = slackEvent.User;
+
+            var user = await GetSlackUserAsync(userId);
+            if (user is null)
+            {
+                return BotResponses.NotLoggedIn;
+            }
+
+            try
+            {
+                // TODO: Throws an exception if it somehow couldn't get the token. Return a specified error response for that.
+                Console.WriteLine("START TOKEN:");
+                Console.WriteLine(_secretManager.GetSecret(userId));
+                Console.WriteLine("END TOKEN:");
+
+                //var objects = await manager.GetObjectsAsync<TimeCockpit.Objects.Project>(await _tokenManager.GetAccessTokenAsync(userId));
+                //Console.WriteLine(objects);
+            }
+            catch (Exception)
+            {
+                return "Unsuccessful";
+            }
+
+            return "Successful";
+        }
+
+
 
         /// <summary>
         /// The user wants to get the duration of the current work session.
