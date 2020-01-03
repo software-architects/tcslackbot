@@ -2,6 +2,6 @@
 {
     class Collection
     {
-        public const string Users = "slack_user";
+        public const string Users = "slack_users";
     }
 }
