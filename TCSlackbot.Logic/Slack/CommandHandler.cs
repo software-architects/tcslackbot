@@ -104,7 +104,7 @@ namespace TCSlackbot.Logic.Slack
             //
             user.IsWorking = true;
 
-            await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
+            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
             return BotResponses.StartedWorking;
 
@@ -141,7 +141,7 @@ namespace TCSlackbot.Logic.Slack
             // Stop working (reset the start and end time)
             //
             user.IsWorking = false;
-            await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
+            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
             //
             // This will maybe be done with Slack Modal 
@@ -194,7 +194,7 @@ namespace TCSlackbot.Logic.Slack
 
             user.TotalBreakTime = (DateTime.Now.Minute - user.BreakTime.Value.Minute);
             user.BreakTime = null;
-            await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
+            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
             return "Break has ended. Total Break Time: " + user.TotalBreakTime + "min"; // No
         }
 
@@ -266,7 +266,7 @@ namespace TCSlackbot.Logic.Slack
             // TODO: Set break time? Maybe with a list of breaks?
 
             user.BreakTime = DateTime.Now;
-            await _cosmosManager.ReplaceDocumentAsync(CollectionId, user, user.UserId);
+            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
             return BotResponses.StartedBreak;
         }

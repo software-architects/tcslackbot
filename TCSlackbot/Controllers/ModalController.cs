@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
+using TCSlackbot.Logic.Cosmos;
 using TCSlackbot.Logic.Slack;
 using TCSlackbot.Logic.Slack.Requests;
 using TCSlackbot.Logic.Utils;
@@ -117,7 +118,7 @@ namespace TCSlackbot.Controllers
             // user.EndTime = DateTime.Parse(payload.View.State.Values.AllValues["StopTime"].Value);
             // user.Description = payload.View.State.Values.AllValues["Description"].Value;
             user.IsWorking = false;
-            await _cosmosManager.ReplaceDocumentAsync("slack_users", user, user.UserId);
+            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
             // replyData["text"] = "Your time has been saved saved";
             // await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));
             return Ok();

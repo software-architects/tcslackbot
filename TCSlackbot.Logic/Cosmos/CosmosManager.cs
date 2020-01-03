@@ -1,9 +1,12 @@
 ﻿using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Documents.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using TCSlackbot.Logic.Cosmos;
 
 namespace TCSlackbot.Logic.Utils
 {
@@ -65,6 +68,29 @@ namespace TCSlackbot.Logic.Utils
         }
 
         /// <inheritdoc/>
+        public IDocumentQuery<SlackUser> GetAllSlackUsers()
+        {
+            try
+            {
+                var response = client.CreateDocumentQuery<SlackUser>(
+                Collection.Users,
+                new FeedOptions { MaxItemCount = 10 })
+                .Where(s => s.IsWorking && (DateTime.Now - s.StartTime).Value > TimeSpan.FromHours(4))
+                .AsDocumentQuery();
+                
+                return (dynamic)response;
+            }
+            catch (DocumentClientException)
+            {
+                return default;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <inheritdoc/>
         public async Task<T> CreateDocumentAsync<T>(string collectionName, T document)
         {
             await CreateCollectionIfNotExistsAsync(DatabaseName, collectionName);
@@ -105,6 +131,8 @@ namespace TCSlackbot.Logic.Utils
                 throw;
             }
         }
+
+        
 
         /// <summary>
         /// Creates the specified database if it does not yet exist.

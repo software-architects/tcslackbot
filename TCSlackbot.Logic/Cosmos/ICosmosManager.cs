@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using Microsoft.Azure.Documents.Linq;
+using System.Threading.Tasks;
 
 namespace TCSlackbot.Logic.Utils
 {
@@ -12,6 +13,13 @@ namespace TCSlackbot.Logic.Utils
         /// <param name="documentId">The id of the document</param>
         /// <returns>Default if it failed or the document</returns>
         public Task<T> GetDocumentAsync<T>(string collectionName, string documentId);
+
+        /// <summary>
+        /// Get all SlackUsers in the DB which are working longer thän a specific amount of time.
+        /// </summary>
+        /// <returns></returns>
+        public IDocumentQuery<SlackUser> GetAllSlackUsers();
+
 
         /// <summary>
         /// Creates a new document in the database.

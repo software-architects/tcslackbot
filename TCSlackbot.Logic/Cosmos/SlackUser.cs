@@ -12,6 +12,11 @@ namespace TCSlackbot.Logic
         public string UserId { get; set; }
 
         /// <summary>
+        /// The id of the user (and document). 
+        /// </summary>
+        public string ChannelId { get; set; }
+
+        /// <summary>
         /// The start time of the working session.
         /// </summary>
         public DateTime? StartTime { get; set; }

@@ -147,4 +147,10 @@
   <data name="StoppedWorking" xml:space="preserve">
     <value>You stopped working.</value>
   </data>
+  <data name="TakeABreak" xml:space="preserve">
+    <value>Hey, you have been working for a long time now. Why don't you take a break?</value>
+  </data>
+  <data name="LogoutMessage" xml:space="preserve">
+    <value>You have succesfully logged out. Goodbye.</value>
+  </data>
 </root>
