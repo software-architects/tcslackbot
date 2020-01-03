@@ -135,6 +135,8 @@ namespace TCSlackbot.Controllers
             //
             // Handle the command
             //
+            var user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, slackEvent.User);
+
             var text = slackEvent.Text.Replace("<@UJZLBL7BL> ", "").ToLower().Trim().Split("").FirstOrDefault();
             switch (text)
             {
@@ -142,17 +144,22 @@ namespace TCSlackbot.Controllers
                 case "link":
                     reply["text"] = commandHandler.GetLoginLink(slackEvent);
                     hiddenMessage = true;
-                    var user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, slackEvent.User);
                     user.ChannelId = await GetIMChannelFromUserAsync(await _httpClient.GetAsync("im.list"), slackEvent.User);
                     await _cosmosManager.ReplaceDocumentAsync<SlackUser>(Collection.Users, user, user.UserId);
                     break;
 
                 case "logout":
                 case "unlink":
-                    reply["text"] = BotResponses.LogoutMessage;
-                    hiddenMessage = true;
-                    await _secretManager.DeleteSecretAsync(slackEvent.User);
+                    if (!user.IsWorking)
+                    {
+                        reply["text"] = BotResponses.LogoutMessage;
+                        hiddenMessage = true;
+                        await _secretManager.DeleteSecretAsync(slackEvent.User);
+                        break;
+                    }
+                    reply["text"] = BotResponses.NotLoggedIn;
                     break;
+                    
                 // TODO: Reminder after 4h to take a break    
                 case "start":
                     reply["text"] = await commandHandler.StartWorkingAsync(slackEvent);

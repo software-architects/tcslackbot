@@ -191,11 +191,10 @@ namespace TCSlackbot.Logic.Slack
             }
 
             // TODO: Implement
-
             user.TotalBreakTime = (DateTime.Now.Minute - user.BreakTime.Value.Minute);
             user.BreakTime = null;
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
-            return "Break has ended. Total Break Time: " + user.TotalBreakTime + "min"; // No
+            return "Break has ended. Total Break Time: " + user.TotalBreakTime + " min"; 
         }
 
         /// <summary>
