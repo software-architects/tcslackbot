@@ -47,6 +47,11 @@ namespace TCSlackbot.Logic.Slack.Requests
         // Date, StartTime, EndTime, Description
         // I dont know what JsonPropertyName i should put here as the string is random
         // See TestViewSubmission.json
+        public Dictionary<string, IdentifierString> AllStrings { get; set; }
+    }
+
+    public partial class IdentifierString
+    {
         public Dictionary<string, Details> AllValues { get; set; }
     }
 
@@ -58,6 +63,5 @@ namespace TCSlackbot.Logic.Slack.Requests
         public string Value { get; set; }
         [JsonPropertyName("selected_date")]
         public string Date { get; set; }
-
     }
 }

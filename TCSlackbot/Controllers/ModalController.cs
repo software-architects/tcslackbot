@@ -117,9 +117,9 @@ namespace TCSlackbot.Controllers
         public async Task<IActionResult> ProcessModalData(SlackUser user)   /* , Dictionary<string,string> replyData */
         {
             var payload = JsonSerializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
-            user.StartTime = DateTime.Parse(payload.View.State.Values.AllValues["StartTime"].Value);
-            user.EndTime = DateTime.Parse(payload.View.State.Values.AllValues["StopTime"].Value);
-            user.Description = payload.View.State.Values.AllValues["Description"].Value;
+            // user.StartTime = DateTime.Parse(payload.View.State.Values.AllValues["StartTime"].Value);
+            // user.EndTime = DateTime.Parse(payload.View.State.Values.AllValues["StopTime"].Value);
+            // user.Description = payload.View.State.Values.AllValues["Description"].Value;
             user.IsWorking = false;
             await _cosmosManager.ReplaceDocumentAsync("slack_users", user, user.UserId);
             // replyData["text"] = "Your time has been saved saved";
