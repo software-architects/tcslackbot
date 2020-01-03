@@ -35,7 +35,8 @@ namespace TCSlackbot
             Debug.Assert(!string.IsNullOrEmpty(clientId));
             Debug.Assert(!string.IsNullOrEmpty(clientSecret));
 
-            services.AddAuthentication(options =>
+            services
+                .AddAuthentication(options =>
                 {
                     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 })
@@ -43,6 +44,9 @@ namespace TCSlackbot
                 {
                     options.LoginPath = "/auth/login";
                     options.AccessDeniedPath = "/error";
+
+                    // Don't reuse the tokens via the cookie, because it could have been renewed, thus they would be invalid.
+                    options.ExpireTimeSpan = TimeSpan.FromSeconds(1);
                 })
                 .AddOpenIdConnect(options =>
                 {
@@ -60,6 +64,7 @@ namespace TCSlackbot
                     options.AuthenticationMethod = OpenIdConnectRedirectBehavior.RedirectGet;
 
                     options.Scope.Add("openid");
+                    options.Scope.Add("profile");
                     options.Scope.Add("offline_access");
 
                     options.SecurityTokenValidator = new JwtSecurityTokenHandler
