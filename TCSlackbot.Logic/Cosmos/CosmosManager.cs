@@ -77,7 +77,7 @@ namespace TCSlackbot.Logic.Utils
                 new FeedOptions { MaxItemCount = 10 })
                 .Where(s => s.IsWorking && (DateTime.Now - s.StartTime).Value > TimeSpan.FromHours(4))
                 .AsDocumentQuery();
-                
+
                 return (dynamic)response;
             }
             catch (DocumentClientException)
@@ -132,7 +132,7 @@ namespace TCSlackbot.Logic.Utils
             }
         }
 
-        
+
 
         /// <summary>
         /// Creates the specified database if it does not yet exist.
@@ -183,6 +183,19 @@ namespace TCSlackbot.Logic.Utils
                 {
                     throw;
                 }
+            }
+        }
+
+        async Task ICosmosManager.RemoveDocumentAsync(string collectionName, string documentId)
+        {
+            try
+            {
+                var documentUri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, documentId);
+                await client.DeleteDocumentAsync(documentUri);
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
         }
     }

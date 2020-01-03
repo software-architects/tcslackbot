@@ -39,5 +39,7 @@ namespace TCSlackbot.Logic.Utils
         /// <param name="documentId">The id of the document</param>
         /// <returns>Default if it failed or the replaced document</returns>
         public Task<T> ReplaceDocumentAsync<T>(string collectionName, T document, string documentId);
+
+        public Task RemoveDocumentAsync(string collectionName, string documentId);
     }
 }
