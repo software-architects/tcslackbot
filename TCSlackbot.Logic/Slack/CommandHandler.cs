@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using TCSlackbot.Logic.Cosmos;
 using TCSlackbot.Logic.Resources;
 using TCSlackbot.Logic.Utils;
 
@@ -9,8 +10,6 @@ namespace TCSlackbot.Logic.Slack
 {
     public class CommandHandler
     {
-        private const string CollectionId = "slack_users";
-
         private readonly IDataProtector _protector;
         private readonly ICosmosManager _cosmosManager;
         private readonly ISecretManager _secretManager;
@@ -330,10 +329,10 @@ namespace TCSlackbot.Logic.Slack
             //
             // Create a new user if not found
             //
-            var user = await _cosmosManager.GetDocumentAsync<SlackUser>(CollectionId, userId);
+            var user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, userId);
             if (user is null)
             {
-                user = await _cosmosManager.CreateDocumentAsync(CollectionId, new SlackUser { UserId = userId });
+                user = await _cosmosManager.CreateDocumentAsync(Collection.Users, new SlackUser { UserId = userId });
             }
 
             //
