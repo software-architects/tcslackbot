@@ -1,22 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Security.Cryptography;
-using System.Text;
-using System.IO;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.DataProtection;
+﻿using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Primitives;
+using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 using TCSlackbot.Logic;
 using TCSlackbot.Logic.Slack;
 using TCSlackbot.Logic.Slack.Requests;
 using TCSlackbot.Logic.Utils;
-using System.Net.Http.Headers;
-using TCSlackbot.Logic.Resources;
 
 namespace TCSlackbot.Controllers
 {
@@ -28,18 +23,19 @@ namespace TCSlackbot.Controllers
         private readonly ISecretManager _secretManager;
         private readonly ICosmosManager _cosmosManager;
         private readonly HttpClient _httpClient;
-
+        private readonly ITokenManager _tokenManager;
         private readonly CommandHandler commandHandler;
 
-        public ModalController(IDataProtectionProvider provider, ISecretManager secretManager, ICosmosManager cosmosManager, IHttpClientFactory factory)
+        public ModalController(IDataProtectionProvider provider, ISecretManager secretManager, ICosmosManager cosmosManager, IHttpClientFactory factory, ITokenManager tokenManager)
         {
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
             _cosmosManager = cosmosManager;
             _httpClient = factory.CreateClient("BotClient");
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken"));
+            _tokenManager = tokenManager;
 
-            commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager);
+            commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager);
         }
 
         /// <summary>
@@ -95,7 +91,7 @@ namespace TCSlackbot.Controllers
             }
             switch (payload.Type)
             {
-                case "message_action": 
+                case "message_action":
                     return await ViewModal(payload);
                 case "view_submission":
                     return await ProcessModalData(user);    /* , replyData */
@@ -111,7 +107,7 @@ namespace TCSlackbot.Controllers
         {
             string json = "{\"trigger_id\": \"" + payload.TriggerId + "\", \"view\": { \"type\": \"modal\", \"callback_id\": \"" + payload.CallbackId + "\",";
             json += await System.IO.File.ReadAllTextAsync("Json/StopTimeTracking.json");
-             await _httpClient.PostAsync("views.open", new StringContent(json, Encoding.UTF8, "application/json"));
+            await _httpClient.PostAsync("views.open", new StringContent(json, Encoding.UTF8, "application/json"));
             return Ok(json);
         }
         public async Task<IActionResult> ProcessModalData(SlackUser user)   /* , Dictionary<string,string> replyData */

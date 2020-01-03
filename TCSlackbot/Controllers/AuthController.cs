@@ -78,5 +78,22 @@ namespace TCSlackbot.Controllers
 
             return Ok("Successfully logged in.");
         }
+
+        [Route("test")]
+        public async Task<IActionResult> Test()
+        {
+            // WORKING
+            //var secretManager = new SecretManager(_configuration);
+            //var manager = new TokenManager(_configuration, secretManager);
+
+            //var result = await manager.RenewTokensAsync("<refresh_token>");
+            //Console.WriteLine(result);
+
+            // TODO: 
+            // - https://identitymodel.readthedocs.io/en/latest/client/token.html
+            // - https://docs.microsoft.com/en-us/aspnet/core/security/authentication/identity-configuration?view=aspnetcore-3.1
+
+            return Ok();
+        }
     }
 }
