@@ -153,4 +153,7 @@
   <data name="LogoutMessage" xml:space="preserve">
     <value>You have succesfully logged out. Goodbye.</value>
   </data>
+  <data name="InvalidParameter" xml:space="preserve">
+    <value>There was one or more parameters missing. </value>
+  </data>
 </root>

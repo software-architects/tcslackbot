@@ -132,6 +132,26 @@ namespace TCSlackbot.Logic.Utils
             }
         }
 
+        async Task ICosmosManager.RemoveDocumentAsync(string collectionName, string documentId)
+        {
+            try
+            {
+                var documentUri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, documentId);
+                await client.DeleteDocumentAsync(documentUri);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        public bool ExistsDocument(string collectionName, string documentId)
+        {
+            var collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, collectionName);
+            var query = client.CreateDocumentQuery<Document>(collectionUri, new FeedOptions() { MaxItemCount = 1 });
+
+            return query.Any(x => x.Id == documentId);
+        }
 
 
         /// <summary>
@@ -186,17 +206,5 @@ namespace TCSlackbot.Logic.Utils
             }
         }
 
-        async Task ICosmosManager.RemoveDocumentAsync(string collectionName, string documentId)
-        {
-            try
-            {
-                var documentUri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, documentId);
-                await client.DeleteDocumentAsync(documentUri);
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-        }
     }
 }

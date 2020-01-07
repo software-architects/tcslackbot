@@ -9,13 +9,11 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
 using TCSlackbot.Logic.Cosmos;
 using TCSlackbot.Logic.Resources;
 using TCSlackbot.Logic.Slack;
-using TCSlackbot.Logic.Slack.Requests;
 using TCSlackbot.Logic.Utils;
 using static TCSlackbot.Logic.Slack.Requests.IMResponse;
 
@@ -160,7 +158,7 @@ namespace TCSlackbot.Controllers
                     }
                     reply["text"] = BotResponses.NotLoggedIn;
                     break;
-                    
+
                 // TODO: Reminder after 4h to take a break    
                 case "start":
                     reply["text"] = await commandHandler.StartWorkingAsync(slackEvent);
@@ -189,10 +187,6 @@ namespace TCSlackbot.Controllers
                     reply["text"] = await commandHandler.FilterObjectsAsync(slackEvent);
                     break;
 
-                case "test":
-                    reply["text"] = await commandHandler.DoSomething(slackEvent);
-                    break;
-
                 default:
                     break;
             }
@@ -216,9 +210,9 @@ namespace TCSlackbot.Controllers
 
         private async void ReminderScheduler(int hour, int min, double intervalInHour, Action task)
         {
-            var queryable =_cosmosManager.GetAllSlackUsers();
+            var queryable = _cosmosManager.GetAllSlackUsers();
             while (queryable.HasMoreResults)
-            {   
+            {
                 // Iterate through SlackUsers
                 foreach (SlackUser s in await queryable.ExecuteNextAsync<SlackUser>())
                 {
@@ -226,7 +220,7 @@ namespace TCSlackbot.Controllers
                     reply["user"] = s.UserId;
                     reply["channel"] = s.ChannelId;
                     reply["text"] = BotResponses.TakeABreak;
-                    
+
                     await SendReplyAsync(reply, true);
                 }
             }
