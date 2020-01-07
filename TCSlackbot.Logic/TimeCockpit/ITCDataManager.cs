@@ -4,7 +4,7 @@ using TCSlackbot.Logic.TimeCockpit;
 
 namespace TCSlackbot.Logic.Utils
 {
-    interface ITCDataManager
+    public interface ITCDataManager
     {
         public Task<IEnumerable<T>> GetObjectsAsync<T>(string accessToken);
 

@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using TCSlackbot.Logic.Cosmos;
 using TCSlackbot.Logic.Resources;
+using TCSlackbot.Logic.TimeCockpit;
+using TCSlackbot.Logic.TimeCockpit.Objects;
 using TCSlackbot.Logic.Utils;
 
 namespace TCSlackbot.Logic.Slack
@@ -14,13 +16,15 @@ namespace TCSlackbot.Logic.Slack
         private readonly ICosmosManager _cosmosManager;
         private readonly ISecretManager _secretManager;
         private readonly ITokenManager _tokenManager;
+        private readonly ITCDataManager _tcDataManager;
 
-        public CommandHandler(IDataProtector protector, ICosmosManager cosmosManager, ISecretManager secretManager, ITokenManager tokenManager)
+        public CommandHandler(IDataProtector protector, ICosmosManager cosmosManager, ISecretManager secretManager, ITokenManager tokenManager, ITCDataManager tcDataManager)
         {
             _protector = protector;
             _cosmosManager = cosmosManager;
             _secretManager = secretManager;
             _tokenManager = tokenManager;
+            _tcDataManager = tcDataManager;
         }
 
         /// <summary>
@@ -180,16 +184,21 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.NotLoggedIn;
             }
 
+            // filter <object> <filter_text>
             var text = slackEvent.Text.ToLower().Trim().Split(" ");
+            if (text.Length != 2)
+            {
+                return BotResponses.InvalidParameter;
+            }
 
             switch (text.ElementAtOrDefault(1))
             {
                 case "projects":
                 case "project":
-                    // Send request to the TimeCockpit API
-                    // Return the list with the data
+                    var queryData = new TCQueryData($"From P In Project Where P.Code Like '%{text.ElementAtOrDefault(2)}%' Select P");
+                    var data = await _tcDataManager.GetFilteredObjectsAsync<Project>(await _tokenManager.GetAccessTokenAsync(userId), queryData);
 
-                    break;
+                    return string.Join('\n', data.Take(10).Select(element => $"- {element.ProjectName}"));
 
                 case "tasks":
                 case "task":
