@@ -93,9 +93,9 @@ namespace TCSlackbot.Controllers
             switch (payload.Type)
             {
                 case "message_action":
-                    return await ViewModal(payload);
+                    return await ViewModalAsync(payload);
                 case "view_submission":
-                    return await ProcessModalData(user);    /* , replyData */
+                    return await ProcessModalDataAsync(user);    /* , replyData */
                 default:
                     Console.WriteLine($"Received unhandled request: {payload.Type}.");
                     break;
@@ -104,21 +104,27 @@ namespace TCSlackbot.Controllers
         }
 
 
-        public async Task<IActionResult> ViewModal(AppActionPayload payload)
+        public async Task<IActionResult> ViewModalAsync(AppActionPayload payload)
         {
             string json = "{\"trigger_id\": \"" + payload.TriggerId + "\", \"view\": { \"type\": \"modal\", \"callback_id\": \"" + payload.CallbackId + "\",";
             json += await System.IO.File.ReadAllTextAsync("Json/StopTimeTracking.json");
             await _httpClient.PostAsync("views.open", new StringContent(json, Encoding.UTF8, "application/json"));
             return Ok(json);
         }
-        public async Task<IActionResult> ProcessModalData(SlackUser user)   /* , Dictionary<string,string> replyData */
+        public async Task<IActionResult> ProcessModalDataAsync(SlackUser user)   /* , Dictionary<string,string> replyData */
         {
             var payload = JsonSerializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
+            var json = HttpContext.Request.Form["payload"];
+            var parsed_json = JsonDocument.Parse(json);
+            foreach (var f in parsed_json.RootElement.EnumerateObject())
+            {
+                Console.WriteLine("Name: " + f.Name + ", Value: " + f.Value);
+            }
             // user.StartTime = DateTime.Parse(payload.View.State.Values.AllValues["StartTime"].Value);
             // user.EndTime = DateTime.Parse(payload.View.State.Values.AllValues["StopTime"].Value);
             // user.Description = payload.View.State.Values.AllValues["Description"].Value;
             user.IsWorking = false;
-            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
+            // await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
             // replyData["text"] = "Your time has been saved saved";
             // await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));
             return Ok();
