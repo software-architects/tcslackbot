@@ -20,7 +20,6 @@ namespace TCSlackbot.Logic.Utils
         /// <returns></returns>
         public IDocumentQuery<SlackUser> GetAllSlackUsers();
 
-
         /// <summary>
         /// Creates a new document in the database.
         /// </summary>
@@ -41,5 +40,7 @@ namespace TCSlackbot.Logic.Utils
         public Task<T> ReplaceDocumentAsync<T>(string collectionName, T document, string documentId);
 
         public Task RemoveDocumentAsync(string collectionName, string documentId);
+
+        public bool ExistsDocument(string collectionName, string documentId);
     }
 }
