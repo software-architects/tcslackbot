@@ -25,9 +25,10 @@ namespace TCSlackbot.Controllers
         private readonly ICosmosManager _cosmosManager;
         private readonly HttpClient _httpClient;
         private readonly ITokenManager _tokenManager;
+        private readonly ITCDataManager _tCDataManager;
         private readonly CommandHandler commandHandler;
 
-        public ModalController(IDataProtectionProvider provider, ISecretManager secretManager, ICosmosManager cosmosManager, IHttpClientFactory factory, ITokenManager tokenManager)
+        public ModalController(IDataProtectionProvider provider, ISecretManager secretManager, ICosmosManager cosmosManager, IHttpClientFactory factory, ITokenManager tokenManager, ITCDataManager dataManager)
         {
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
@@ -35,8 +36,8 @@ namespace TCSlackbot.Controllers
             _httpClient = factory.CreateClient("BotClient");
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken"));
             _tokenManager = tokenManager;
-
-            commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager);
+            _tCDataManager = dataManager;
+            commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager, _tCDataManager);
         }
 
         /// <summary>
