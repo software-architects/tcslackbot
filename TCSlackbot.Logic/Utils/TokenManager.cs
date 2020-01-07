@@ -49,7 +49,7 @@ namespace TCSlackbot.Logic.Utils
             //
             // Get the new access and refresh token
             //
-            var (accessToken, refreshToken) = await RenewTokensAsync(userId);
+            var (accessToken, refreshToken) = await RenewTokensAsync(oldRefreshToken);
 
             // Tokens could not be renewed
             if (accessToken is null || refreshToken is null)

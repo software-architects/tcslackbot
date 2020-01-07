@@ -11,7 +11,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
-using TCSlackbot.Logic.Cosmos;
 using TCSlackbot.Logic.Resources;
 using TCSlackbot.Logic.Slack;
 using TCSlackbot.Logic.Utils;
@@ -134,29 +133,26 @@ namespace TCSlackbot.Controllers
             //
             // Handle the command
             //
-            var user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, slackEvent.User);
+            //var user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, slackEvent.User);
 
-            var text = slackEvent.Text.Replace("<@UJZLBL7BL> ", "").ToLower().Trim().Split("").FirstOrDefault();
+            var text = slackEvent.Text.Replace("<@UJZLBL7BL> ", "").ToLower().Trim().Split(' ').FirstOrDefault();
             switch (text)
             {
                 case "login":
                 case "link":
                     reply["text"] = commandHandler.GetLoginLink(slackEvent);
                     hiddenMessage = true;
-                    user.ChannelId = await GetIMChannelFromUserAsync(await _httpClient.GetAsync("im.list"), slackEvent.User);
-                    await _cosmosManager.ReplaceDocumentAsync<SlackUser>(Collection.Users, user, user.UserId);
+                    //user.ChannelId = await GetIMChannelFromUserAsync(await _httpClient.GetAsync("im.list"), slackEvent.User);
+                    //await _cosmosManager.ReplaceDocumentAsync<SlackUser>(Collection.Users, user, user.UserId);
                     break;
 
                 case "logout":
                 case "unlink":
-                    if (user.IsWorking)
-                    {
-                        reply["text"] = BotResponses.LogoutMessage;
-                        hiddenMessage = true;
-                        await _secretManager.DeleteSecretAsync(slackEvent.User);
-                        await _cosmosManager.RemoveDocumentAsync(Collection.Users, slackEvent.User);
-                        break;
-                    }
+                    //reply["text"] = BotResponses.LogoutMessage;
+                    //hiddenMessage = true;
+                    //await _secretManager.DeleteSecretAsync(slackEvent.User);
+                    //await _cosmosManager.RemoveDocumentAsync(Collection.Users, slackEvent.User);
+                    //break;
                     reply["text"] = BotResponses.NotLoggedIn;
                     break;
 

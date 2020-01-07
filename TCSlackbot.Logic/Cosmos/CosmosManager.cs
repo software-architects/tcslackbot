@@ -147,10 +147,17 @@ namespace TCSlackbot.Logic.Utils
 
         public bool ExistsDocument(string collectionName, string documentId)
         {
-            var collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, collectionName);
-            var query = client.CreateDocumentQuery<Document>(collectionUri, new FeedOptions() { MaxItemCount = 1 });
+            try
+            {
+                var collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, collectionName);
+                var query = client.CreateDocumentQuery<Document>(collectionUri, new FeedOptions() { MaxItemCount = 1 });
 
-            return query.Any(x => x.Id == documentId);
+                return query.Any(x => x.Id == documentId);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
 

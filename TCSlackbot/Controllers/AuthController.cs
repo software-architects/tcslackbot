@@ -55,7 +55,6 @@ namespace TCSlackbot.Controllers
         public async Task<IActionResult> LinkAccounts([FromQuery(Name = "uuid")] string encryptedUuid)
         {
             var refreshToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "refresh_token");
-            var accessToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
 
             try
             {

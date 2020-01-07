@@ -186,7 +186,7 @@ namespace TCSlackbot.Logic.Slack
 
             // filter <object> <filter_text>
             var text = slackEvent.Text.ToLower().Trim().Split(" ");
-            if (text.Length != 2)
+            if (text.Length != 3)
             {
                 return BotResponses.InvalidParameter;
             }
@@ -196,9 +196,18 @@ namespace TCSlackbot.Logic.Slack
                 case "projects":
                 case "project":
                     var queryData = new TCQueryData($"From P In Project Where P.Code Like '%{text.ElementAtOrDefault(2)}%' Select P");
-                    var data = await _tcDataManager.GetFilteredObjectsAsync<Project>(await _tokenManager.GetAccessTokenAsync(userId), queryData);
 
-                    return string.Join('\n', data.Take(10).Select(element => $"- {element.ProjectName}"));
+                    var accessToken = await _tokenManager.GetAccessTokenAsync(userId);
+                    if (accessToken != null)
+                    {
+                        var data = await _tcDataManager.GetFilteredObjectsAsync<Project>(accessToken, queryData);
+                        if (data.Count() != 0)
+                        {
+                            return string.Join('\n', data.Take(10).Select(element => $"- {element.ProjectName}"));
+                        }
+                    }
+
+                    break;
 
                 case "tasks":
                 case "task":
@@ -305,12 +314,8 @@ namespace TCSlackbot.Logic.Slack
             //
             // Create a new user if not found
             //
-            SlackUser user;
-            if (_cosmosManager.ExistsDocument(Collection.Users, userId))
-            {
-                user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, userId);
-            }
-            else
+            var user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, userId); ;
+            if (user is null)
             {
                 user = await _cosmosManager.CreateDocumentAsync(Collection.Users, new SlackUser { UserId = userId });
             }
@@ -318,7 +323,7 @@ namespace TCSlackbot.Logic.Slack
             //
             // Check for a tampered userid
             //
-            if (user.UserId != userId)
+            if (user is null || user.UserId != userId)
             {
                 user = default;
             }

@@ -40,8 +40,6 @@ namespace TCSlackbot.Logic.Utils
         public async Task<IEnumerable<T>> GetFilteredObjectsAsync<T>(string accessToken, TCQueryData queryData)
         {
             // Send request
-            Console.WriteLine(JsonSerializer.Serialize(queryData));
-
             var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Post,
