@@ -117,9 +117,41 @@ namespace TCSlackbot.Controllers
             var payload = JsonSerializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
             var json = HttpContext.Request.Form["payload"];
             var parsed_json = JsonDocument.Parse(json);
-            foreach (var f in parsed_json.RootElement.EnumerateObject())
+            // D:/Diplo/Payload/json
+            foreach (var parsedPayload in parsed_json.RootElement.EnumerateObject())
             {
-                Console.WriteLine("Name: " + f.Name + ", Value: " + f.Value);
+                if (parsedPayload.NameEquals("View"))
+                {
+                    foreach (var view in parsedPayload.Value.EnumerateObject())
+                    {
+                        if (view.NameEquals("values")) 
+                        {
+                            foreach(var values in view.Value.EnumerateObject())
+                            {
+                                Console.WriteLine("Name: " + values.Name + ", Value: " + values.Value);
+                                foreach(var parameter in values.Value.EnumerateObject())
+                                {
+                                    if (parameter.NameEquals("Date"))
+                                    {
+                                       var date = parameter.Value[1];
+                                    }
+                                    if (parameter.NameEquals("StartTime"))
+                                    {
+                                        user.StartTime = parameter.Value[1].GetDateTime();
+                                    }
+                                    if (parameter.NameEquals("EndTime"))
+                                    {
+                                        user.EndTime = parameter.Value[1].GetDateTime();
+                                    }
+                                    if (parameter.NameEquals("Description"))
+                                    {
+                                        user.Description = parameter.Value[1].ToString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
             // user.StartTime = DateTime.Parse(payload.View.State.Values.AllValues["StartTime"].Value);
             // user.EndTime = DateTime.Parse(payload.View.State.Values.AllValues["StopTime"].Value);
