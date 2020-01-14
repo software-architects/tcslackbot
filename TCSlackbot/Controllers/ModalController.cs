@@ -128,12 +128,15 @@ namespace TCSlackbot.Controllers
                         {
                             foreach(var values in view.Value.EnumerateObject())
                             {
+                                var date = ;
                                 Console.WriteLine("Name: " + values.Name + ", Value: " + values.Value);
                                 foreach(var parameter in values.Value.EnumerateObject())
                                 {
+                                    var formatter = new System.Globalization.DateTimeFormatInfo().SetAllDateTimePatterns();
+
                                     if (parameter.NameEquals("Date"))
                                     {
-                                       var date = parameter.Value[1];
+                                       date = parameter.Value[1];
                                     }
                                     if (parameter.NameEquals("StartTime"))
                                     {
