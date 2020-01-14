@@ -115,7 +115,8 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to You have to login before you can use this bot!\nType login or link to get the login link..
+        ///   Looks up a localized string similar to You have to login before you can use this bot!
+        ///Type login or link to get the login link..
         /// </summary>
         public static string NotLoggedIn {
             get {
