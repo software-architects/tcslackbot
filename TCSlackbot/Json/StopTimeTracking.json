@@ -1,0 +1,114 @@
+"title": {
+  "type": "plain_text",
+  "text": "Stop Timetracking",
+  "emoji": true
+}, "submit": {
+  "type": "plain_text",
+  "text": "Submit",
+  "emoji": true
+}, "close": {
+  "type": "plain_text",
+  "text": "Cancel",
+  "emoji": true
+}, "blocks": [
+  {
+    "type": "input",
+    "element": {
+      "type": "datepicker",
+      "placeholder": {
+        "type": "plain_text",
+        "text": "Select a date",
+        "emoji": true
+      },
+      "action_id": "Date"
+    },
+    "label": {
+      "type": "plain_text",
+      "text": "Date",
+      "emoji": true
+    }
+  },
+  {
+    "type": "input",
+    "element": {
+      "type": "plain_text_input",
+      "action_id": "StartTime",
+      "placeholder": {
+        "type": "plain_text",
+        "text": "StartTime"
+      }
+    },
+    "label": {
+      "type": "plain_text",
+      "text": "Start Time"
+    }
+  },
+  {
+    "type": "input",
+    "element": {
+      "type": "plain_text_input",
+      "action_id": "EndTime"
+    },
+    "label": {
+      "type": "plain_text",
+      "text": "End Time"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "Project"
+    },
+    "accessory": {
+      "type": "multi_static_select",
+      "placeholder": {
+        "type": "plain_text",
+        "text": "Select items",
+        "emoji": true
+      },
+      "options": [
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "Choice 1",
+            "emoji": true
+          },
+          "value": "value-0"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "Choice 2",
+            "emoji": true
+          },
+          "value": "value-1"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "Choice 3",
+            "emoji": true
+          },
+          "value": "value-2"
+        }
+      ],
+      "action_id": "Project"
+    }
+  },
+  {
+    "type": "input",
+    "element": {
+      "type": "plain_text_input",
+      "multiline": true,
+      "action_id": "Description"
+    },
+    "label": {
+      "type": "plain_text",
+      "text": "Description",
+      "emoji": true
+    }
+  }
+] }
+
+}

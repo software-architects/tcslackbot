@@ -1,12 +1,20 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
+using TCSlackbot.Logic.Resources;
+using TCSlackbot.Logic.Slack;
+using TCSlackbot.Logic.Utils;
+using static TCSlackbot.Logic.Slack.Requests.IMResponse;
 
 namespace TCSlackbot.Controllers
 {
@@ -17,119 +25,253 @@ namespace TCSlackbot.Controllers
     {
         private readonly IDataProtector _protector;
         private readonly ISecretManager _secretManager;
+        private readonly ICosmosManager _cosmosManager;
         private readonly HttpClient _httpClient;
+        private readonly ITokenManager _tokenManager;
+        private readonly ITCDataManager _tcDataManager;
 
-        public CommandController(IDataProtectionProvider provider, ISecretManager secretManager, IHttpClientFactory factory)
+        private readonly CommandHandler commandHandler;
+        public CommandController(IDataProtectionProvider provider, ISecretManager secretManager, ICosmosManager cosmosManager, IHttpClientFactory factory, ITokenManager tokenManager, ITCDataManager dataManager)
         {
-            _secretManager = secretManager;
             _protector = provider.CreateProtector("UUIDProtector");
-            _httpClient = factory.CreateClient();
-            _httpClient.BaseAddress = new Uri("https://slack.com/api/");
+            _secretManager = secretManager;
+            _cosmosManager = cosmosManager;
+            _httpClient = factory.CreateClient("BotClient");
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken"));
+            _tokenManager = tokenManager;
+            _tcDataManager = dataManager;
+            commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager, _tcDataManager);
         }
-        /* Do not delete
+
+        /// <summary>
+        /// Handles the incoming requests (only if they have a valid slack signature).
+        /// </summary>
+        /// <param name="body">The dynamic request body</param>
+        /// <returns></returns>
         [HttpPost]
-        public IActionResult CheckChallenge([FromBody]SlackChallengeToken sct)
+        public async Task<IActionResult> HandleRequestAsync([FromBody] dynamic body)
         {
-            Console.WriteLine("test");
-            return Ok(sct.Challenge);
-        }
-        */
-        [HttpPost]
-        public async Task<IActionResult> HandleIncomingSlackRequest([FromBody]SlackRequest request)
-        {
-            if(request.Event.Type == "message")
+            var request = Deserialize<SlackBaseRequest>(body.ToString());
+
+            //
+            // Verify slack request
+            //
+            if (!IsValidSignature(body.ToString(), HttpContext.Request.Headers))
             {
-                var reply = new Dictionary<string, string>();
-                bool secret = false; // If secret is true then a ephemeral message will be 
-                                     // sent, which can only be seen by the one who wrote the message
-
-                reply["user"] = request.Event.User;
-                reply["token"] = _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken");
-                reply["channel"] = request.Event.Channel;
-                //reply["attachments"] = "[{\"fallback\":\"dummy\", \"text\":\"this is an attachment\"}]";
-
-                switch (request.Event.Text.ToLower())
-                {
-                    case "login": reply["text"] = LoginEventsAPI(request); secret = true; break;
-                    case "link": reply["text"] = LoginEventsAPI(request); secret = true; break;
-                    case "start": reply["text"] = StartWorktime(request); break;
-                    default: break;
-                }
-                await SendPostRequest(reply, secret);
-                return Ok("Worked");
+                return BadRequest();
             }
+
+            //
+            // Handle the request
+            //
+            switch (request.Type)
+            {
+                case "url_verification":
+                    return HandleSlackChallenge(Deserialize<SlackChallenge>(body.ToString()));
+
+                case "event_callback":
+                    return await HandleEventCallbackAsync(Deserialize<SlackEventCallbackRequest>(body.ToString()));
+
+                default:
+                    Console.WriteLine($"Received unhandled request: {request.Type}.");
+                    break;
+            }
+
+            return NotFound();
+        }
+
+        /// <summary>
+        /// Handles the requests with the type 'event_callback' and calls the specified event handler.
+        /// </summary>
+        /// <param name="request">The event request data</param>
+        /// <returns></returns>
+        public async Task<IActionResult> HandleEventCallbackAsync(SlackEventCallbackRequest request)
+        {
+            switch (request.Event.Type)
+            {
+                case "message":
+                    return await HandleSlackMessage(request.Event);
+
+                case "app_mention":
+                    return await HandleSlackMessage(request.Event);
+
+                default:
+                    break;
+            }
+
+            return NotFound();
+        }
+
+        /// <summary>
+        /// Handles the slack challenge (Needed for setting up event subscriptions). 
+        /// </summary>
+        /// <param name="request">The slack challenge request</param>
+        /// <returns>The challenge property of the challenge request</returns>
+        public IActionResult HandleSlackChallenge(SlackChallenge request)
+        {
+            return Ok(request.Challenge);
+        }
+
+        /// <summary>
+        /// Handles all slack messages and calls the specified command handler if it is a command.
+        /// </summary>
+        /// <param name="slackEvent"></param>
+        /// <returns></returns>
+        public async Task<IActionResult> HandleSlackMessage(SlackEvent slackEvent)
+        {
+            var reply = new Dictionary<string, string>();
+            var hiddenMessage = false;
+
+            //
+            // Set the reply data
+            //
+
+            //reply["token"] = _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken");
+            reply["channel"] = slackEvent.Channel;
+            reply["user"] = slackEvent.User;
+
+            //
+            // Handle the command
+            //
+            //var user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, slackEvent.User);
+
+            var text = slackEvent.Text.Replace("<@UJZLBL7BL> ", "").ToLower().Trim().Split(' ').FirstOrDefault();
+            switch (text)
+            {
+                case "login":
+                case "link":
+                    reply["text"] = commandHandler.GetLoginLink(slackEvent);
+                    hiddenMessage = true;
+                    //user.ChannelId = await GetIMChannelFromUserAsync(await _httpClient.GetAsync("im.list"), slackEvent.User);
+                    //await _cosmosManager.ReplaceDocumentAsync<SlackUser>(Collection.Users, user, user.UserId);
+                    break;
+
+                case "logout":
+                case "unlink":
+                    //reply["text"] = BotResponses.LogoutMessage;
+                    //hiddenMessage = true;
+                    //await _secretManager.DeleteSecretAsync(slackEvent.User);
+                    //await _cosmosManager.RemoveDocumentAsync(Collection.Users, slackEvent.User);
+                    //break;
+                    reply["text"] = BotResponses.NotLoggedIn;
+                    break;
+
+                // TODO: Reminder after 4h to take a break    
+                case "start":
+                    reply["text"] = await commandHandler.StartWorkingAsync(slackEvent);
+                    break;
+
+                case "stop":
+                    reply["text"] = await commandHandler.StopWorkingAsync(slackEvent);
+                    break;
+
+                // stop@13:00 Maybe add 10 minute break for every 4h
+                case "pause":
+                case "break":
+                    reply["text"] = await commandHandler.PauseWorktimeAsync(slackEvent);
+                    break;
+
+                case "resume":
+                    reply["text"] = await commandHandler.ResumeWorktimeAsync(slackEvent);
+                    break;
+
+                case "starttime":
+                case "gettime":
+                    reply["text"] = await commandHandler.GetWorktimeAsync(slackEvent);
+                    break;
+
+                case "filter":
+                    reply["text"] = await commandHandler.FilterObjectsAsync(slackEvent);
+                    break;
+
+                default:
+                    break;
+            }
+
+            await SendReplyAsync(reply, hiddenMessage);
+
             return Ok();
         }
 
-        private string StartWorktime(SlackRequest request)
+        private async Task<string> GetIMChannelFromUserAsync(HttpResponseMessage list, string user)
         {
-            if (IsLoggedIn(request)){
-                var now = DateTime.Now;
-                // Insert start time of user into cosmosDB
-                return "StartTime has been set!";
+            foreach (var channel in JsonSerializer.Deserialize<Payload>(await list.Content.ReadAsStringAsync()).Ims)
+            {
+                if (channel.User == user)
+                {
+                    return channel.Id;
+                }
             }
-            return "You have to login before you can use this bot!\nType login or link to get the login link.";
+            return null;
         }
 
-        private bool IsLoggedIn(SlackRequest request) {
-            return _secretManager.GetSecret(request.Event.User) != null;
-        }
-
-        private async Task SendPostRequest(Dictionary<string, string> dict, bool secret)
+        private async void ReminderScheduler(int hour, int min, double intervalInHour, Action task)
         {
-            if (secret)
+            var queryable = _cosmosManager.GetAllSlackUsers();
+            while (queryable.HasMoreResults)
             {
-                await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(dict)); 
-            }
-            else
-            {
-                await _httpClient.PostAsync("chat.postMessage", new FormUrlEncodedContent(dict));
+                // Iterate through SlackUsers
+                foreach (SlackUser s in await queryable.ExecuteNextAsync<SlackUser>())
+                {
+                    var reply = new Dictionary<string, string>();
+                    reply["user"] = s.UserId;
+                    reply["channel"] = s.ChannelId;
+                    reply["text"] = BotResponses.TakeABreak;
+
+                    await SendReplyAsync(reply, true);
+                }
             }
         }
 
-        [NonAction]
-        public string LoginEventsAPI(SlackRequest request)
+        /// <summary>
+        /// Sends a reply either in the group channel or via direct message.
+        /// </summary>
+        /// <param name="replyData">The data of the reply (message, channel, ...)</param>
+        /// <param name="directMessage">True when it should be sent via direct message</param>
+        /// <returns></returns>
+        private async Task SendReplyAsync(Dictionary<string, string> replyData, bool directMessage)
         {
-            if (System.Diagnostics.Debugger.IsAttached)
+            string requestUri = "chat.postMessage";
+
+            //
+            // Use a different uri for the direct message
+            //
+            if (directMessage)
             {
-                return "<https://localhost:6001/auth/link/?uuid=" + _protector.Protect(request.Event.User) + "|Link TimeCockpit Account>";
+                requestUri = "chat.postEphemeral";
             }
-            else
-            {
-                return "<https://tcslackbot.azurewebsites.net/auth/link/?uuid=" + _protector.Protect(request.Event.User) + "|Link TimeCockpit Account>";
-            }
+            await _httpClient.PostAsync(requestUri, new FormUrlEncodedContent(replyData));
         }
 
-        [HttpPost]
-        [Route("status")]
-        public JsonResult GetStatus() // [FromForm] SlackSlashCommand ssc
+        /// <summary>
+        /// Validates the signature of the slack request.
+        /// </summary>
+        /// <param name="body">The request body</param>
+        /// <param name="headers">The request headers</param>
+        /// <returns>True if the signature is valid</returns>
+        private bool IsValidSignature(string body, IHeaderDictionary headers)
         {
-            var dict = HttpContext.Request.Form;
+            var timestamp = headers["X-Slack-Request-Timestamp"];
+            var signature = headers["X-Slack-Signature"];
+            var signingSecret = _secretManager.GetSecret("Slack-SigningSecret");
 
-            System.Console.WriteLine(dict["token"]);
+            var encoding = new UTF8Encoding();
+            using var hmac = new HMACSHA256(encoding.GetBytes(signingSecret));
+            var hash = hmac.ComputeHash(encoding.GetBytes($"v0:{timestamp}:{body}"));
+            var ownSignature = $"v0={BitConverter.ToString(hash).Replace("-", "").ToLower()}";
 
-            return new JsonResult(dict);
+            return ownSignature.Equals(signature);
         }
 
-
-        
+        /// <summary>
+        /// Deserializes the specified content to the specified type.
+        /// </summary>
+        /// <typeparam name="T">The type of the deserialized data</typeparam>
+        /// <param name="content">The serialized content</param>
+        /// <returns>The deserialized object of the specified type</returns>
+        private static T Deserialize<T>(string content)
+        {
+            return JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
     }
 }
-
-/*
- * Old Code
-[HttpPost]
-        [Route("slashcommand")]
-        public JsonResult HandleCommand([FromForm] SlackSlashCommand ssc)
-        {
-            return new JsonResult("You did it.");
-        }
-
-        [HttpPost]
-        [Route("ping")]
-        public IActionResult Ping([FromForm] SlackSlashCommand ssc)
-        {
-            return Ok("Pong");
-        }
- * 
- */
