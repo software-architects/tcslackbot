@@ -40,7 +40,7 @@ namespace TCSlackbot.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("login")]
-        public ActionResult Authenticate([FromQuery] string ReturnUrl = "/")
+        public IActionResult Authenticate([FromQuery] string ReturnUrl = "/")
         {
             return Challenge(new AuthenticationProperties { RedirectUri = ReturnUrl }, OpenIdConnectDefaults.AuthenticationScheme);
         }
