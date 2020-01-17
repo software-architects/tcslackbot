@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
 using System;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
+using TCSlackbot.Logic.Authentication;
 using TCSlackbot.Logic.Cosmos;
 using TCSlackbot.Logic.Resources;
 using TCSlackbot.Logic.TimeCockpit;
@@ -284,15 +286,25 @@ namespace TCSlackbot.Logic.Slack
             }
 
             //
+            // Create the data
+            //
+            var linkData = new LinkData
+            {
+                UserId = userId,
+                ValidUntil = DateTime.Now.AddHours(1)
+            };
+            var jsonData = JsonSerializer.Serialize(linkData);
+
+            //
             // Send the login link
             //
             if (System.Diagnostics.Debugger.IsAttached)
             {
-                return "<https://localhost:6001/auth/link/?uuid=" + _protector.Protect(slackEvent.User) + "|Link TimeCockpit Account>";
+                return "<https://localhost:6001/auth/link/?data=" + _protector.Protect(jsonData) + "|Link TimeCockpit Account>";
             }
             else
             {
-                return "<https://tcslackbot.azurewebsites.net/auth/link/?uuid=" + _protector.Protect(slackEvent.User) + "|Link TimeCockpit Account>";
+                return "<https://tcslackbot.azurewebsites.net/auth/link/?data=" + _protector.Protect(jsonData) + "|Link TimeCockpit Account>";
             }
         }
 
@@ -301,7 +313,8 @@ namespace TCSlackbot.Logic.Slack
         /// </summary>
         /// <param name="userId">The id of the user</param>
         /// <returns>The object of the slack user</returns>
-        public async Task<SlackUser> GetSlackUserAsync(string userId)
+        public async Task<SlackUser> GetSlackUserAsync
+            (string userId)
         {
             //
             // Check if the user is logged in

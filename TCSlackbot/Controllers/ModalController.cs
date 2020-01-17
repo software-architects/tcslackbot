@@ -9,7 +9,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
-using TCSlackbot.Logic.Cosmos;
 using TCSlackbot.Logic.Slack;
 using TCSlackbot.Logic.Slack.Requests;
 using TCSlackbot.Logic.Utils;
@@ -112,15 +111,52 @@ namespace TCSlackbot.Controllers
             await _httpClient.PostAsync("views.open", new StringContent(json, Encoding.UTF8, "application/json"));
             return Ok(json);
         }
+
         public async Task<IActionResult> ProcessModalDataAsync(SlackUser user)   /* , Dictionary<string,string> replyData */
         {
-            var payload = JsonSerializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
-            var json = HttpContext.Request.Form["payload"];
-            var parsed_json = JsonDocument.Parse(json);
-            foreach (var f in parsed_json.RootElement.EnumerateObject())
-            {
-                Console.WriteLine("Name: " + f.Name + ", Value: " + f.Value);
-            }
+            //var payload = JsonSerializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
+            //var json = HttpContext.Request.Form["payload"];
+            //var parsed_json = JsonDocument.Parse(json);
+            //// D:/Diplo/Payload/json
+            //foreach (var parsedPayload in parsed_json.RootElement.EnumerateObject())
+            //{
+            //    if (parsedPayload.NameEquals("View"))
+            //    {
+            //        foreach (var view in parsedPayload.Value.EnumerateObject())
+            //        {
+            //            if (view.NameEquals("values"))
+            //            {
+            //                foreach (var values in view.Value.EnumerateObject())
+            //                {
+            //                    var date = DateTime.Now;
+            //                    Console.WriteLine("Name: " + values.Name + ", Value: " + values.Value);
+            //                    foreach (var parameter in values.Value.EnumerateObject())
+            //                    {
+            //                        var formatter = new System.Globalization.DateTimeFormatInfo().SetAllDateTimePatterns();
+
+            //                        if (parameter.NameEquals("Date"))
+            //                        {
+            //                            date = parameter.Value[1];
+            //                        }
+            //                        if (parameter.NameEquals("StartTime"))
+            //                        {
+            //                            user.StartTime = parameter.Value[1].GetDateTime();
+            //                        }
+            //                        if (parameter.NameEquals("EndTime"))
+            //                        {
+            //                            user.EndTime = parameter.Value[1].GetDateTime();
+            //                        }
+            //                        if (parameter.NameEquals("Description"))
+            //                        {
+            //                            user.Description = parameter.Value[1].ToString();
+            //                        }
+            //                    }
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
+
             // user.StartTime = DateTime.Parse(payload.View.State.Values.AllValues["StartTime"].Value);
             // user.EndTime = DateTime.Parse(payload.View.State.Values.AllValues["StopTime"].Value);
             // user.Description = payload.View.State.Values.AllValues["Description"].Value;
