@@ -13,6 +13,7 @@
 }, "blocks": [
   {
     "type": "input",
+    "block_id": "date",
     "element": {
       "type": "datepicker",
       "placeholder": {
@@ -30,6 +31,7 @@
   },
   {
     "type": "input",
+    "block_id": "starttime",
     "element": {
       "type": "plain_text_input",
       "action_id": "StartTime",
@@ -45,6 +47,7 @@
   },
   {
     "type": "input",
+    "block_id": "endtime",
     "element": {
       "type": "plain_text_input",
       "action_id": "EndTime"
@@ -56,6 +59,7 @@
   },
   {
     "type": "section",
+    "block_id": "project",
     "text": {
       "type": "mrkdwn",
       "text": "Project"
@@ -98,6 +102,7 @@
   },
   {
     "type": "input",
+    "block_id":  "description",
     "element": {
       "type": "plain_text_input",
       "multiline": true,

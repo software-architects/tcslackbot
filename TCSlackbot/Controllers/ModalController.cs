@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
@@ -115,52 +116,50 @@ namespace TCSlackbot.Controllers
         public async Task<IActionResult> ProcessModalDataAsync(SlackUser user)   /* , Dictionary<string,string> replyData */
         {
             var payload = JsonSerializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
-            var json = HttpContext.Request.Form["payload"];
-            var parsed_json = JsonDocument.Parse(json);
-            // D:/Diplo/Payload/json
-            foreach (var parsedPayload in parsed_json.RootElement.EnumerateObject())
+            
+            TimeSpan startTime;
+            TimeSpan endTime;
+            String errorMessage = "{ \"response_action\": \"errors\", \"errors\": {";
+            if (payload.View.State.Values.Date.Date.Day  == null)
             {
-                if (parsedPayload.NameEquals("View"))
-                {
-                    foreach (var view in parsedPayload.Value.EnumerateObject())
-                    {
-                        if (view.NameEquals("values")) 
-                        {
-                            foreach(var values in view.Value.EnumerateObject())
-                            {
-                                var date = ;
-                                Console.WriteLine("Name: " + values.Name + ", Value: " + values.Value);
-                                foreach(var parameter in values.Value.EnumerateObject())
-                                {
-                                    var formatter = new System.Globalization.DateTimeFormatInfo().SetAllDateTimePatterns();
-
-                                    if (parameter.NameEquals("Date"))
-                                    {
-                                       date = parameter.Value[1];
-                                    }
-                                    if (parameter.NameEquals("StartTime"))
-                                    {
-                                        user.StartTime = parameter.Value[1].GetDateTime();
-                                    }
-                                    if (parameter.NameEquals("EndTime"))
-                                    {
-                                        user.EndTime = parameter.Value[1].GetDateTime();
-                                    }
-                                    if (parameter.NameEquals("Description"))
-                                    {
-                                        user.Description = parameter.Value[1].ToString();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                // TODO: send message to user
+                return Ok();
             }
-            // user.StartTime = DateTime.Parse(payload.View.State.Values.AllValues["StartTime"].Value);
-            // user.EndTime = DateTime.Parse(payload.View.State.Values.AllValues["StopTime"].Value);
-            // user.Description = payload.View.State.Values.AllValues["Description"].Value;
+            if (!TimeSpan.TryParse(payload.View.State.Values.Starttime.StartTime.Value, out startTime)) 
+            {
+                // TODO: send message to user
+                errorMessage += "\"starttime\": \"Please use a valid time format! (eg. \"08:00\")\",";
+            }
+            if (!TimeSpan.TryParse(payload.View.State.Values.Endtime.EndTime.Value, out endTime))
+            {
+                // TODO: send message to user
+                errorMessage += "\"endtime\": \"Please use a valid time format! (eg. \"08:00\")\",";
+            }
+            if (endTime.CompareTo(startTime) != 1)
+            {
+                errorMessage += "\"endtime\": \"End Time has to be after Start Time! (eg. \"08:00\")\",";
+            }
+            if (errorMessage.EndsWith(","))
+            {
+                errorMessage = errorMessage.Substring(0, errorMessage.Length - 1) + "}}";
+                /*
+                var replyData = new Dictionary<string, string>();
+                replyData["user"] = payload.User.Id;
+                replyData["text"] = errorMessage;
+
+                await _httpClient.PostAsync("https://747773f7.ngrok.io/modal", new FormUrlEncodedContent(replyData));
+                */
+                return Ok();
+            }
+            DateTime date = payload.View.State.Values.Date.Date.Day;
+            
+            user.StartTime = date + startTime; // startTime 
+
+            user.EndTime = date + endTime;
+            
+            user.Description = payload.View.State.Values.Description.Description.Value;
             user.IsWorking = false;
-            // await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
+            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
             // replyData["text"] = "Your time has been saved saved";
             // await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));
             return Ok();
