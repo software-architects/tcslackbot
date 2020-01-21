@@ -37,8 +37,7 @@ namespace TCSlackbot.Controllers
             ISecretManager secretManager,
             ICosmosManager cosmosManager,
             ITokenManager tokenManager,
-            ITCManager dataManager,
-            CommandHandler commandHandler
+            ITCManager dataManager
             )
         {
             _protector = provider.CreateProtector("UUIDProtector");
@@ -49,8 +48,7 @@ namespace TCSlackbot.Controllers
             _tokenManager = tokenManager;
             _tcDataManager = dataManager;
 
-            //_commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager, _tcDataManager);
-            _commandHandler = commandHandler;
+            _commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager, _tcDataManager);
         }
 
         /// <summary>
