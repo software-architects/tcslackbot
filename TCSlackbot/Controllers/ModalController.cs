@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
@@ -26,10 +25,18 @@ namespace TCSlackbot.Controllers
         private readonly ICosmosManager _cosmosManager;
         private readonly HttpClient _httpClient;
         private readonly ITokenManager _tokenManager;
-        private readonly ITCDataManager _tCDataManager;
-        private readonly CommandHandler commandHandler;
+        private readonly ITCManager _tCDataManager;
+        private readonly CommandHandler _commandHandler;
 
-        public ModalController(IDataProtectionProvider provider, ISecretManager secretManager, ICosmosManager cosmosManager, IHttpClientFactory factory, ITokenManager tokenManager, ITCDataManager dataManager)
+        public ModalController(
+            IHttpClientFactory factory,
+            IDataProtectionProvider provider,
+            ISecretManager secretManager,
+            ICosmosManager cosmosManager,
+            ITokenManager tokenManager,
+            ITCManager dataManager,
+            CommandHandler commandHandler
+            )
         {
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
@@ -38,7 +45,9 @@ namespace TCSlackbot.Controllers
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken"));
             _tokenManager = tokenManager;
             _tCDataManager = dataManager;
-            commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager, _tCDataManager);
+
+            _commandHandler = commandHandler;
+            //commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager, _tCDataManager);
         }
 
         /// <summary>
@@ -79,7 +88,7 @@ namespace TCSlackbot.Controllers
             //
             // Check if user is logged in, working
             //
-            var user = await commandHandler.GetSlackUserAsync(payload.User.Id);
+            var user = await _commandHandler.GetSlackUserAsync(payload.User.Id);
             if (user == null)
             {
                 // replyData["text"] = BotResponses.NotLoggedIn;
@@ -116,16 +125,16 @@ namespace TCSlackbot.Controllers
         public async Task<IActionResult> ProcessModalDataAsync(SlackUser user)   /* , Dictionary<string,string> replyData */
         {
             var payload = JsonSerializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
-            
+
             TimeSpan startTime;
             TimeSpan endTime;
             String errorMessage = "{ \"response_action\": \"errors\", \"errors\": {";
-            if (payload.View.State.Values.Date.Date.Day  == null)
+            if (payload.View.State.Values.Date.Date.Day == null)
             {
                 // TODO: send message to user
                 return Ok();
             }
-            if (!TimeSpan.TryParse(payload.View.State.Values.Starttime.StartTime.Value, out startTime)) 
+            if (!TimeSpan.TryParse(payload.View.State.Values.Starttime.StartTime.Value, out startTime))
             {
                 // TODO: send message to user
                 errorMessage += "\"starttime\": \"Please use a valid time format! (eg. \"08:00\")\",";
@@ -152,11 +161,11 @@ namespace TCSlackbot.Controllers
                 return Ok();
             }
             DateTime date = payload.View.State.Values.Date.Date.Day;
-            
+
             user.StartTime = date + startTime; // startTime 
 
             user.EndTime = date + endTime;
-            
+
             user.Description = payload.View.State.Values.Description.Description.Value;
             user.IsWorking = false;
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);

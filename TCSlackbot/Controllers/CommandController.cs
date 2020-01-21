@@ -28,10 +28,18 @@ namespace TCSlackbot.Controllers
         private readonly ICosmosManager _cosmosManager;
         private readonly HttpClient _httpClient;
         private readonly ITokenManager _tokenManager;
-        private readonly ITCDataManager _tcDataManager;
+        private readonly ITCManager _tcDataManager;
 
-        private readonly CommandHandler commandHandler;
-        public CommandController(IDataProtectionProvider provider, ISecretManager secretManager, ICosmosManager cosmosManager, IHttpClientFactory factory, ITokenManager tokenManager, ITCDataManager dataManager)
+        private readonly CommandHandler _commandHandler;
+        public CommandController(
+            IHttpClientFactory factory,
+            IDataProtectionProvider provider,
+            ISecretManager secretManager,
+            ICosmosManager cosmosManager,
+            ITokenManager tokenManager,
+            ITCManager dataManager,
+            CommandHandler commandHandler
+            )
         {
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
@@ -40,7 +48,9 @@ namespace TCSlackbot.Controllers
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken"));
             _tokenManager = tokenManager;
             _tcDataManager = dataManager;
-            commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager, _tcDataManager);
+
+            //_commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager, _tcDataManager);
+            _commandHandler = commandHandler;
         }
 
         /// <summary>
@@ -140,7 +150,7 @@ namespace TCSlackbot.Controllers
             {
                 case "login":
                 case "link":
-                    reply["text"] = commandHandler.GetLoginLink(slackEvent);
+                    reply["text"] = _commandHandler.GetLoginLink(slackEvent);
                     hiddenMessage = true;
                     //user.ChannelId = await GetIMChannelFromUserAsync(await _httpClient.GetAsync("im.list"), slackEvent.User);
                     //await _cosmosManager.ReplaceDocumentAsync<SlackUser>(Collection.Users, user, user.UserId);
@@ -158,30 +168,30 @@ namespace TCSlackbot.Controllers
 
                 // TODO: Reminder after 4h to take a break    
                 case "start":
-                    reply["text"] = await commandHandler.StartWorkingAsync(slackEvent);
+                    reply["text"] = await _commandHandler.StartWorkingAsync(slackEvent);
                     break;
 
                 case "stop":
-                    reply["text"] = await commandHandler.StopWorkingAsync(slackEvent);
+                    reply["text"] = await _commandHandler.StopWorkingAsync(slackEvent);
                     break;
 
                 // stop@13:00 Maybe add 10 minute break for every 4h
                 case "pause":
                 case "break":
-                    reply["text"] = await commandHandler.PauseWorktimeAsync(slackEvent);
+                    reply["text"] = await _commandHandler.PauseWorktimeAsync(slackEvent);
                     break;
 
                 case "resume":
-                    reply["text"] = await commandHandler.ResumeWorktimeAsync(slackEvent);
+                    reply["text"] = await _commandHandler.ResumeWorktimeAsync(slackEvent);
                     break;
 
                 case "starttime":
                 case "gettime":
-                    reply["text"] = await commandHandler.GetWorktimeAsync(slackEvent);
+                    reply["text"] = await _commandHandler.GetWorktimeAsync(slackEvent);
                     break;
 
                 case "filter":
-                    reply["text"] = await commandHandler.FilterObjectsAsync(slackEvent);
+                    reply["text"] = await _commandHandler.FilterObjectsAsync(slackEvent);
                     break;
 
                 default:

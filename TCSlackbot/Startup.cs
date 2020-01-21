@@ -10,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
-using TCSlackbot.Logic;
 using TCSlackbot.Logic.Utils;
 
 namespace TCSlackbot
@@ -83,10 +82,14 @@ namespace TCSlackbot
                 client.BaseAddress = new Uri("https://slack.com/api/");
             });
 
-            services.AddTransient<ISecretManager, SecretManager>();
-            services.AddTransient<ICosmosManager, CosmosManager>();
-            services.AddTransient<ITokenManager, TokenManager>();
-            services.AddTransient<ITCDataManager, TCManager>();
+            services.AddHttpClient<TCManager>();
+            services.AddHttpClient<TokenManager>();
+
+            //services.AddTransient<ISecretManager, SecretManager>();
+            //services.AddTransient<ICosmosManager, CosmosManager>();
+            //services.AddTransient<ITokenManager, TokenManager>();
+            //services.AddTransient<ITCManager, TCManager>();
+
             services.AddControllers();
             services.AddDataProtection();
         }

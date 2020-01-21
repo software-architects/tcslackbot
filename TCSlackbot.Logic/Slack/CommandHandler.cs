@@ -16,9 +16,13 @@ namespace TCSlackbot.Logic.Slack
         private readonly ICosmosManager _cosmosManager;
         private readonly ISecretManager _secretManager;
         private readonly ITokenManager _tokenManager;
-        private readonly ITCDataManager _tcDataManager;
+        private readonly ITCManager _tcDataManager;
 
-        public CommandHandler(IDataProtector protector, ICosmosManager cosmosManager, ISecretManager secretManager, ITokenManager tokenManager, ITCDataManager tcDataManager)
+        public CommandHandler(IDataProtector protector,
+            ICosmosManager cosmosManager,
+            ISecretManager secretManager,
+            ITokenManager tokenManager,
+            ITCManager tcDataManager)
         {
             _protector = protector;
             _cosmosManager = cosmosManager;

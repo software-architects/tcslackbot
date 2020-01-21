@@ -11,9 +11,14 @@ using TCSlackbot.Logic.TimeCockpit.Objects;
 
 namespace TCSlackbot.Logic.Utils
 {
-    public class TCManager : ITCDataManager
+    public class TCManager : ITCManager
     {
-        private static readonly HttpClient client = new HttpClient();
+        private readonly HttpClient _client;
+
+        public TCManager(HttpClient client)
+        {
+            _client = client;
+        }
 
         public async Task<IEnumerable<T>> GetObjectsAsync<T>(string accessToken)
         {
@@ -28,7 +33,7 @@ namespace TCSlackbot.Logic.Utils
             };
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await client.SendAsync(request);
+            var response = await _client.SendAsync(request);
             var responseContent = await response.Content.ReadAsStringAsync();
 
             // Parse response
@@ -48,7 +53,7 @@ namespace TCSlackbot.Logic.Utils
             };
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await client.SendAsync(request);
+            var response = await _client.SendAsync(request);
             var responseContent = await response.Content.ReadAsStringAsync();
 
             // Parse response
