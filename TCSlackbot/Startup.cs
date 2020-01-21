@@ -85,8 +85,10 @@ namespace TCSlackbot
 
             services.AddTransient<ISecretManager, SecretManager>();
             services.AddTransient<ICosmosManager, CosmosManager>();
-            services.AddTransient<ITokenManager, TokenManager>();
-            services.AddTransient<ITCDataManager, TCManager>();
+
+            services.AddHttpClient<ITCManager, TCManager>();
+            services.AddHttpClient<ITokenManager, TokenManager>();
+
             services.AddControllers();
             services.AddDataProtection();
         }

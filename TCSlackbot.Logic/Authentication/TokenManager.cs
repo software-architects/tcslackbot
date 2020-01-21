@@ -7,14 +7,15 @@ namespace TCSlackbot.Logic.Utils
 {
     public class TokenManager : ITokenManager
     {
-        private static readonly HttpClient client = new HttpClient();
         public static readonly AccessTokenCache accessTokenCache = new AccessTokenCache();
 
+        private readonly HttpClient _client;
         private readonly IConfiguration _configuration;
         private readonly ISecretManager _secretManager;
 
-        public TokenManager(IConfiguration configuration, ISecretManager secretManager)
+        public TokenManager(HttpClient client, IConfiguration configuration, ISecretManager secretManager)
         {
+            _client = client;
             _configuration = configuration;
             _secretManager = secretManager;
         }
@@ -83,12 +84,12 @@ namespace TCSlackbot.Logic.Utils
             //
             // Find the discovery endpoint
             //
-            var discoveryResponse = await client.GetDiscoveryDocumentAsync("https://auth.timecockpit.com/");
+            var discoveryResponse = await _client.GetDiscoveryDocumentAsync("https://auth.timecockpit.com/");
 
             //
             // Send request to the auth endpoint
             //
-            var response = await client.RequestRefreshTokenAsync(new RefreshTokenRequest
+            var response = await _client.RequestRefreshTokenAsync(new RefreshTokenRequest
             {
                 Address = discoveryResponse.TokenEndpoint,
                 ClientId = _configuration["TimeCockpit-ClientId"],

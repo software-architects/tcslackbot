@@ -72,7 +72,7 @@
       },
       {
         "type": "section",
-        "block_id": "cBK",
+        "block_id": "project",
         "text": {
           "type": "mrkdwn",
           "text": "Project",

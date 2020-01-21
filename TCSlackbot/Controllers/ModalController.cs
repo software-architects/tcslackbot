@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
+using TCSlackbot.Logic.Cosmos;
 using TCSlackbot.Logic.Slack;
 using TCSlackbot.Logic.Slack.Requests;
 using TCSlackbot.Logic.Utils;
@@ -24,10 +25,17 @@ namespace TCSlackbot.Controllers
         private readonly ICosmosManager _cosmosManager;
         private readonly HttpClient _httpClient;
         private readonly ITokenManager _tokenManager;
-        private readonly ITCDataManager _tCDataManager;
-        private readonly CommandHandler commandHandler;
+        private readonly ITCManager _tCDataManager;
+        private readonly CommandHandler _commandHandler;
 
-        public ModalController(IDataProtectionProvider provider, ISecretManager secretManager, ICosmosManager cosmosManager, IHttpClientFactory factory, ITokenManager tokenManager, ITCDataManager dataManager)
+        public ModalController(
+            IHttpClientFactory factory,
+            IDataProtectionProvider provider,
+            ISecretManager secretManager,
+            ICosmosManager cosmosManager,
+            ITokenManager tokenManager,
+            ITCManager dataManager
+            )
         {
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
@@ -36,7 +44,8 @@ namespace TCSlackbot.Controllers
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken"));
             _tokenManager = tokenManager;
             _tCDataManager = dataManager;
-            commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager, _tCDataManager);
+
+            _commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager, _tCDataManager);
         }
 
         /// <summary>
@@ -77,7 +86,7 @@ namespace TCSlackbot.Controllers
             //
             // Check if user is logged in, working
             //
-            var user = await commandHandler.GetSlackUserAsync(payload.User.Id);
+            var user = await _commandHandler.GetSlackUserAsync(payload.User.Id);
             if (user == null)
             {
                 // replyData["text"] = BotResponses.NotLoggedIn;
@@ -111,57 +120,53 @@ namespace TCSlackbot.Controllers
             await _httpClient.PostAsync("views.open", new StringContent(json, Encoding.UTF8, "application/json"));
             return Ok(json);
         }
-
         public async Task<IActionResult> ProcessModalDataAsync(SlackUser user)   /* , Dictionary<string,string> replyData */
         {
-            //var payload = JsonSerializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
-            //var json = HttpContext.Request.Form["payload"];
-            //var parsed_json = JsonDocument.Parse(json);
-            //// D:/Diplo/Payload/json
-            //foreach (var parsedPayload in parsed_json.RootElement.EnumerateObject())
-            //{
-            //    if (parsedPayload.NameEquals("View"))
-            //    {
-            //        foreach (var view in parsedPayload.Value.EnumerateObject())
-            //        {
-            //            if (view.NameEquals("values"))
-            //            {
-            //                foreach (var values in view.Value.EnumerateObject())
-            //                {
-            //                    var date = DateTime.Now;
-            //                    Console.WriteLine("Name: " + values.Name + ", Value: " + values.Value);
-            //                    foreach (var parameter in values.Value.EnumerateObject())
-            //                    {
-            //                        var formatter = new System.Globalization.DateTimeFormatInfo().SetAllDateTimePatterns();
+            var payload = JsonSerializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
 
-            //                        if (parameter.NameEquals("Date"))
-            //                        {
-            //                            date = parameter.Value[1];
-            //                        }
-            //                        if (parameter.NameEquals("StartTime"))
-            //                        {
-            //                            user.StartTime = parameter.Value[1].GetDateTime();
-            //                        }
-            //                        if (parameter.NameEquals("EndTime"))
-            //                        {
-            //                            user.EndTime = parameter.Value[1].GetDateTime();
-            //                        }
-            //                        if (parameter.NameEquals("Description"))
-            //                        {
-            //                            user.Description = parameter.Value[1].ToString();
-            //                        }
-            //                    }
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
+            TimeSpan startTime;
+            TimeSpan endTime;
+            String errorMessage = "{ \"response_action\": \"errors\", \"errors\": {";
+            if (payload.View.State.Values.Date.Date.Day == null)
+            {
+                // TODO: send message to user
+                return Ok();
+            }
+            if (!TimeSpan.TryParse(payload.View.State.Values.Starttime.StartTime.Value, out startTime))
+            {
+                // TODO: send message to user
+                errorMessage += "\"starttime\": \"Please use a valid time format! (eg. \"08:00\")\",";
+            }
+            if (!TimeSpan.TryParse(payload.View.State.Values.Endtime.EndTime.Value, out endTime))
+            {
+                // TODO: send message to user
+                errorMessage += "\"endtime\": \"Please use a valid time format! (eg. \"08:00\")\",";
+            }
+            if (endTime.CompareTo(startTime) != 1)
+            {
+                errorMessage += "\"endtime\": \"End Time has to be after Start Time! (eg. \"08:00\")\",";
+            }
+            if (errorMessage.EndsWith(","))
+            {
+                errorMessage = errorMessage.Substring(0, errorMessage.Length - 1) + "}}";
+                /*
+                var replyData = new Dictionary<string, string>();
+                replyData["user"] = payload.User.Id;
+                replyData["text"] = errorMessage;
 
-            // user.StartTime = DateTime.Parse(payload.View.State.Values.AllValues["StartTime"].Value);
-            // user.EndTime = DateTime.Parse(payload.View.State.Values.AllValues["StopTime"].Value);
-            // user.Description = payload.View.State.Values.AllValues["Description"].Value;
+                await _httpClient.PostAsync("https://747773f7.ngrok.io/modal", new FormUrlEncodedContent(replyData));
+                */
+                return Ok();
+            }
+            DateTime date = payload.View.State.Values.Date.Date.Day;
+
+            user.StartTime = date + startTime; // startTime 
+
+            user.EndTime = date + endTime;
+
+            user.Description = payload.View.State.Values.Description.Description.Value;
             user.IsWorking = false;
-            // await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
+            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
             // replyData["text"] = "Your time has been saved saved";
             // await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));
             return Ok();

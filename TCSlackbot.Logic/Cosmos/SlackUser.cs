@@ -56,8 +56,8 @@ namespace TCSlackbot.Logic
                 }
                 else
                 {
-                    StartTime = null;
-                    EndTime = null;
+                    // StartTime = null;
+                    // EndTime = null;
                 }
             }
         }
