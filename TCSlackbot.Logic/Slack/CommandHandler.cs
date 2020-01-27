@@ -168,11 +168,14 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.NotOnBreak;
             }
 
-            // TODO: Implement
-            user.TotalBreakTime = (DateTime.Now.Minute - user.BreakTime.Value.Minute);
-            user.BreakTime = null;
+            if (!user.StopBreak(DateTime.Now))
+            {
+                return BotResponses.EndBreakFailure;
+            }
+
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
-            return "Break has ended. Total Break Time: " + user.TotalBreakTime + " min";
+
+            return BotResponses.BreakEnded;
         }
 
         /// <summary>
@@ -254,9 +257,11 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.AlreadyOnBreak;
             }
 
-            // TODO: Set break time? Maybe with a list of breaks?
+            if (!user.StartBreak(DateTime.Now))
+            {
+                return BotResponses.StartBreakFailure;
+            }
 
-            user.BreakTime = DateTime.Now;
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
             return BotResponses.StartedBreak;

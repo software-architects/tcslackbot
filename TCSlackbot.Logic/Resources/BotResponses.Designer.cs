@@ -88,6 +88,24 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string BreakEnded {
+            get {
+                return ResourceManager.GetString("BreakEnded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to stop the break..
+        /// </summary>
+        public static string EndBreakFailure {
+            get {
+                return ResourceManager.GetString("EndBreakFailure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Specified object not found..
         /// </summary>
         public static string FilterObjectNotFound {
@@ -139,6 +157,15 @@ namespace TCSlackbot.Logic.Resources {
         public static string NotWorking {
             get {
                 return ResourceManager.GetString("NotWorking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to start break..
+        /// </summary>
+        public static string StartBreakFailure {
+            get {
+                return ResourceManager.GetString("StartBreakFailure", resourceCulture);
             }
         }
         
