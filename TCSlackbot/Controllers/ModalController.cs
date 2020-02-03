@@ -65,17 +65,7 @@ namespace TCSlackbot.Controllers
             //
             if (payload.Type == "block_actions" || payload.Type == "view_closed")
                 return Ok();
-
-            //
-            // Preparing reply for the user
-            // TODO: Somehow get the channel
-            // https://api.slack.com/types/im
-            //
-
-            // var replyData = new Dictionary<string, string>();
-            // replyData["channel"] = payload.Channel.Id;
-            // replyData["user"] = payload.User.Id;
-
+           
             //
             // Check if user is logged in, working
             //
@@ -92,6 +82,7 @@ namespace TCSlackbot.Controllers
                 // await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));                
                 return Ok();
             }
+
             switch (payload.Type)
             {
                 case "message_action":
@@ -137,7 +128,7 @@ namespace TCSlackbot.Controllers
             }
             if (endTime.CompareTo(startTime) != 1)
             {
-                errorMessage += "\"endtime\": \"End Time has to be after Start Time! (eg. \"08:00\")\",";
+                errorMessage += "\"endtime\": \"End Time has to be after Start Time!";
             }
             if (errorMessage.EndsWith(","))
             {
@@ -151,6 +142,7 @@ namespace TCSlackbot.Controllers
                 */
                 return Ok();
             }
+
             DateTime date = payload.View.State.Values.Date.Date.Day;
             
             user.StartTime = date + startTime; // startTime 
@@ -160,8 +152,11 @@ namespace TCSlackbot.Controllers
             user.Description = payload.View.State.Values.Description.Description.Value;
             user.IsWorking = false;
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
-            // replyData["text"] = "Your time has been saved saved";
-            // await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));
+            var replyData = new Dictionary<string, string>();
+            replyData["user"] = payload.User.Id;
+            replyData["channel"] = await GetIMChannelFromUserAsync(replyData["user"]);
+            replyData["text"] = "Your time has been saved saved";
+            await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));
             return Ok();
         }
         /// <summary>
@@ -184,6 +179,23 @@ namespace TCSlackbot.Controllers
             return ownSignature.Equals(signature);
         }
 
+        /// <summary>
+        /// Get the IM channel id from user
+        /// </summary>
+        /// <param name="user">Id of user</param>
+        /// <returns>channel id</returns>
+        public async Task<string> GetIMChannelFromUserAsync(string user)
+        {
+            var list = await _httpClient.GetAsync("https://slack.com/api/conversations.list?types=im");
+            foreach (var channel in JsonSerializer.Deserialize<ConversationsList>(await list.Content.ReadAsStringAsync()).Channels)
+            {
+                if (channel.User == user)
+                {
+                    return channel.Id;
+                }
+            }
+            return null;
+        }
         /// <summary>
         /// Deserializes the specified content to the specified type.
         /// </summary>
