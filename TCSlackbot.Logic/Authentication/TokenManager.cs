@@ -26,7 +26,7 @@ namespace TCSlackbot.Logic.Utils
         /// <param name="userId">The id of the user</param>
         /// <returns>Either the access token if successful or default if something went wrong 
         /// (The user may need to login again if the refresh token in the key vault was invalid.)</returns>
-        public async Task<string> GetAccessTokenAsync(string userId)
+        public async Task<string?> GetAccessTokenAsync(string userId)
         {
             //
             // Check if already in the cache
@@ -89,7 +89,7 @@ namespace TCSlackbot.Logic.Utils
             //
             // Send request to the auth endpoint
             //
-            var response = await _client.RequestRefreshTokenAsync(new RefreshTokenRequest
+            using var rtRequest = new RefreshTokenRequest
             {
                 Address = discoveryResponse.TokenEndpoint,
                 ClientId = _configuration["TimeCockpit-ClientId"],
@@ -97,7 +97,8 @@ namespace TCSlackbot.Logic.Utils
                 Scope = "openid offline_access",
                 RefreshToken = oldRefreshToken,
                 ClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader
-            });
+            };
+            var response = await _client.RequestRefreshTokenAsync(rtRequest);
 
             // Could not renew the tokens
             if (response.IsError)

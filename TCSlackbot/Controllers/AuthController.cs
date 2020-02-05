@@ -13,6 +13,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
 using TCSlackbot.Logic.Authentication;
+using TCSlackbot.Logic.Utils;
 
 namespace TCSlackbot.Controllers
 {
@@ -30,6 +31,13 @@ namespace TCSlackbot.Controllers
             IConfiguration config,
             IDataProtectionProvider provider)
         {
+            if (provider is null)
+            {
+#pragma warning disable CA2208 // Instantiate argument exceptions correctly
+                throw new ArgumentNullException("IDataProtectionProvider");
+#pragma warning restore CA2208 // Instantiate argument exceptions correctly
+            }
+
             _logger = logger;
             _configuration = config;
             _protector = provider.CreateProtector("UUIDProtector");
@@ -42,9 +50,14 @@ namespace TCSlackbot.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("login")]
-        public IActionResult Authenticate([FromQuery] string ReturnUrl = "/")
+        public IActionResult Authenticate([FromQuery] Uri ReturnUri)
         {
-            return Challenge(new AuthenticationProperties { RedirectUri = ReturnUrl }, OpenIdConnectDefaults.AuthenticationScheme);
+            if (ReturnUri == null)
+            {
+                ReturnUri = new Uri("/");
+            }
+
+            return Challenge(new AuthenticationProperties { RedirectUri = ReturnUri.AbsoluteUri }, OpenIdConnectDefaults.AuthenticationScheme);
         }
 
         /// <summary>
@@ -64,7 +77,7 @@ namespace TCSlackbot.Controllers
                 string decryptedData = _protector.Unprotect(encryptedData);
 
                 // Deserialize json
-                var jsonData = JsonSerializer.Deserialize<LinkData>(decryptedData);
+                var jsonData = Serializer.Deserialize<LinkData>(decryptedData);
 
                 // Validate the time
                 if (DateTime.Now > jsonData.ValidUntil)
@@ -74,7 +87,7 @@ namespace TCSlackbot.Controllers
 
                 // Associate the uuid with the refresh token
                 var azureServiceTokenProvider = new AzureServiceTokenProvider();
-                var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+                using var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
 
                 await keyVaultClient.SetSecretAsync(Program.GetKeyVaultEndpoint(), jsonData.UserId, refreshToken);
 

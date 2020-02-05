@@ -14,15 +14,15 @@ namespace TCSlackbot.Logic.Slack.Requests
         public UserChannel Channel { get; set; }
         [JsonPropertyName("user")]
         public UserChannel User { get; set; }
+    }
 
-        //User and Channel have the same properties
-        public partial class UserChannel
-        {
-            [JsonPropertyName("id")]
-            public string Id { get; set; }
+    //User and Channel have the same properties
+    public class UserChannel
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; }
 
-            [JsonPropertyName("name")]
-            public string Name { get; set; }
-        }
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
     }
 }

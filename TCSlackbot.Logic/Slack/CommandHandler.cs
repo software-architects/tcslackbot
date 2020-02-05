@@ -40,6 +40,11 @@ namespace TCSlackbot.Logic.Slack
         /// <returns>The bot response message</returns>
         public async Task<string> GetWorktimeAsync(SlackEvent slackEvent)
         {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
             var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
@@ -64,6 +69,11 @@ namespace TCSlackbot.Logic.Slack
         /// <returns>The bot response message</returns>
         public async Task<string> StartWorkingAsync(SlackEvent slackEvent)
         {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
             var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
@@ -94,10 +104,15 @@ namespace TCSlackbot.Logic.Slack
         /// <returns>The bot response message</returns>
         public async Task<string> StopWorkingAsync(SlackEvent slackEvent)
         {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
             var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
-            if (userId is null)
+            if (user is null)
             {
                 return BotResponses.NotLoggedIn;
             }
@@ -149,6 +164,11 @@ namespace TCSlackbot.Logic.Slack
         /// <returns>The bot response message</returns>
         public async Task<string> ResumeWorktimeAsync(SlackEvent slackEvent)
         {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
             var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
@@ -167,11 +187,14 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.NotOnBreak;
             }
 
-            // TODO: Implement
-            user.TotalBreakTime = (DateTime.Now.Minute - user.BreakTime.Value.Minute);
-            user.BreakTime = null;
+            if (!user.StopBreak(DateTime.Now))
+            {
+                return BotResponses.EndBreakFailure;
+            }
+
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
-            return "Break has ended. Total Break Time: " + user.TotalBreakTime + " min";
+
+            return BotResponses.BreakEnded;
         }
 
         /// <summary>
@@ -181,6 +204,11 @@ namespace TCSlackbot.Logic.Slack
         /// <returns>The bot response message</returns>
         public async Task<string> FilterObjectsAsync(SlackEvent slackEvent)
         {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
             var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
@@ -206,7 +234,7 @@ namespace TCSlackbot.Logic.Slack
                     if (accessToken != null)
                     {
                         var data = await _tcDataManager.GetFilteredObjectsAsync<Project>(accessToken, queryData);
-                        if (data.Count() != 0)
+                        if (data.Any())
                         {
                             return string.Join('\n', data.Take(10).Select(element => $"- {element.ProjectName}"));
                         }
@@ -235,6 +263,11 @@ namespace TCSlackbot.Logic.Slack
         /// <returns>The bot response message</returns>
         public async Task<string> PauseWorktimeAsync(SlackEvent slackEvent)
         {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
             var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
@@ -253,9 +286,11 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.AlreadyOnBreak;
             }
 
-            // TODO: Set break time? Maybe with a list of breaks?
+            if (!user.StartBreak(DateTime.Now))
+            {
+                return BotResponses.StartBreakFailure;
+            }
 
-            user.BreakTime = DateTime.Now;
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
             return BotResponses.StartedBreak;
@@ -278,6 +313,11 @@ namespace TCSlackbot.Logic.Slack
         /// <returns>The login link as a string</returns>
         public string GetLoginLink(SlackEvent slackEvent)
         {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
             var userId = slackEvent.User;
 
             //
@@ -316,7 +356,7 @@ namespace TCSlackbot.Logic.Slack
         /// </summary>
         /// <param name="userId">The id of the user</param>
         /// <returns>The object of the slack user</returns>
-        public async Task<SlackUser> GetSlackUserAsync
+        public async Task<SlackUser?> GetSlackUserAsync
             (string userId)
         {
             //
@@ -324,13 +364,13 @@ namespace TCSlackbot.Logic.Slack
             //
             if (!IsLoggedIn(userId))
             {
-                return default;
+                return null;
             }
 
             //
             // Create a new user if not found
             //
-            var user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, userId); ;
+            SlackUser? user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, userId);
             if (user is null)
             {
                 user = await _cosmosManager.CreateDocumentAsync(Collection.Users, new SlackUser { UserId = userId });
@@ -339,9 +379,9 @@ namespace TCSlackbot.Logic.Slack
             //
             // Check for a tampered userid
             //
-            if (user is null || user.UserId != userId)
+            if (user != null && user.UserId != userId)
             {
-                user = default;
+                user = null;
             }
 
             return user;

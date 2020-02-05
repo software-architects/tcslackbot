@@ -1,10 +1,11 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace TCSlackbot.Logic.TimeCockpit.Objects
 {
-    class ODataResponse<T>
+    public class ODataResponse<T>
     {
         [JsonPropertyName("value")]
-        public T[] Value { get; set; }
+        public List<T> Value { get; } = new List<T>();
     }
 }

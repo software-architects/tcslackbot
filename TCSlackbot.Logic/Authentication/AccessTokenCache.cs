@@ -46,7 +46,7 @@ namespace TCSlackbot.Logic
         /// </summary>
         /// <param name="userId">The id of the user</param>
         /// <returns>The access token or default if it is already expired</returns>
-        public string Get(string userId)
+        public string? Get(string userId)
         {
             //
             // Get the token
@@ -74,7 +74,7 @@ namespace TCSlackbot.Logic
         /// </summary>
         /// <param name="token">The specified token to check</param>
         /// <returns>True if it's has not yet expired</returns>
-        private bool IsValidToken(string token)
+        private static bool IsValidToken(string token)
         {
             if (string.IsNullOrEmpty(token))
             {
