@@ -42,7 +42,7 @@ namespace TCSlackbot.Logic
         /// <summary>
         /// The list of breaks during a working session. 
         /// </summary>
-        public Stack<Break> Breaks { get; } = new Stack<Break>();
+        public Stack<Break>? Breaks { get; set; }
 
         /// <summary>
         /// Boolean whether the user is working.
@@ -71,7 +71,7 @@ namespace TCSlackbot.Logic
         public bool IsOnBreak
         {
             // Check ALL breaks (you could theoretically also only check the latest one)
-            get => Breaks.Any(b => b.End is null);
+            get => !(Breaks is null) || Breaks.Any(b => b.End is null);
         }
 
         /// <summary>
@@ -90,13 +90,21 @@ namespace TCSlackbot.Logic
         /// <returns>True if successful</returns>
         public bool StartBreak(DateTime date)
         {
-            // 1. Get the top of the stack
-            var @break = Breaks.Peek();
-
-            // 2. Check if there's already a break which has not been ended yet
-            if (@break.End is null)
+            if (Breaks == null)
             {
-                return false;
+                Breaks = new Stack<Break>();
+            }
+
+            if (Breaks.Count != 0)
+            {
+                // 1. Get the top of the stack
+                var @break = Breaks.Peek();
+
+                // 2. Check if there's already a break which has not been ended yet
+                if (@break.End is null)
+                {
+                    return false;
+                }
             }
 
             // 3. Insert a new break
@@ -109,7 +117,7 @@ namespace TCSlackbot.Logic
 
             return true;
         }
-        
+
         /// <summary>
         /// Stops the current breaks.
         /// </summary>
@@ -117,6 +125,11 @@ namespace TCSlackbot.Logic
         /// <returns>True if successful</returns>
         public bool StopBreak(DateTime date)
         {
+            if (Breaks == null)
+            {
+                return false;
+            }
+
             // 1. Get the top of the stack 
             var @break = Breaks.Peek();
 
