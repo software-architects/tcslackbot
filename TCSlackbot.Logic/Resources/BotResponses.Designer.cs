@@ -213,5 +213,14 @@ namespace TCSlackbot.Logic.Resources {
                 return ResourceManager.GetString("TakeABreak", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You successfully unlinked your account..
+        /// </summary>
+        public static string Unlinked {
+            get {
+                return ResourceManager.GetString("Unlinked", resourceCulture);
+            }
+        }
     }
 }

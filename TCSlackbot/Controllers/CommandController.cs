@@ -186,15 +186,9 @@ namespace TCSlackbot.Controllers
 
                 case "logout":
                 case "unlink":
-                    //reply["text"] = BotResponses.LogoutMessage;
-                    //hiddenMessage = true;
-                    //await _secretManager.DeleteSecretAsync(slackEvent.User);
-                    //await _cosmosManager.RemoveDocumentAsync(Collection.Users, slackEvent.User);
-                    //break;
-                    reply["text"] = BotResponses.NotLoggedIn;
+                    reply["text"] = await _commandHandler.Logout(slackEvent);
                     break;
 
-                // TODO: Reminder after 4h to take a break    
                 case "start":
                     reply["text"] = await _commandHandler.StartWorkingAsync(slackEvent);
                     break;

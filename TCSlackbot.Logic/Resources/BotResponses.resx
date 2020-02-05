@@ -169,4 +169,7 @@ Type login or link to get the login link.</value>
   <data name="StartBreakFailure" xml:space="preserve">
     <value>Failed to start break.</value>
   </data>
+  <data name="Unlinked" xml:space="preserve">
+    <value>You successfully unlinked your account.</value>
+  </data>
 </root>

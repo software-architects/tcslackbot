@@ -86,7 +86,7 @@ namespace TCSlackbot.Logic.Slack
             {
                 return BotResponses.AlreadyWorking;
             }
-            
+
             //
             // Start working
             //
@@ -257,6 +257,26 @@ namespace TCSlackbot.Logic.Slack
         }
 
         /// <summary>
+        /// Logs the user out and deletes his refresh token.
+        /// </summary>
+        /// <param name="slackEvent"></param>
+        /// <returns>The bot response message</returns>
+        public async Task<string> Logout(SlackEvent slackEvent)
+        {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
+            await _secretManager.DeleteSecretAsync(slackEvent.User);
+
+            // TODO: Remove all user data too?
+            //await _cosmosManager.RemoveDocumentAsync(Collection.Users, slackEvent.User);
+
+            return BotResponses.Unlinked;
+        }
+
+        /// <summary>
         /// The user wants a break. 
         /// </summary>
         /// <param name="slackEvent"></param>
@@ -356,8 +376,7 @@ namespace TCSlackbot.Logic.Slack
         /// </summary>
         /// <param name="userId">The id of the user</param>
         /// <returns>The object of the slack user</returns>
-        public async Task<SlackUser?> GetSlackUserAsync
-            (string userId)
+        public async Task<SlackUser?> GetSlackUserAsync(string userId)
         {
             //
             // Check if the user is logged in
