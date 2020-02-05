@@ -76,13 +76,18 @@ namespace TCSlackbot.Logic
             get => Breaks.Any(b => b.End is null);
         }
 
+        /// <summary>
+        /// Starts a break and adds it to the list.
+        /// </summary>
+        /// <param name="date">The time, when the break started.</param>
+        /// <returns>True if successful</returns>
         public bool StartBreak(DateTime date)
         {
             // 1. Get the top of the stack
             var @break = Breaks.Peek();
 
-            // 2. Check if the end is set (break has ended)
-            if (@break.Start is null || @break.End is null)
+            // 2. Check if there's already a break which has not been ended yet
+            if (@break.End is null)
             {
                 return false;
             }
@@ -97,14 +102,19 @@ namespace TCSlackbot.Logic
 
             return true;
         }
-
+        
+        /// <summary>
+        /// Stops the current breaks.
+        /// </summary>
+        /// <param name="date">The time, when the break stopped.</param>
+        /// <returns>True if successful</returns>
         public bool StopBreak(DateTime date)
         {
             // 1. Get the top of the stack 
             var @break = Breaks.Peek();
 
-            // 2. Check if the end is null (break has not ended)
-            if (@break.End is null)
+            // 2. Check if the there's an break which has not been ended yet
+            if (@break.End != null)
             {
                 return false;
             }

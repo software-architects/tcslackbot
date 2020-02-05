@@ -329,6 +329,8 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.StartBreakFailure;
             }
 
+
+
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
             return BotResponses.StartedBreak;
