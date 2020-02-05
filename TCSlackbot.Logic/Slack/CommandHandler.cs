@@ -269,10 +269,6 @@ namespace TCSlackbot.Logic.Slack
             }
 
             var userId = slackEvent.User;
-            if (!IsLoggedIn(userId))
-            {
-                return BotResponses.NotLoggedIn;
-            }
 
             var user = await GetSlackUserAsync(userId);
             if (user is null)
