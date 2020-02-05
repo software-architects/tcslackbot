@@ -124,6 +124,15 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to You are on break..
+        /// </summary>
+        public static string ErrorOnBreak {
+            get {
+                return ResourceManager.GetString("ErrorOnBreak", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Specified object not found..
         /// </summary>
         public static string FilterObjectNotFound {

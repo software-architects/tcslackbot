@@ -88,6 +88,11 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.AlreadyWorking;
             }
 
+            if (user.IsOnBreak)
+            {
+                return BotResponses.ErrorOnBreak;
+            }
+
             //
             // Start working
             //
@@ -123,37 +128,23 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.NotWorking;
             }
 
+            if (user.IsOnBreak)
+            {
+                return BotResponses.ErrorOnBreak;
+            }
+
             //
             // Send the request to the TimeCockpit API
             //
-            user.EndTime = DateTime.Now;
+            user.IsWorking = false;
 
             // TODO: Send the request
 
             //
             // Stop working (reset the start and end time)
             //
-            user.IsWorking = false;
+            user.ResetWorktime();
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
-
-            //
-            // This will maybe be done with Slack Modal 
-            //
-            // TODO: Implement
-            var message = slackEvent.Text.Split(" ");
-            try
-            {
-                // user.Project = message[1];
-                if (slackEvent.Text.Split(" ").Length > 2)
-                {
-                    // user.Description = message[2];
-                }
-            }
-            catch (IndexOutOfRangeException e)
-            {
-                Console.WriteLine(e.Message);
-                return "Wrong Syntax";
-            }
 
             return BotResponses.StoppedWorking;
         }
@@ -196,6 +187,46 @@ namespace TCSlackbot.Logic.Slack
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
             return BotResponses.BreakEnded;
+        }
+
+        /// <summary>
+        /// The user wants a break. 
+        /// </summary>
+        /// <param name="slackEvent"></param>
+        /// <returns>The bot response message</returns>
+        public async Task<string> PauseWorktimeAsync(SlackEvent slackEvent)
+        {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
+            var userId = slackEvent.User;
+
+            var user = await GetSlackUserAsync(userId);
+            if (user is null)
+            {
+                return BotResponses.NotLoggedIn;
+            }
+
+            if (!user.IsWorking)
+            {
+                return BotResponses.NotWorking;
+            }
+
+            if (user.IsOnBreak)
+            {
+                return BotResponses.AlreadyOnBreak;
+            }
+
+            if (!user.StartBreak(DateTime.Now))
+            {
+                return BotResponses.StartBreakFailure;
+            }
+
+            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
+
+            return BotResponses.StartedBreak;
         }
 
         /// <summary>
@@ -297,58 +328,6 @@ namespace TCSlackbot.Logic.Slack
         }
 
         /// <summary>
-        /// The user wants a break. 
-        /// </summary>
-        /// <param name="slackEvent"></param>
-        /// <returns>The bot response message</returns>
-        public async Task<string> PauseWorktimeAsync(SlackEvent slackEvent)
-        {
-            if (slackEvent is null)
-            {
-                return BotResponses.Error;
-            }
-
-            var userId = slackEvent.User;
-
-            var user = await GetSlackUserAsync(userId);
-            if (user is null)
-            {
-                return BotResponses.NotLoggedIn;
-            }
-
-            if (!user.IsWorking)
-            {
-                return BotResponses.NotWorking;
-            }
-
-            if (user.IsOnBreak)
-            {
-                return BotResponses.AlreadyOnBreak;
-            }
-
-            if (!user.StartBreak(DateTime.Now))
-            {
-                return BotResponses.StartBreakFailure;
-            }
-
-
-
-            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
-
-            return BotResponses.StartedBreak;
-        }
-
-        /// <summary>
-        /// Checks whether the specified user is logged in.
-        /// </summary>
-        /// <param name="userId">The id of the user</param>
-        /// <returns>True if already logged in</returns>
-        public bool IsLoggedIn(string userId)
-        {
-            return _secretManager.GetSecret(userId) != null;
-        }
-
-        /// <summary>
         /// Generates a login link for the specified slack user.
         /// </summary>
         /// <param name="slackEvent">The event containing the user id</param>
@@ -426,6 +405,16 @@ namespace TCSlackbot.Logic.Slack
             }
 
             return user;
+        }
+
+        /// <summary>
+        /// Checks whether the specified user is logged in.
+        /// </summary>
+        /// <param name="userId">The id of the user</param>
+        /// <returns>True if already logged in</returns>
+        public bool IsLoggedIn(string userId)
+        {
+            return _secretManager.GetSecret(userId) != null;
         }
     }
 }

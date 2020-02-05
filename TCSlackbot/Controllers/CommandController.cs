@@ -197,7 +197,6 @@ namespace TCSlackbot.Controllers
                     reply["text"] = await _commandHandler.StopWorkingAsync(slackEvent);
                     break;
 
-                // stop@13:00 Maybe add 10 minute break for every 4h
                 case "pause":
                 case "break":
                     reply["text"] = await _commandHandler.PauseWorktimeAsync(slackEvent);
@@ -207,8 +206,8 @@ namespace TCSlackbot.Controllers
                     reply["text"] = await _commandHandler.ResumeWorktimeAsync(slackEvent);
                     break;
 
-                case "starttime":
-                case "gettime":
+                case "status":
+                case "time":
                     reply["text"] = await _commandHandler.GetWorktimeAsync(slackEvent);
                     break;
 

@@ -59,9 +59,7 @@ namespace TCSlackbot.Logic
                 }
                 else
                 {
-                    // TODO: Use this again
-                    // StartTime = null;
-                    // EndTime = null;
+                    EndTime = DateTime.Now;
                 }
             }
         }
@@ -74,6 +72,15 @@ namespace TCSlackbot.Logic
         {
             // Check ALL breaks (you could theoretically also only check the latest one)
             get => Breaks.Any(b => b.End is null);
+        }
+
+        /// <summary>
+        /// Resets the worktime (e.g. when the user stopped working).
+        /// </summary>
+        public void ResetWorktime()
+        {
+            StartTime = null;
+            EndTime = null;
         }
 
         /// <summary>
