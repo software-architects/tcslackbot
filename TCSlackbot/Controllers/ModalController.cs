@@ -67,6 +67,22 @@ namespace TCSlackbot.Controllers
         }
 
         /// <summary>
+        /// Send Project Data to Modal
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("getData")]
+        public async Task<IActionResult> GetExternalData()
+        {
+            string json = "\"options\": [ {\"text\": {\"type\": \"plain_text\",  \"text\": \" * this is plain_text text*\"},\"value\": \"value -3\" }]";
+            var projectList = await _httpClient.GetAsync("https://apipreview.timecockpit.com/odata/APP_Project");
+            foreach (var i in JsonSerializer.Deserialize<ProjectRequest>(await projectList.Content.ReadAsStringAsync()).Values)
+            {
+                Console.WriteLine(i.ProjectName);
+            }
+            return Ok("json.json");
+        }
+        /// <summary>
         /// Handles the incoming requests (only if they have a valid slack signature).
         /// </summary>
         /// <param name="body">The dynamic request body</param>
@@ -139,6 +155,7 @@ namespace TCSlackbot.Controllers
 
             return Ok(json);
         }
+
 
         public async Task<IActionResult> ProcessModalDataAsync(SlackUser user)   /* , Dictionary<string,string> replyData */
         {
