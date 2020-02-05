@@ -127,8 +127,7 @@
     <value>You are already on break. Did you forget to unpause?</value>
   </data>
   <data name="NotLoggedIn" xml:space="preserve">
-    <value>You have to login before you can use this bot!
-Type login or link to get the login link.</value>
+    <value>Please login to use this bot.</value>
   </data>
   <data name="NotOnBreak" xml:space="preserve">
     <value>You are not on break. Did you forget to pause?</value>

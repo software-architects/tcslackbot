@@ -59,8 +59,11 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.NotWorking;
             }
 
-            // TODO: Maybe show a duration instead
-            return "Started at: " + user.StartTime;
+            var timeSpan = DateTime.Now - user.StartTime.GetValueOrDefault();
+            var hours = timeSpan.Hours;
+            var minutes = timeSpan.Minutes;
+
+            return $"You have been working for {((hours > 0) ? string.Format("{0} hours {1} minutes", hours, minutes) : string.Format("{0} minutes", minutes))}";
         }
 
         /// <summary>
