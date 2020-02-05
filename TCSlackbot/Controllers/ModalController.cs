@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -146,9 +147,9 @@ namespace TCSlackbot.Controllers
                 return BadRequest();
             }
 
-            var payload = JsonSerializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
+            var payload = Serializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
 
-            String errorMessage = "{ \"response_action\": \"errors\", \"errors\": {";
+            string errorMessage = "{ \"response_action\": \"errors\", \"errors\": {";
             if (payload.View.State.Values.Date.Date.Day == null)
             {
                 // TODO: send message to user
@@ -192,41 +193,14 @@ namespace TCSlackbot.Controllers
             user.Description = payload.View.State.Values.Description.Description.Value;
             user.IsWorking = false;
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
-            var replyData = new Dictionary<string, string>();
-            replyData["user"] = payload.User.Id;
-            replyData["channel"] = await GetIMChannelFromUserAsync(replyData["user"]);
-            replyData["text"] = "Your time has been saved saved";
-            await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));
-            return Ok();
-        }
-
-
-        /// <summary>
-        /// Get the IM channel id from user
-        /// </summary>
-        /// <param name="user">Id of user</param>
-        /// <returns>channel id</returns>
-        public async Task<string> GetIMChannelFromUserAsync(string user)
-        {
-            var list = await _httpClient.GetAsync("https://slack.com/api/conversations.list?types=im");
-            foreach (var channel in JsonSerializer.Deserialize<ConversationsList>(await list.Content.ReadAsStringAsync()).Channels)
+            var replyData = new Dictionary<string, string>
             {
-                if (channel.User == user)
-                {
-                    return channel.Id;
-                }
-            }
-            return null;
-        }
-        /// <summary>
-        /// Deserializes the specified content to the specified type.
-        /// </summary>
-        /// <typeparam name="T">The type of the deserialized data</typeparam>
-        /// <param name="content">The serialized content</param>
-        /// <returns>The deserialized object of the specified type</returns>
-        private static T Deserialize<T>(string content)
-        {
-            return JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                ["user"] = payload.User.Id
+            };
+            replyData["channel"] = await CommandController.GetIMChannelFromUserAsync(_httpClient, replyData["user"]);
+            replyData["text"] = "Your time has been saved saved";
+            _ = await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));
+            return Ok();
         }
     }
 }

@@ -231,9 +231,6 @@ namespace TCSlackbot.Controllers
             return Ok();
         }
 
-       
-
-
         private async void ReminderScheduler(int hour, int min, double intervalInHour, Action task)
         {
             _ = hour;
@@ -246,8 +243,6 @@ namespace TCSlackbot.Controllers
             {
                 return;
             }
-            
-
 
             while (queryable.HasMoreResults)
             {
@@ -271,17 +266,23 @@ namespace TCSlackbot.Controllers
         /// </summary>
         /// <param name="user">Id of user</param>
         /// <returns>channel id</returns>
-        public async Task<string> GetIMChannelFromUserAsync(string user)
+        public static async Task<string?> GetIMChannelFromUserAsync(HttpClient client, string user)
+        {
+            if (client is null)
+            {
+                return default;
+            }
 
-            var list = await _httpClient.GetAsync("https://slack.com/api/conversations.list?types=im");
-            foreach (var channel in JsonSerializer.Deserialize<ConversationsList>(await list.Content.ReadAsStringAsync()).Channels)
+            var list = await client.GetAsync(new Uri("https://slack.com/api/conversations.list?types=im"));
+            foreach (var channel in Serializer.Deserialize<ConversationsList>(await list.Content.ReadAsStringAsync()).Channels)
             {
                 if (channel.User == user)
                 {
                     return channel.Id;
                 }
-}
-            return null;
+            }
+
+            return default;
         }
 
         /// <summary>
@@ -299,7 +300,7 @@ namespace TCSlackbot.Controllers
             //
             if (directMessage)
             {
-                replyData["channel"] = GetIMChannelFromUserAsync(replyData["user"]).Result;
+                replyData["channel"] = GetIMChannelFromUserAsync(_httpClient, replyData["user"]).Result;
                 requestUri = "chat.postEphemeral";
             }
 
