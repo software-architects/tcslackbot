@@ -13,6 +13,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
 using TCSlackbot.Logic.Authentication;
+using TCSlackbot.Logic.Utils;
 
 namespace TCSlackbot.Controllers
 {
@@ -76,7 +77,7 @@ namespace TCSlackbot.Controllers
                 string decryptedData = _protector.Unprotect(encryptedData);
 
                 // Deserialize json
-                var jsonData = JsonSerializer.Deserialize<LinkData>(decryptedData);
+                var jsonData = Serializer.Deserialize<LinkData>(decryptedData);
 
                 // Validate the time
                 if (DateTime.Now > jsonData.ValidUntil)

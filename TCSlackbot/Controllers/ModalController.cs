@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -84,7 +83,7 @@ namespace TCSlackbot.Controllers
             //    return BadRequest();
             // }
 
-            var payload = Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
+            var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
             //
             // Ignore unecessary requests
             //
@@ -159,20 +158,18 @@ namespace TCSlackbot.Controllers
 
             var payload = JsonSerializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
 
-            TimeSpan startTime;
-            TimeSpan endTime;
             String errorMessage = "{ \"response_action\": \"errors\", \"errors\": {";
             if (payload.View.State.Values.Date.Date.Day == null)
             {
                 // TODO: send message to user
                 return Ok();
             }
-            if (!TimeSpan.TryParse(payload.View.State.Values.Starttime.StartTime.Value, out startTime))
+            if (!TimeSpan.TryParse(payload.View.State.Values.Starttime.StartTime.Value, out TimeSpan startTime))
             {
                 // TODO: send message to user
                 errorMessage += "\"starttime\": \"Please use a valid time format! (eg. \"08:00\")\",";
             }
-            if (!TimeSpan.TryParse(payload.View.State.Values.Endtime.EndTime.Value, out endTime))
+            if (!TimeSpan.TryParse(payload.View.State.Values.Endtime.EndTime.Value, out TimeSpan endTime))
             {
                 // TODO: send message to user
                 errorMessage += "\"endtime\": \"Please use a valid time format! (eg. \"08:00\")\",";
@@ -209,15 +206,6 @@ namespace TCSlackbot.Controllers
             return Ok();
         }
 
-        /// <summary>
-        /// Deserializes the specified content to the specified type.
-        /// </summary>
-        /// <typeparam name="T">The type of the deserialized data</typeparam>
-        /// <param name="content">The serialized content</param>
-        /// <returns>The deserialized object of the specified type</returns>
-        private static T Deserialize<T>(string content)
-        {
-            return JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
+
     }
 }

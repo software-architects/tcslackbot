@@ -76,7 +76,7 @@ namespace TCSlackbot.Controllers
         [HttpPost]
         public async Task<IActionResult> HandleRequestAsync([FromBody] dynamic body)
         {
-            var request = Deserialize<SlackBaseRequest>(body.ToString());
+            var request = Serializer.Deserialize<SlackBaseRequest>(body.ToString());
 
             //
             // Verify slack request
@@ -92,10 +92,10 @@ namespace TCSlackbot.Controllers
             switch (request.Type)
             {
                 case "url_verification":
-                    return HandleSlackChallenge(Deserialize<SlackChallenge>(body.ToString()));
+                    return HandleSlackChallenge(Serializer.Deserialize<SlackChallenge>(body.ToString()));
 
                 case "event_callback":
-                    return await HandleEventCallbackAsync(Deserialize<SlackEventCallbackRequest>(body.ToString()));
+                    return await HandleEventCallbackAsync(Serializer.Deserialize<SlackEventCallbackRequest>(body.ToString()));
 
                 default:
                     Console.WriteLine($"Received unhandled request: {request.Type}.");
@@ -301,17 +301,6 @@ namespace TCSlackbot.Controllers
             var ownSignature = $"v0={BitConverter.ToString(hash).Replace("-", "", StringComparison.CurrentCulture).ToLower()}";
 
             return ownSignature.Equals(signature, StringComparison.CurrentCulture);
-        }
-
-        /// <summary>
-        /// Deserializes the specified content to the specified type.
-        /// </summary>
-        /// <typeparam name="T">The type of the deserialized data</typeparam>
-        /// <param name="content">The serialized content</param>
-        /// <returns>The deserialized object of the specified type</returns>
-        private static T Deserialize<T>(string content)
-        {
-            return JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
     }
 }

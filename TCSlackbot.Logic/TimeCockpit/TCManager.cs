@@ -37,11 +37,9 @@ namespace TCSlackbot.Logic.Utils
             var responseContent = await response.Content.ReadAsStringAsync();
 
             // Parse response
-            var content = Deserialize<ODataResponse<T>>(responseContent);
+            var content = Serializer.Deserialize<ODataResponse<T>>(responseContent);
 
             return content.Value.ToArray();
-
-
         }
 
         public async Task<IEnumerable<T>> GetFilteredObjectsAsync<T>(string accessToken, TCQueryData queryData)
@@ -59,17 +57,9 @@ namespace TCSlackbot.Logic.Utils
             var responseContent = await response.Content.ReadAsStringAsync();
 
             // Parse response
-            var content = Deserialize<ODataResponse<T>>(responseContent);
+            var content = Serializer.Deserialize<ODataResponse<T>>(responseContent);
 
             return content.Value.ToArray();
-        }
-
-        private T Deserialize<T>(string content)
-        {
-            return JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions
-            {
-                //PropertyNamingPolicy = new TCNamingPolicy()
-            });
         }
     }
 }
