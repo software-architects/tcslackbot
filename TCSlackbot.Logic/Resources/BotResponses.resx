@@ -157,7 +157,7 @@
     <value>There was one or more parameters missing. </value>
   </data>
   <data name="BreakEnded" xml:space="preserve">
-    <value />
+    <value>Successfully stopped the break.</value>
   </data>
   <data name="EndBreakFailure" xml:space="preserve">
     <value>Failed to stop the break.</value>

@@ -71,7 +71,7 @@ namespace TCSlackbot.Logic
         public bool IsOnBreak
         {
             // Check ALL breaks (you could theoretically also only check the latest one)
-            get => !(Breaks is null) || Breaks.Any(b => b.End is null);
+            get => !(Breaks is null) && Breaks.Any(b => b.End is null);
         }
 
         /// <summary>
@@ -98,10 +98,10 @@ namespace TCSlackbot.Logic
             if (Breaks.Count != 0)
             {
                 // 1. Get the top of the stack
-                var @break = Breaks.Peek();
+                var @break = Breaks.LastOrDefault();
 
                 // 2. Check if there's already a break which has not been ended yet
-                if (@break.End is null)
+                if (@break == null || @break.End is null)
                 {
                     return false;
                 }
@@ -131,10 +131,10 @@ namespace TCSlackbot.Logic
             }
 
             // 1. Get the top of the stack 
-            var @break = Breaks.Peek();
+            var @break = Breaks.LastOrDefault();
 
             // 2. Check if the there's an break which has not been ended yet
-            if (@break.End != null)
+            if (@break == default || @break.End != null)
             {
                 return false;
             }
