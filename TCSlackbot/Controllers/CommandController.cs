@@ -13,8 +13,8 @@ using System.Threading.Tasks;
 using TCSlackbot.Logic;
 using TCSlackbot.Logic.Resources;
 using TCSlackbot.Logic.Slack;
+using TCSlackbot.Logic.Slack.Requests;
 using TCSlackbot.Logic.Utils;
-using static TCSlackbot.Logic.Slack.Requests.IMResponse;
 
 namespace TCSlackbot.Controllers
 {
@@ -129,7 +129,6 @@ namespace TCSlackbot.Controllers
         {
             var reply = new Dictionary<string, string>();
             var hiddenMessage = false;
-
             //
             // Set the reply data
             //
@@ -150,8 +149,6 @@ namespace TCSlackbot.Controllers
                 case "link":
                     reply["text"] = _commandHandler.GetLoginLink(slackEvent);
                     hiddenMessage = true;
-                    //user.ChannelId = await GetIMChannelFromUserAsync(await _httpClient.GetAsync("im.list"), slackEvent.User);
-                    //await _cosmosManager.ReplaceDocumentAsync<SlackUser>(Collection.Users, user, user.UserId);
                     break;
 
                 case "logout":
@@ -201,9 +198,15 @@ namespace TCSlackbot.Controllers
             return Ok();
         }
 
-        private async Task<string> GetIMChannelFromUserAsync(HttpResponseMessage list, string user)
+        /// <summary>
+        /// Get the IM channel id from user
+        /// </summary>
+        /// <param name="user">Id of user</param>
+        /// <returns>channel id</returns>
+        public async Task<string> GetIMChannelFromUserAsync(string user)
         {
-            foreach (var channel in JsonSerializer.Deserialize<Payload>(await list.Content.ReadAsStringAsync()).Ims)
+            var list = await _httpClient.GetAsync("https://slack.com/api/conversations.list?types=im");
+            foreach (var channel in JsonSerializer.Deserialize<ConversationsList>(await list.Content.ReadAsStringAsync()).Channels)
             {
                 if (channel.User == user)
                 {
@@ -246,6 +249,7 @@ namespace TCSlackbot.Controllers
             //
             if (directMessage)
             {
+                replyData["channel"] = GetIMChannelFromUserAsync(replyData["user"]).Result;
                 requestUri = "chat.postEphemeral";
             }
             await _httpClient.PostAsync(requestUri, new FormUrlEncodedContent(replyData));

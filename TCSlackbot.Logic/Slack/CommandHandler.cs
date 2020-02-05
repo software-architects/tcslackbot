@@ -76,12 +76,11 @@ namespace TCSlackbot.Logic.Slack
             {
                 return BotResponses.AlreadyWorking;
             }
-
+            
             //
             // Start working
             //
             user.IsWorking = true;
-
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
             return BotResponses.StartedWorking;
