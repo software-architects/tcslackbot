@@ -268,6 +268,12 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.Error;
             }
 
+            var userId = slackEvent.User;
+            if (!IsLoggedIn(userId))
+            {
+                return BotResponses.NotLoggedIn;
+            }
+
             await _secretManager.DeleteSecretAsync(slackEvent.User);
 
             // TODO: Remove all user data too?
