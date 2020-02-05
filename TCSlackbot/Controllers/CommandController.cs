@@ -295,12 +295,19 @@ namespace TCSlackbot.Controllers
         {
             string requestUri = "chat.postMessage";
 
+            var channel = GetIMChannelFromUserAsync(_httpClient, replyData["user"]).Result;
+            if (channel is null)
+            {
+                // TODO: Return error message
+                return;
+            }
+
             //
             // Use a different uri for the direct message
             //
             if (directMessage)
             {
-                replyData["channel"] = GetIMChannelFromUserAsync(_httpClient, replyData["user"]).Result;
+                replyData["channel"] = channel;
                 requestUri = "chat.postEphemeral";
             }
 

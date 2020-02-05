@@ -186,18 +186,29 @@ namespace TCSlackbot.Controllers
 
             DateTime date = payload.View.State.Values.Date.Date.Day;
 
-            user.StartTime = date + startTime; // startTime 
-
+            user.StartTime = date + startTime;
             user.EndTime = date + endTime;
-
             user.Description = payload.View.State.Values.Description.Description.Value;
             user.IsWorking = false;
+            
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
-            var replyData = new Dictionary<string, string>();
-            replyData["user"] = payload.User.Id;
-            replyData["channel"] = await CommandController.GetIMChannelFromUserAsync(_httpClient, replyData["user"]);
-            replyData["text"] = "Your time has been saved saved";
-            _ = await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));
+
+            var channel = await CommandController.GetIMChannelFromUserAsync(_httpClient, payload.User.Id);
+            if (channel is null)
+            {
+                // TODO: Maybe return an error message?
+                return BadRequest();
+            }
+
+            var replyData = new Dictionary<string, string>
+            {
+                ["user"] = payload.User.Id,
+                ["channel"] = channel,
+                ["text"] = "Your time has been saved saved"
+            };
+
+            _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), new FormUrlEncodedContent(replyData));
+
             return Ok();
         }
     }
