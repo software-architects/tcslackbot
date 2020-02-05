@@ -232,11 +232,13 @@ namespace TCSlackbot.Controllers
             return Ok();
         }
 
-        // TODO: Remove this once the method uses the parameters
-#pragma warning disable IDE0060 // Remove unused parameter
         private async void ReminderScheduler(int hour, int min, double intervalInHour, Action task)
-#pragma warning restore IDE0060 // Remove unused parameter
         {
+            _ = hour;
+            _ = min;
+            _ = intervalInHour;
+            _ = task;
+
             var queryable = _cosmosManager.GetAllSlackUsers();
             if (queryable == null)
             {

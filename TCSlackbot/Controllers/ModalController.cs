@@ -180,7 +180,7 @@ namespace TCSlackbot.Controllers
             }
             if (errorMessage.EndsWith(",", StringComparison.CurrentCulture))
             {
-                errorMessage = errorMessage.Substring(0, errorMessage.Length - 1) + "}}";
+                errorMessage = errorMessage[0..^1] + "}}";
 
                 /*
                 var replyData = new Dictionary<string, string>();
