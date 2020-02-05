@@ -172,4 +172,10 @@ Type login or link to get the login link.</value>
   <data name="Unlinked" xml:space="preserve">
     <value>You successfully unlinked your account.</value>
   </data>
+  <data name="UnlinkWhileOnBreak" xml:space="preserve">
+    <value>Cannot unlink, because you are on break.</value>
+  </data>
+  <data name="UnlinkWhileWorking" xml:space="preserve">
+    <value>Cannot unlink, because you are working.</value>
+  </data>
 </root>

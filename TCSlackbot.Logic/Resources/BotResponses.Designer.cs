@@ -222,5 +222,23 @@ namespace TCSlackbot.Logic.Resources {
                 return ResourceManager.GetString("Unlinked", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot unlink, because you are on break..
+        /// </summary>
+        public static string UnlinkWhileOnBreak {
+            get {
+                return ResourceManager.GetString("UnlinkWhileOnBreak", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot unlink, because you are working..
+        /// </summary>
+        public static string UnlinkWhileWorking {
+            get {
+                return ResourceManager.GetString("UnlinkWhileWorking", resourceCulture);
+            }
+        }
     }
 }
