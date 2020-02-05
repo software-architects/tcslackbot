@@ -115,6 +115,15 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to An error occured. You have been logged out..
+        /// </summary>
+        public static string ErrorLoggedOut {
+            get {
+                return ResourceManager.GetString("ErrorLoggedOut", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Specified object not found..
         /// </summary>
         public static string FilterObjectNotFound {
@@ -138,6 +147,15 @@ namespace TCSlackbot.Logic.Resources {
         public static string LogoutMessage {
             get {
                 return ResourceManager.GetString("LogoutMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No objects found..
+        /// </summary>
+        public static string NoObjectsFound {
+            get {
+                return ResourceManager.GetString("NoObjectsFound", resourceCulture);
             }
         }
         

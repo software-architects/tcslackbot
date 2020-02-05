@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using System.Net.Http;
 using System.Threading.Tasks;
+using TCSlackbot.Logic.Authentication.Exceptions;
 
 namespace TCSlackbot.Logic.Utils
 {
@@ -58,7 +59,7 @@ namespace TCSlackbot.Logic.Utils
                 // Delete the refresh token if it's invalid
                 await _secretManager.DeleteSecretAsync(userId);
 
-                return default;
+                throw new LoggedOutException();
             }
 
             //

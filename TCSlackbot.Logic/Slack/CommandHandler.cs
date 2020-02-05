@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using TCSlackbot.Logic.Authentication;
+using TCSlackbot.Logic.Authentication.Exceptions;
 using TCSlackbot.Logic.Cosmos;
 using TCSlackbot.Logic.Resources;
 using TCSlackbot.Logic.TimeCockpit;
@@ -230,14 +231,18 @@ namespace TCSlackbot.Logic.Slack
                 case "project":
                     var queryData = new TCQueryData($"From P In Project Where P.Code Like '%{text.ElementAtOrDefault(2)}%' Select P");
 
-                    var accessToken = await _tokenManager.GetAccessTokenAsync(userId);
-                    if (accessToken != null)
+                    try
                     {
-                        var data = await _tcDataManager.GetFilteredObjectsAsync<Project>(accessToken, queryData);
-                        if (data.Any())
+                        var accessToken = await _tokenManager.GetAccessTokenAsync(userId);
+                        if (accessToken != null)
                         {
-                            return string.Join('\n', data.Take(10).Select(element => $"- {element.ProjectName}"));
+                            var data = await _tcDataManager.GetFilteredObjectsAsync<Project>(accessToken, queryData);
+                            return data.Any() ? string.Join('\n', data.Take(10).Select(element => $"- {element.ProjectName}")) : BotResponses.NoObjectsFound;
                         }
+                    }
+                    catch (LoggedOutException)
+                    {
+                        return BotResponses.ErrorLoggedOut;
                     }
 
                     break;
@@ -247,10 +252,7 @@ namespace TCSlackbot.Logic.Slack
                     // Send request to the TimeCockpit API
                     // Return the list with the data
 
-                    break;
-
-                default:
-                    return BotResponses.FilterObjectNotFound;
+                    return BotResponses.NoObjectsFound;
             }
 
             return BotResponses.FilterObjectNotFound;

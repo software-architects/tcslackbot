@@ -178,4 +178,10 @@ Type login or link to get the login link.</value>
   <data name="UnlinkWhileWorking" xml:space="preserve">
     <value>Cannot unlink, because you are working.</value>
   </data>
+  <data name="ErrorLoggedOut" xml:space="preserve">
+    <value>An error occured. You have been logged out.</value>
+  </data>
+  <data name="NoObjectsFound" xml:space="preserve">
+    <value>No objects found.</value>
+  </data>
 </root>
