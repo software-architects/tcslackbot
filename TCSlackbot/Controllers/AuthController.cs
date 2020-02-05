@@ -32,7 +32,9 @@ namespace TCSlackbot.Controllers
         {
             if (provider is null)
             {
-                throw new InvalidProgramException();
+#pragma warning disable CA2208 // Instantiate argument exceptions correctly
+                throw new ArgumentNullException("IDataProtectionProvider");
+#pragma warning restore CA2208 // Instantiate argument exceptions correctly
             }
 
             _logger = logger;
@@ -47,9 +49,14 @@ namespace TCSlackbot.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("login")]
-        public IActionResult Authenticate([FromQuery] string ReturnUrl = "/")
+        public IActionResult Authenticate([FromQuery] Uri ReturnUri)
         {
-            return Challenge(new AuthenticationProperties { RedirectUri = ReturnUrl }, OpenIdConnectDefaults.AuthenticationScheme);
+            if (ReturnUri == null)
+            {
+                ReturnUri = new Uri("/");
+            }
+
+            return Challenge(new AuthenticationProperties { RedirectUri = ReturnUri.AbsoluteUri }, OpenIdConnectDefaults.AuthenticationScheme);
         }
 
         /// <summary>
@@ -93,11 +100,6 @@ namespace TCSlackbot.Controllers
             }
 
             return Ok("Successfully linked the accounts.");
-        }
-
-        public IActionResult Authenticate(Uri ReturnUrl)
-        {
-            throw new NotImplementedException();
         }
     }
 }

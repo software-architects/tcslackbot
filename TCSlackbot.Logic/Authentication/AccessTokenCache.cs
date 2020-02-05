@@ -46,7 +46,7 @@ namespace TCSlackbot.Logic
         /// </summary>
         /// <param name="userId">The id of the user</param>
         /// <returns>The access token or default if it is already expired</returns>
-        public string Get(string userId)
+        public string? Get(string userId)
         {
             //
             // Get the token

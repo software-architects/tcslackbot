@@ -25,6 +25,11 @@ namespace TCSlackbot.Tests
 
         public DataProtectionTests(DependencySetupFixture fixture)
         {
+            if (fixture == null)
+            {
+                throw new ArgumentNullException();
+            }
+
             _serviceProvider = fixture.ServiceProvider;
         }
 

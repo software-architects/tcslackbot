@@ -113,7 +113,7 @@ namespace TCSlackbot.Logic.Slack
             var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
-            if (userId is null)
+            if (user is null)
             {
                 return BotResponses.NotLoggedIn;
             }
@@ -357,7 +357,7 @@ namespace TCSlackbot.Logic.Slack
         /// </summary>
         /// <param name="userId">The id of the user</param>
         /// <returns>The object of the slack user</returns>
-        public async Task<SlackUser> GetSlackUserAsync
+        public async Task<SlackUser?> GetSlackUserAsync
             (string userId)
         {
             //
@@ -365,13 +365,13 @@ namespace TCSlackbot.Logic.Slack
             //
             if (!IsLoggedIn(userId))
             {
-                return default;
+                return null;
             }
 
             //
             // Create a new user if not found
             //
-            var user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, userId); ;
+            SlackUser? user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, userId);
             if (user is null)
             {
                 user = await _cosmosManager.CreateDocumentAsync(Collection.Users, new SlackUser { UserId = userId });
@@ -380,9 +380,9 @@ namespace TCSlackbot.Logic.Slack
             //
             // Check for a tampered userid
             //
-            if (user is null || user.UserId != userId)
+            if (user != null && user.UserId != userId)
             {
-                user = default;
+                user = null;
             }
 
             return user;

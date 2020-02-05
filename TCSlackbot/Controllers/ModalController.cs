@@ -37,11 +37,23 @@ namespace TCSlackbot.Controllers
             ITCManager dataManager
             )
         {
-            // Should never happen
-            if (provider is null || factory is null || secretManager is null)
+#pragma warning disable CA2208 // Instantiate argument exceptions correctly
+            if (provider is null)
             {
-                throw new InvalidOperationException();
+                var message = "IDataProtectionProvider";
+                throw new ArgumentNullException(message);
             }
+
+            if (factory is null)
+            {
+                throw new ArgumentNullException("IHttpClientFactory");
+            }
+
+            if (secretManager is null)
+            {
+                throw new ArgumentNullException("ISecretManager");
+            }
+#pragma warning restore CA2208 // Instantiate argument exceptions correctly
 
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
@@ -195,26 +207,6 @@ namespace TCSlackbot.Controllers
             // replyData["text"] = "Your time has been saved saved";
             // await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));
             return Ok();
-        }
-
-        /// <summary>
-        /// Validates the signature of the slack request.
-        /// </summary>
-        /// <param name="body">The request body</param>
-        /// <param name="headers">The request headers</param>
-        /// <returns>True if the signature is valid</returns>
-        private bool IsValidSignature(string body, IHeaderDictionary headers)
-        {
-            var timestamp = headers["X-Slack-Request-Timestamp"];
-            var signature = headers["X-Slack-Signature"];
-            var signingSecret = _secretManager.GetSecret("Slack-SigningSecret");
-
-            var encoding = new UTF8Encoding();
-            using var hmac = new HMACSHA256(encoding.GetBytes(signingSecret));
-            var hash = hmac.ComputeHash(encoding.GetBytes($"v0:{timestamp}:{body}"));
-            var ownSignature = $"v0={BitConverter.ToString(hash).Replace("-", "", StringComparison.CurrentCulture).ToLower()}";
-
-            return ownSignature.Equals(signature, StringComparison.CurrentCulture);
         }
 
         /// <summary>

@@ -39,7 +39,7 @@ namespace TCSlackbot.Logic.Slack
         public SlackEvent Event { get; set; }
 
         [JsonPropertyName("authed_teams")]
-        public List<string> AuthedTeams { get; set; }
+        public List<string> AuthedTeams { get; } = new List<string>();
 
         [JsonPropertyName("event_id")]
         public string EventId { get; set; }

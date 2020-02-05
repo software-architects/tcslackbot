@@ -39,11 +39,23 @@ namespace TCSlackbot.Controllers
             ITCManager dataManager
             )
         {
-            // Should never happen
-            if (provider is null || factory is null || secretManager is null)
+#pragma warning disable CA2208 // Instantiate argument exceptions correctly
+            if (provider is null)
             {
-                throw new InvalidOperationException();
+                var message = "IDataProtectionProvider";
+                throw new ArgumentNullException(message);
             }
+
+            if (factory is null)
+            {
+                throw new ArgumentNullException("IHttpClientFactory");
+            }
+
+            if (secretManager is null)
+            {
+                throw new ArgumentNullException("ISecretManager");
+            }
+#pragma warning restore CA2208 // Instantiate argument exceptions correctly
 
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
@@ -100,6 +112,11 @@ namespace TCSlackbot.Controllers
         /// <returns></returns>
         public async Task<IActionResult> HandleEventCallbackAsync(SlackEventCallbackRequest request)
         {
+            if (request is null)
+            {
+                return BadRequest();
+            }
+
             switch (request.Event.Type)
             {
                 case "message":
@@ -215,12 +232,18 @@ namespace TCSlackbot.Controllers
             return Ok();
         }
 
-
+        // TODO: Remove this once the method uses the parameters
 #pragma warning disable IDE0060 // Remove unused parameter
         private async void ReminderScheduler(int hour, int min, double intervalInHour, Action task)
 #pragma warning restore IDE0060 // Remove unused parameter
         {
             var queryable = _cosmosManager.GetAllSlackUsers();
+            if (queryable == null)
+            {
+                return;
+            }
+
+
             while (queryable.HasMoreResults)
             {
                 // Iterate through SlackUsers
@@ -256,10 +279,8 @@ namespace TCSlackbot.Controllers
                 requestUri = "chat.postEphemeral";
             }
 
-            using (var content = new FormUrlEncodedContent(replyData))
-            {
-                _ = await _httpClient.PostAsync(new Uri(requestUri), content);
-            }
+            using var content = new FormUrlEncodedContent(replyData);
+            _ = await _httpClient.PostAsync(new Uri(requestUri), content);
         }
 
         /// <summary>
