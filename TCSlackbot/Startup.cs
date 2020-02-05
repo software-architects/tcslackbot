@@ -85,14 +85,16 @@ namespace TCSlackbot
 
             services.AddTransient<ISecretManager, SecretManager>();
             services.AddTransient<ICosmosManager, CosmosManager>();
-            services.AddTransient<ITokenManager, TokenManager>();
-            services.AddTransient<ITCDataManager, TCManager>();
+
+            services.AddHttpClient<ITCManager, TCManager>();
+            services.AddHttpClient<ITokenManager, TokenManager>();
+
             services.AddControllers();
             services.AddDataProtection();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public static void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {

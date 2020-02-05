@@ -157,4 +157,31 @@ Type login or link to get the login link.</value>
   <data name="InvalidParameter" xml:space="preserve">
     <value>There was one or more parameters missing. </value>
   </data>
+  <data name="BreakEnded" xml:space="preserve">
+    <value />
+  </data>
+  <data name="EndBreakFailure" xml:space="preserve">
+    <value>Failed to stop the break.</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>An error occured.</value>
+  </data>
+  <data name="StartBreakFailure" xml:space="preserve">
+    <value>Failed to start break.</value>
+  </data>
+  <data name="Unlinked" xml:space="preserve">
+    <value>You successfully unlinked your account.</value>
+  </data>
+  <data name="UnlinkWhileOnBreak" xml:space="preserve">
+    <value>Cannot unlink, because you are on break.</value>
+  </data>
+  <data name="UnlinkWhileWorking" xml:space="preserve">
+    <value>Cannot unlink, because you are working.</value>
+  </data>
+  <data name="ErrorLoggedOut" xml:space="preserve">
+    <value>An error occured. You have been logged out.</value>
+  </data>
+  <data name="NoObjectsFound" xml:space="preserve">
+    <value>No objects found.</value>
+  </data>
 </root>

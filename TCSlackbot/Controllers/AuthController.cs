@@ -9,8 +9,11 @@ using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
+using TCSlackbot.Logic.Authentication;
+using TCSlackbot.Logic.Utils;
 
 namespace TCSlackbot.Controllers
 {
@@ -28,6 +31,13 @@ namespace TCSlackbot.Controllers
             IConfiguration config,
             IDataProtectionProvider provider)
         {
+            if (provider is null)
+            {
+#pragma warning disable CA2208 // Instantiate argument exceptions correctly
+                throw new ArgumentNullException("IDataProtectionProvider");
+#pragma warning restore CA2208 // Instantiate argument exceptions correctly
+            }
+
             _logger = logger;
             _configuration = config;
             _protector = provider.CreateProtector("UUIDProtector");
@@ -40,32 +50,46 @@ namespace TCSlackbot.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("login")]
-        public ActionResult Authenticate([FromQuery] string ReturnUrl = "/")
+        public IActionResult Authenticate([FromQuery] Uri ReturnUrl)
         {
-            return Challenge(new AuthenticationProperties { RedirectUri = ReturnUrl }, OpenIdConnectDefaults.AuthenticationScheme);
+            if (ReturnUrl == null)
+            {
+                return BadRequest("ReturnUrl not found.");
+            }
+
+            return Challenge(new AuthenticationProperties { RedirectUri = ReturnUrl.ToString() }, OpenIdConnectDefaults.AuthenticationScheme);
         }
 
         /// <summary>
         /// Allows the user to link the slack with the TimeCockpit account.
         /// </summary>
-        /// <param name="encryptedUuid">The encrypted id of the slack user</param>
+        /// <param name="encryptedData">The encrypted id of the slack user</param>
         /// <returns></returns>
         [Authorize, HttpGet]
         [Route("link")]
-        public async Task<IActionResult> LinkAccounts([FromQuery(Name = "uuid")] string encryptedUuid)
+        public async Task<IActionResult> LinkAccounts([FromQuery(Name = "data")] string encryptedData)
         {
             var refreshToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "refresh_token");
 
             try
             {
-                // Decrypt the uuid
-                string decrypedUuid = _protector.Unprotect(encryptedUuid);
+                // Decrypt the data
+                string decryptedData = _protector.Unprotect(encryptedData);
+
+                // Deserialize json
+                var jsonData = Serializer.Deserialize<LinkData>(decryptedData);
+
+                // Validate the time
+                if (DateTime.Now > jsonData.ValidUntil)
+                {
+                    return BadRequest("Link has expired.");
+                }
 
                 // Associate the uuid with the refresh token
                 var azureServiceTokenProvider = new AzureServiceTokenProvider();
-                var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+                using var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
 
-                await keyVaultClient.SetSecretAsync(Program.GetKeyVaultEndpoint(), decrypedUuid, refreshToken);
+                await keyVaultClient.SetSecretAsync(Program.GetKeyVaultEndpoint(), jsonData.UserId, refreshToken);
 
                 // Reload the configuration because we added a new secret
                 ((IConfigurationRoot)_configuration).Reload();
@@ -73,10 +97,10 @@ namespace TCSlackbot.Controllers
             catch (Exception exception)
             {
                 _logger.LogCritical(exception.ToString());
-                return BadRequest("Failed to login.");
+                return BadRequest("Failed to link accounts.");
             }
 
-            return Ok("Successfully logged in.");
+            return Ok("Successfully linked the accounts.");
         }
     }
 }

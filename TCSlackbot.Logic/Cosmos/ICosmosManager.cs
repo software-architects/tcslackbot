@@ -12,13 +12,13 @@ namespace TCSlackbot.Logic.Utils
         /// <param name="collectionName">The name of the collection</param>
         /// <param name="documentId">The id of the document</param>
         /// <returns>Default if it failed or the document</returns>
-        public Task<T> GetDocumentAsync<T>(string collectionName, string documentId);
+        public Task<T?> GetDocumentAsync<T>(string collectionName, string documentId) where T : class;
 
         /// <summary>
         /// Get all SlackUsers in the DB which are working longer thän a specific amount of time.
         /// </summary>
         /// <returns></returns>
-        public IDocumentQuery<SlackUser> GetAllSlackUsers();
+        public IDocumentQuery<SlackUser>? GetAllSlackUsers();
 
         /// <summary>
         /// Creates a new document in the database.
@@ -27,7 +27,7 @@ namespace TCSlackbot.Logic.Utils
         /// <param name="collectionName">The name of the collection</param>
         /// <param name="document">The document to create</param>
         /// <returns>Default if it failed or the created document</returns>
-        public Task<T> CreateDocumentAsync<T>(string collectionName, T document);
+        public Task<T?> CreateDocumentAsync<T>(string collectionName, T document) where T : class;
 
         /// <summary>
         /// Replaces the specified document in the database.
@@ -37,7 +37,7 @@ namespace TCSlackbot.Logic.Utils
         /// <param name="document">The document to create</param>
         /// <param name="documentId">The id of the document</param>
         /// <returns>Default if it failed or the replaced document</returns>
-        public Task<T> ReplaceDocumentAsync<T>(string collectionName, T document, string documentId);
+        public Task<T?> ReplaceDocumentAsync<T>(string collectionName, T document, string documentId) where T : class;
 
         public Task RemoveDocumentAsync(string collectionName, string documentId);
 
