@@ -54,7 +54,7 @@ namespace TCSlackbot.Controllers
         {
             if (ReturnUri == null)
             {
-                ReturnUri = new Uri("/");
+                ReturnUri = new Uri(HttpContext.Request.Host.ToString());
             }
 
             return Challenge(new AuthenticationProperties { RedirectUri = ReturnUri.AbsoluteUri }, OpenIdConnectDefaults.AuthenticationScheme);

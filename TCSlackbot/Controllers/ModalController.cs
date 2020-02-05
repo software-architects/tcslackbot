@@ -134,7 +134,7 @@ namespace TCSlackbot.Controllers
 
             using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
             {
-                await _httpClient.PostAsync(new Uri("views.open"), content);
+                await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "views.open"), content);
             }
 
             return Ok(json);
@@ -193,10 +193,8 @@ namespace TCSlackbot.Controllers
             user.Description = payload.View.State.Values.Description.Description.Value;
             user.IsWorking = false;
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
-            var replyData = new Dictionary<string, string>
-            {
-                ["user"] = payload.User.Id
-            };
+            var replyData = new Dictionary<string, string>();
+            replyData["user"] = payload.User.Id;
             replyData["channel"] = await CommandController.GetIMChannelFromUserAsync(_httpClient, replyData["user"]);
             replyData["text"] = "Your time has been saved saved";
             _ = await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));

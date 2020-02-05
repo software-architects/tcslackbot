@@ -305,7 +305,7 @@ namespace TCSlackbot.Controllers
             }
 
             using var content = new FormUrlEncodedContent(replyData);
-            _ = await _httpClient.PostAsync(new Uri(requestUri), content);
+            _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, requestUri), content);
         }
 
         /// <summary>
