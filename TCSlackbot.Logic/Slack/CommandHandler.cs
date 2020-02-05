@@ -133,6 +133,9 @@ namespace TCSlackbot.Logic.Slack
             //
             // Stop working (reset the start and end time)
             //
+            
+            // Send TimeData to TC-API
+
             user.IsWorking = false;
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
