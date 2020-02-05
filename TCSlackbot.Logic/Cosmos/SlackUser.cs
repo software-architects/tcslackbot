@@ -42,7 +42,7 @@ namespace TCSlackbot.Logic
         /// <summary>
         /// The list of breaks during a working session. 
         /// </summary>
-        public Stack<Break> Breaks { get; set; }
+        public Stack<Break> Breaks { get; } = new Stack<Break>();
 
         /// <summary>
         /// Boolean whether the user is working.
