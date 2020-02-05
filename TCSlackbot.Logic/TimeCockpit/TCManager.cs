@@ -26,13 +26,13 @@ namespace TCSlackbot.Logic.Utils
             var objectName = $"APP_{typeof(T).Name}";
 
             // Send request
-            var request = new HttpRequestMessage
+            using var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri($"https://web.timecockpit.com/odata/{objectName}"),
             };
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await _client.SendAsync(request);
             var responseContent = await response.Content.ReadAsStringAsync();
 
@@ -40,12 +40,14 @@ namespace TCSlackbot.Logic.Utils
             var content = Deserialize<ODataResponse<T>>(responseContent);
 
             return content.Value.ToArray();
+
+
         }
 
         public async Task<IEnumerable<T>> GetFilteredObjectsAsync<T>(string accessToken, TCQueryData queryData)
         {
             // Send request
-            var request = new HttpRequestMessage
+            using var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Post,
                 Content = new StringContent(JsonSerializer.Serialize(queryData), Encoding.UTF8, "application/json"),

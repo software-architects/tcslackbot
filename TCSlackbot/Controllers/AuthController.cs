@@ -30,6 +30,11 @@ namespace TCSlackbot.Controllers
             IConfiguration config,
             IDataProtectionProvider provider)
         {
+            if (provider is null)
+            {
+                throw new InvalidProgramException();
+            }
+
             _logger = logger;
             _configuration = config;
             _protector = provider.CreateProtector("UUIDProtector");
@@ -74,7 +79,7 @@ namespace TCSlackbot.Controllers
 
                 // Associate the uuid with the refresh token
                 var azureServiceTokenProvider = new AzureServiceTokenProvider();
-                var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+                using var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
 
                 await keyVaultClient.SetSecretAsync(Program.GetKeyVaultEndpoint(), jsonData.UserId, refreshToken);
 
@@ -88,6 +93,11 @@ namespace TCSlackbot.Controllers
             }
 
             return Ok("Successfully linked the accounts.");
+        }
+
+        public IActionResult Authenticate(Uri ReturnUrl)
+        {
+            throw new NotImplementedException();
         }
     }
 }

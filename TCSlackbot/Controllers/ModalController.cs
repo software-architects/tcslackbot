@@ -37,11 +37,17 @@ namespace TCSlackbot.Controllers
             ITCManager dataManager
             )
         {
+            // Should never happen
+            if (provider is null || factory is null || secretManager is null)
+            {
+                throw new InvalidOperationException();
+            }
+
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
             _cosmosManager = cosmosManager;
             _httpClient = factory.CreateClient("BotClient");
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken"));
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", secretManager.GetSecret("Slack-SlackbotOAuthAccessToken"));
             _tokenManager = tokenManager;
             _tCDataManager = dataManager;
 
@@ -93,12 +99,14 @@ namespace TCSlackbot.Controllers
                 // await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));
                 return Ok();
             }
+
             if (!user.IsWorking)
             {
                 // replyData["text"] = BotResponses.NotWorking;
                 // await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));                
                 return Ok();
             }
+
             switch (payload.Type)
             {
                 case "message_action":
@@ -112,16 +120,31 @@ namespace TCSlackbot.Controllers
             return Ok();
         }
 
-
         public async Task<IActionResult> ViewModalAsync(AppActionPayload payload)
         {
+            if (payload is null)
+            {
+                return BadRequest();
+            }
+
             string json = "{\"trigger_id\": \"" + payload.TriggerId + "\", \"view\": { \"type\": \"modal\", \"callback_id\": \"" + payload.CallbackId + "\",";
             json += await System.IO.File.ReadAllTextAsync("Json/StopTimeTracking.json");
-            await _httpClient.PostAsync("views.open", new StringContent(json, Encoding.UTF8, "application/json"));
+
+            using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
+            {
+                await _httpClient.PostAsync(new Uri("views.open"), content);
+            }
+
             return Ok(json);
         }
+
         public async Task<IActionResult> ProcessModalDataAsync(SlackUser user)   /* , Dictionary<string,string> replyData */
         {
+            if (user is null)
+            {
+                return BadRequest();
+            }
+
             var payload = JsonSerializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
 
             TimeSpan startTime;
@@ -146,9 +169,10 @@ namespace TCSlackbot.Controllers
             {
                 errorMessage += "\"endtime\": \"End Time has to be after Start Time! (eg. \"08:00\")\",";
             }
-            if (errorMessage.EndsWith(","))
+            if (errorMessage.EndsWith(",", StringComparison.CurrentCulture))
             {
                 errorMessage = errorMessage.Substring(0, errorMessage.Length - 1) + "}}";
+
                 /*
                 var replyData = new Dictionary<string, string>();
                 replyData["user"] = payload.User.Id;
@@ -156,6 +180,7 @@ namespace TCSlackbot.Controllers
 
                 await _httpClient.PostAsync("https://747773f7.ngrok.io/modal", new FormUrlEncodedContent(replyData));
                 */
+
                 return Ok();
             }
             DateTime date = payload.View.State.Values.Date.Date.Day;
@@ -171,6 +196,7 @@ namespace TCSlackbot.Controllers
             // await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));
             return Ok();
         }
+
         /// <summary>
         /// Validates the signature of the slack request.
         /// </summary>
@@ -186,9 +212,9 @@ namespace TCSlackbot.Controllers
             var encoding = new UTF8Encoding();
             using var hmac = new HMACSHA256(encoding.GetBytes(signingSecret));
             var hash = hmac.ComputeHash(encoding.GetBytes($"v0:{timestamp}:{body}"));
-            var ownSignature = $"v0={BitConverter.ToString(hash).Replace("-", "").ToLower()}";
+            var ownSignature = $"v0={BitConverter.ToString(hash).Replace("-", "", StringComparison.CurrentCulture).ToLower()}";
 
-            return ownSignature.Equals(signature);
+            return ownSignature.Equals(signature, StringComparison.CurrentCulture);
         }
 
         /// <summary>

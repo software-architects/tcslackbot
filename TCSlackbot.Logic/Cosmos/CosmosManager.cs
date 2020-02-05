@@ -21,6 +21,11 @@ namespace TCSlackbot.Logic.Utils
 
         public CosmosManager(ILogger<CosmosManager> logger, IConfiguration configuration)
         {
+            if (configuration is null)
+            {
+                throw new InvalidProgramException();
+            }
+
             _configuration = configuration;
             _logger = logger;
 
@@ -132,7 +137,7 @@ namespace TCSlackbot.Logic.Utils
             }
         }
 
-        async Task ICosmosManager.RemoveDocumentAsync(string collectionName, string documentId)
+        public async Task RemoveDocumentAsync(string collectionName, string documentId)
         {
             try
             {

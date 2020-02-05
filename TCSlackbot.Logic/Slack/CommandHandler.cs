@@ -40,6 +40,11 @@ namespace TCSlackbot.Logic.Slack
         /// <returns>The bot response message</returns>
         public async Task<string> GetWorktimeAsync(SlackEvent slackEvent)
         {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
             var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
@@ -64,6 +69,11 @@ namespace TCSlackbot.Logic.Slack
         /// <returns>The bot response message</returns>
         public async Task<string> StartWorkingAsync(SlackEvent slackEvent)
         {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
             var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
@@ -95,6 +105,11 @@ namespace TCSlackbot.Logic.Slack
         /// <returns>The bot response message</returns>
         public async Task<string> StopWorkingAsync(SlackEvent slackEvent)
         {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
             var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
@@ -150,6 +165,11 @@ namespace TCSlackbot.Logic.Slack
         /// <returns>The bot response message</returns>
         public async Task<string> ResumeWorktimeAsync(SlackEvent slackEvent)
         {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
             var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
@@ -185,6 +205,11 @@ namespace TCSlackbot.Logic.Slack
         /// <returns>The bot response message</returns>
         public async Task<string> FilterObjectsAsync(SlackEvent slackEvent)
         {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
             var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
@@ -210,7 +235,7 @@ namespace TCSlackbot.Logic.Slack
                     if (accessToken != null)
                     {
                         var data = await _tcDataManager.GetFilteredObjectsAsync<Project>(accessToken, queryData);
-                        if (data.Count() != 0)
+                        if (data.Any())
                         {
                             return string.Join('\n', data.Take(10).Select(element => $"- {element.ProjectName}"));
                         }
@@ -239,6 +264,11 @@ namespace TCSlackbot.Logic.Slack
         /// <returns>The bot response message</returns>
         public async Task<string> PauseWorktimeAsync(SlackEvent slackEvent)
         {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
             var userId = slackEvent.User;
 
             var user = await GetSlackUserAsync(userId);
@@ -284,6 +314,11 @@ namespace TCSlackbot.Logic.Slack
         /// <returns>The login link as a string</returns>
         public string GetLoginLink(SlackEvent slackEvent)
         {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
             var userId = slackEvent.User;
 
             //

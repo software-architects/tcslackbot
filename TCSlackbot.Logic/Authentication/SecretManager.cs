@@ -31,20 +31,23 @@ namespace TCSlackbot.Logic
         public async Task DeleteSecretAsync(string key)
         {
             var azureServiceTokenProvider = new AzureServiceTokenProvider();
-            var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
-            if( _configuration[key] == null )
+            using var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+
+            if (_configuration[key] == null)
             {
                 return;
             }
+
             try
             {
                 await keyVaultClient.DeleteSecretAsync(KeyVaultEndpoint, key);
 
             }
-            catch(KeyVaultErrorException ex)
+            catch (KeyVaultErrorException ex)
             {
                 Console.WriteLine("\n\nError:" + ex.Message);
             }
+
             // Reload the configuration because we added a new secret
             ((IConfigurationRoot)_configuration).Reload();
         }

@@ -6,6 +6,8 @@
     <UserSecretsId>2f7ccf09-8ccc-438f-9eac-ff8cdd33b9f4</UserSecretsId>
     <StartupObject>TCSlackbot.Program</StartupObject>
     <Nullable>enable</Nullable>
+    <NoWarn>CA2007</NoWarn> <!-- ConfigureAwait -->
+    <NoWarn>CA1304</NoWarn> <!-- .ToLower(CultureInfo) -->
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace TCSlackbot.Logic.Slack
@@ -39,7 +39,7 @@ namespace TCSlackbot.Logic.Slack
         public SlackEvent Event { get; set; }
 
         [JsonPropertyName("authed_teams")]
-        public string[] AuthedTeams { get; set; }
+        public List<string> AuthedTeams { get; set; }
 
         [JsonPropertyName("event_id")]
         public string EventId { get; set; }
