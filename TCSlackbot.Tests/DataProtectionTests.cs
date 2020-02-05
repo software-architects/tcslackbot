@@ -19,15 +19,18 @@ namespace TCSlackbot.Tests
 
         public ServiceProvider ServiceProvider { get; private set; }
     }
+
     public class DataProtectionTests : IClassFixture<DependencySetupFixture>
     {
-        private ServiceProvider _serviceProvider;
+        private readonly ServiceProvider _serviceProvider;
 
         public DataProtectionTests(DependencySetupFixture fixture)
         {
             if (fixture == null)
             {
-                throw new ArgumentNullException();
+#pragma warning disable CA2208 // Instantiate argument exceptions correctly
+                throw new ArgumentNullException("DependencySetupFixture");
+#pragma warning restore CA2208 // Instantiate argument exceptions correctly
             }
 
             _serviceProvider = fixture.ServiceProvider;
