@@ -1,21 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace TCSlackbot.Logic.Slack.Requests
 {
-    public class IMResponse
+    public static class IMResponse
     {
-        public partial class Payload
+        private class Payload
         {
             [JsonPropertyName("ok")]
             public bool Ok { get; set; }
+
             [JsonPropertyName("ims")]
-            public List<InstantMessage> Ims { get; set; }
+            public List<InstantMessage> Ims { get; set; } = new List<InstantMessage>();
         }
 
-        public partial class InstantMessage
+        private class InstantMessage
         {
             [JsonPropertyName("id")]
             public string Id { get; set; }

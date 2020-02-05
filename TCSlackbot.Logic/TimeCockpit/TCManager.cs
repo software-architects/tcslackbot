@@ -26,18 +26,18 @@ namespace TCSlackbot.Logic.Utils
             var objectName = $"APP_{typeof(T).Name}";
 
             // Send request
-            var request = new HttpRequestMessage
+            using var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri($"https://web.timecockpit.com/odata/{objectName}"),
             };
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await _client.SendAsync(request);
             var responseContent = await response.Content.ReadAsStringAsync();
 
             // Parse response
-            var content = Deserialize<ODataResponse<T>>(responseContent);
+            var content = Serializer.Deserialize<ODataResponse<T>>(responseContent);
 
             return content.Value.ToArray();
         }
@@ -45,7 +45,7 @@ namespace TCSlackbot.Logic.Utils
         public async Task<IEnumerable<T>> GetFilteredObjectsAsync<T>(string accessToken, TCQueryData queryData)
         {
             // Send request
-            var request = new HttpRequestMessage
+            using var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Post,
                 Content = new StringContent(JsonSerializer.Serialize(queryData), Encoding.UTF8, "application/json"),
@@ -57,17 +57,9 @@ namespace TCSlackbot.Logic.Utils
             var responseContent = await response.Content.ReadAsStringAsync();
 
             // Parse response
-            var content = Deserialize<ODataResponse<T>>(responseContent);
+            var content = Serializer.Deserialize<ODataResponse<T>>(responseContent);
 
             return content.Value.ToArray();
-        }
-
-        private T Deserialize<T>(string content)
-        {
-            return JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions
-            {
-                //PropertyNamingPolicy = new TCNamingPolicy()
-            });
         }
     }
 }

@@ -21,6 +21,11 @@ namespace TCSlackbot.Logic.Utils
 
         public CosmosManager(ILogger<CosmosManager> logger, IConfiguration configuration)
         {
+            if (configuration is null)
+            {
+                throw new InvalidProgramException();
+            }
+
             _configuration = configuration;
             _logger = logger;
 
@@ -48,7 +53,7 @@ namespace TCSlackbot.Logic.Utils
         }
 
         /// <inheritdoc/>
-        public async Task<T> GetDocumentAsync<T>(string collectionName, string documentId)
+        public async Task<T?> GetDocumentAsync<T>(string collectionName, string documentId) where T: class
         {
             try
             {
@@ -68,15 +73,15 @@ namespace TCSlackbot.Logic.Utils
         }
 
         /// <inheritdoc/>
-        public IDocumentQuery<SlackUser> GetAllSlackUsers()
+        public IDocumentQuery<SlackUser>? GetAllSlackUsers()
         {
             try
             {
                 var response = client.CreateDocumentQuery<SlackUser>(
-                Collection.Users,
-                new FeedOptions { MaxItemCount = 10 })
-                .Where(s => s.IsWorking && (DateTime.Now - s.StartTime).Value > TimeSpan.FromHours(4))
-                .AsDocumentQuery();
+                    Collection.Users,
+                    new FeedOptions { MaxItemCount = 10 })
+                    .Where(s => s.IsWorking && s.StartTime != null && (DateTime.Now - s.StartTime).Value > TimeSpan.FromHours(4))
+                    .AsDocumentQuery();
 
                 return (dynamic)response;
             }
@@ -91,7 +96,7 @@ namespace TCSlackbot.Logic.Utils
         }
 
         /// <inheritdoc/>
-        public async Task<T> CreateDocumentAsync<T>(string collectionName, T document)
+        public async Task<T?> CreateDocumentAsync<T>(string collectionName, T document) where T: class
         {
             await CreateCollectionIfNotExistsAsync(DatabaseName, collectionName);
 
@@ -113,7 +118,7 @@ namespace TCSlackbot.Logic.Utils
         }
 
         /// <inheritdoc/>
-        public async Task<T> ReplaceDocumentAsync<T>(string collectionName, T document, string documentId)
+        public async Task<T?> ReplaceDocumentAsync<T>(string collectionName, T document, string documentId) where T: class
         {
             try
             {
@@ -132,7 +137,7 @@ namespace TCSlackbot.Logic.Utils
             }
         }
 
-        async Task ICosmosManager.RemoveDocumentAsync(string collectionName, string documentId)
+        public async Task RemoveDocumentAsync(string collectionName, string documentId)
         {
             try
             {

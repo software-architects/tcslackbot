@@ -9,7 +9,7 @@ namespace TCSlackbot.Logic.Utils
         /// </summary>
         /// <param name="userId">The id of the user</param>
         /// <returns>The access token or default if it could not be renewed</returns>
-        public Task<string> GetAccessTokenAsync(string userId);
+        public Task<string?> GetAccessTokenAsync(string userId);
 
         /// <summary>
         /// Renews the access and refresh token via the refresh token. 
