@@ -63,5 +63,12 @@ namespace TCSlackbot.Logic.Utils
 
             return content.Value.ToArray();
         }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<Project>> GetFilteredProjects(string accessToken, string projectName)
+        {
+            var queryData = new TCQueryData($"From P In Project Where P.Code Like '%{projectName}%' Select P");
+            return await GetFilteredObjectsAsync<Project>(accessToken, queryData);
+        }
     }
 }

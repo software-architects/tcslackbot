@@ -263,23 +263,22 @@ namespace TCSlackbot.Logic.Slack
             {
                 case "projects":
                 case "project":
-                    var queryData = new TCQueryData($"From P In Project Where P.Code Like '%{text.ElementAtOrDefault(2)}%' Select P");
-
                     try
                     {
                         var accessToken = await _tokenManager.GetAccessTokenAsync(userId);
-                        if (accessToken != null)
+                        if (accessToken == null)
                         {
-                            var data = await _tcDataManager.GetFilteredObjectsAsync<Project>(accessToken, queryData);
-                            return data.Any() ? string.Join('\n', data.Take(10).Select(element => $"- {element.ProjectName}")) : BotResponses.NoObjectsFound;
+                            return BotResponses.InvalidAccessToken;
                         }
+
+                        var queryData = new TCQueryData($"From P In Project Where P.Code Like '%{text.ElementAtOrDefault(2)}%' Select P");
+                        var data = await _tcDataManager.GetFilteredObjectsAsync<Project>(accessToken, queryData);
+                        return data.Any() ? string.Join('\n', data.Take(10).Select(element => $"- {element.ProjectName}")) : BotResponses.NoObjectsFound;
                     }
                     catch (LoggedOutException)
                     {
                         return BotResponses.ErrorLoggedOut;
                     }
-
-                    break;
 
                 case "tasks":
                 case "task":
@@ -290,6 +289,56 @@ namespace TCSlackbot.Logic.Slack
             }
 
             return BotResponses.FilterObjectNotFound;
+        }
+
+        /// <summary>
+        /// Sets the default project for the user who executed the command.
+        /// </summary>
+        /// <param name="slackEvent"></param>
+        /// <returns>The bot response message</returns>
+        public async Task<string> SetDefaultProject(SlackEvent slackEvent)
+        {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
+            var userId = slackEvent.User;
+
+            var user = await GetSlackUserAsync(userId);
+            if (user is null)
+            {
+                return BotResponses.NotLoggedIn;
+            }
+
+            // project <project_name>
+            var text = slackEvent.Text.ToLower().Trim().Split(" ");
+            if (text.Length != 2)
+            {
+                return BotResponses.InvalidParameter;
+            }
+
+            try
+            {
+                var accessToken = await _tokenManager.GetAccessTokenAsync(userId);
+                if (accessToken == null)
+                {
+                    return BotResponses.InvalidAccessToken;
+                }
+
+                var data = await _tcDataManager.GetFilteredProjects(accessToken, text.ElementAtOrDefault(1));
+                
+                if (data.Count() == 1)
+                {
+                    user.DefaultProject = data.FirstOrDefault();
+                }
+            }
+            catch (LoggedOutException)
+            {
+                return BotResponses.ErrorLoggedOut;
+            }
+
+            return BotResponses.ObjectNotFound;
         }
 
         /// <summary>

@@ -10,6 +10,9 @@ namespace TCSlackbot.Logic.TimeCockpit.Objects
         [JsonPropertyName("APP_ProjectName")]
         public string ProjectName { get; set; }
 
+        [JsonPropertyName("APP_ProjectUuid")]
+        public string ProjectUuid { get; set; }
+
         // TODO: Add more
     }
 }

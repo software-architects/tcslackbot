@@ -142,7 +142,16 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to There was one or more parameters missing. .
+        ///   Looks up a localized string similar to Invalid Access Token. Please unlink your account and then link it again..
+        /// </summary>
+        public static string InvalidAccessToken {
+            get {
+                return ResourceManager.GetString("InvalidAccessToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid parameters..
         /// </summary>
         public static string InvalidParameter {
             get {
@@ -192,6 +201,24 @@ namespace TCSlackbot.Logic.Resources {
         public static string NotWorking {
             get {
                 return ResourceManager.GetString("NotWorking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This function has not yet been implemented..
+        /// </summary>
+        public static string NotYetImplemented {
+            get {
+                return ResourceManager.GetString("NotYetImplemented", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Object count not be found..
+        /// </summary>
+        public static string ObjectNotFound {
+            get {
+                return ResourceManager.GetString("ObjectNotFound", resourceCulture);
             }
         }
         
