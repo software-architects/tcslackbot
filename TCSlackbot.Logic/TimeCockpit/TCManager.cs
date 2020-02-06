@@ -20,6 +20,7 @@ namespace TCSlackbot.Logic.Utils
             _client = client;
         }
 
+        /// <inheritdoc/>
         public async Task<IEnumerable<T>> GetObjectsAsync<T>(string accessToken)
         {
             // Get the object name
@@ -42,6 +43,7 @@ namespace TCSlackbot.Logic.Utils
             return content.Value.ToArray();
         }
 
+        /// <inheritdoc/>
         public async Task<IEnumerable<T>> GetFilteredObjectsAsync<T>(string accessToken, TCQueryData queryData)
         {
             // Send request
