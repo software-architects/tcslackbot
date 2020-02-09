@@ -14,6 +14,8 @@ namespace TCSlackbot.Logic.Slack.Requests
         public UserChannel Channel { get; set; }
         [JsonPropertyName("user")]
         public UserChannel User { get; set; }
+        [JsonPropertyName("Value")]
+        public string Value { get; set; }
     }
 
     //User and Channel have the same properties

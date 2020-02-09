@@ -1,17 +1,22 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using TCSlackbot.Logic.TimeCockpit.Objects;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
+using TCSlackbot.Logic.Authentication.Exceptions;
 using TCSlackbot.Logic.Cosmos;
+using TCSlackbot.Logic.Resources;
 using TCSlackbot.Logic.Slack;
 using TCSlackbot.Logic.Slack.Requests;
+using TCSlackbot.Logic.TimeCockpit;
 using TCSlackbot.Logic.Utils;
 
 namespace TCSlackbot.Controllers
@@ -25,7 +30,7 @@ namespace TCSlackbot.Controllers
         private readonly ICosmosManager _cosmosManager;
         private readonly HttpClient _httpClient;
         private readonly ITokenManager _tokenManager;
-        private readonly ITCManager _tCDataManager;
+        private readonly ITCManager _tcDataManager;
         private readonly CommandHandler _commandHandler;
 
         public ModalController(
@@ -53,7 +58,7 @@ namespace TCSlackbot.Controllers
             {
                 throw new ArgumentNullException("ISecretManager");
             }
-#pragma warning restore CA2208 // Instantiate argument exceptions correctly
+            #pragma warning restore CA2208 // Instantiate argument exceptions correctly
 
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
@@ -61,9 +66,9 @@ namespace TCSlackbot.Controllers
             _httpClient = factory.CreateClient("BotClient");
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", secretManager.GetSecret("Slack-SlackbotOAuthAccessToken"));
             _tokenManager = tokenManager;
-            _tCDataManager = dataManager;
+            _tcDataManager = dataManager;
 
-            _commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager, _tCDataManager);
+            _commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager, _tcDataManager);
         }
 
         /// <summary>
@@ -74,13 +79,44 @@ namespace TCSlackbot.Controllers
         [Route("getData")]
         public async Task<IActionResult> GetExternalData()
         {
-            string json = "\"options\": [ {\"text\": {\"type\": \"plain_text\",  \"text\": \" * this is plain_text text*\"},\"value\": \"value -3\" }]";
-            var projectList = await _httpClient.GetAsync("https://apipreview.timecockpit.com/odata/APP_Project");
+            var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
+            string json = "{\"options\": [";
+            var queryData = new TCQueryData($"From P In Project Where P.Code Like '%{payload.Value}%' Select P");
+
+            //  queryData = new TCQueryData($"From P In Project Where P.Code Like '%{text.ElementAtOrDefault(2)}%' Select P");
+            //string userId = HttpContext.Request.Form.TryGetValue("user");
+
+            try
+            {
+                var accessToken = await _tokenManager.GetAccessTokenAsync(payload.User.Id);
+                if (accessToken != null)
+                {
+                    var data = await _tcDataManager.GetFilteredObjectsAsync<Project>(accessToken, queryData);
+
+                    //foreach (var d in data.Any() ? string.Join('\n', data.Take(10).Select(element => $"- {element.ProjectName}")) : BotResponses.NoObjectsFound)
+                    foreach (var project in data.Take(10).Select(element => $"- {element.ProjectName}"))
+                    {
+                        Console.WriteLine(project);
+                    }
+                }
+            }
+            catch (LoggedOutException)
+            {
+                return Ok(BotResponses.ErrorLoggedOut);
+            }
+            /*var projectList = await _httpClient.GetAsync("https://apipreview.timecockpit.com/odata/APP_Project");
+            Console.WriteLine(await projectList.Content.ReadAsStringAsync());
             foreach (var i in JsonSerializer.Deserialize<ProjectRequest>(await projectList.Content.ReadAsStringAsync()).Values)
             {
-                Console.WriteLine(i.ProjectName);
+                json += "{\"text\": {\"type\": \"plain_text\",  \"text\": \"" + i.ProjectName + "\"},\"value\": \"" + i.ProjectName + "\" },";
             }
-            return Ok("json.json");
+            json = json.Remove(json.Length) + "]}";
+            using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
+            {
+                await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "views.open"), content);
+            }
+            */
+            return Ok(new StringContent(json, Encoding.UTF8, "application/json"));
         }
         /// <summary>
         /// Handles the incoming requests (only if they have a valid slack signature).
@@ -146,7 +182,7 @@ namespace TCSlackbot.Controllers
             }
 
             string json = "{\"trigger_id\": \"" + payload.TriggerId + "\", \"view\": { \"type\": \"modal\", \"callback_id\": \"" + payload.CallbackId + "\",";
-            json += await System.IO.File.ReadAllTextAsync("Json/StopTimeTracking.json");
+            json += await System.IO.File.ReadAllTextAsync("Json/StopTimeTrackingNewTest.json"); // Changed to New
 
             using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
             {
@@ -205,6 +241,7 @@ namespace TCSlackbot.Controllers
 
             user.StartTime = date + startTime;
             user.EndTime = date + endTime;
+            // user.Project = payload.View.State.Values.Project.Project.Value
             user.Description = payload.View.State.Values.Description.Description.Value;
             user.IsWorking = false;
             

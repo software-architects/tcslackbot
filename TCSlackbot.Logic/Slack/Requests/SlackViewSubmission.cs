@@ -55,6 +55,8 @@ namespace TCSlackbot.Logic.Slack.Requests
 
         [JsonPropertyName("description")]
         public DescriptionClass Description { get; set; }
+        [JsonPropertyName("project")]
+        public ProjectClass Project { get; set; }
     }
 
     public partial class DateClass
@@ -68,6 +70,12 @@ namespace TCSlackbot.Logic.Slack.Requests
         [JsonPropertyName("Description")]
         public Details Description { get; set; }
     }
+    public partial class ProjectClass
+    {
+        [JsonPropertyName("Date")]
+        public Details Project { get; set; }
+    }
+
 
     public partial class Details
     {

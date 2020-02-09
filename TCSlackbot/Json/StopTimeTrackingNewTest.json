@@ -1,0 +1,94 @@
+"title": {
+  "type": "plain_text",
+  "text": "Stop Timetracking",
+  "emoji": true
+}, "submit": {
+  "type": "plain_text",
+  "text": "Submit",
+  "emoji": true
+}, "close": {
+  "type": "plain_text",
+  "text": "Cancel",
+  "emoji": true
+}, "blocks": [
+  {
+    "type": "input",
+    "block_id": "date",
+    "element": {
+      "type": "datepicker",
+      "placeholder": {
+        "type": "plain_text",
+        "text": "Select a date",
+        "emoji": true
+      },
+      "action_id": "Date"
+    },
+    "label": {
+      "type": "plain_text",
+      "text": "Date",
+      "emoji": true
+    }
+  },
+  {
+    "type": "input",
+    "block_id": "starttime",
+    "element": {
+      "type": "plain_text_input",
+      "action_id": "StartTime",
+      "placeholder": {
+        "type": "plain_text",
+        "text": "StartTime"
+      }
+    },
+    "label": {
+      "type": "plain_text",
+      "text": "Start Time"
+    }
+  },
+  {
+    "type": "input",
+    "block_id": "endtime",
+    "element": {
+      "type": "plain_text_input",
+      "action_id": "EndTime"
+    },
+    "label": {
+      "type": "plain_text",
+      "text": "End Time"
+    }
+  },
+  {
+    "type": "section",
+    "block_id": "project",
+    "text": {
+      "type": "mrkdwn",
+      "text": "Project"
+    },
+    "accessory": {
+      "action_id": "Project",
+      "type": "multi_external_select",
+      "placeholder": {
+        "type": "plain_text",
+        "text": "Select a project"
+      },
+      "min_query_length": 1,
+      "max_selected_items": 1
+    }
+  },
+  {
+    "type": "input",
+    "block_id": "description",
+    "element": {
+      "type": "plain_text_input",
+      "multiline": true,
+      "action_id": "Description"
+    },
+    "label": {
+      "type": "plain_text",
+      "text": "Description",
+      "emoji": true
+    }
+  }
+] }
+
+}
