@@ -241,7 +241,7 @@ namespace TCSlackbot.Controllers
 
             user.StartTime = date + startTime;
             user.EndTime = date + endTime;
-            // user.Project = payload.View.State.Values.Project.Project.Value
+            user.Project = payload.View.State.Values.Project.Project.Value;
             user.Description = payload.View.State.Values.Description.Description.Value;
             user.IsWorking = false;
             
