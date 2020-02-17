@@ -154,7 +154,7 @@
     <value>You have succesfully logged out. Goodbye.</value>
   </data>
   <data name="InvalidParameter" xml:space="preserve">
-    <value>There was one or more parameters missing. </value>
+    <value>Invalid parameters.</value>
   </data>
   <data name="BreakEnded" xml:space="preserve">
     <value>Successfully stopped the break.</value>
@@ -185,5 +185,14 @@
   </data>
   <data name="NoObjectsFound" xml:space="preserve">
     <value>No objects found.</value>
+  </data>
+  <data name="NotYetImplemented" xml:space="preserve">
+    <value>This function has not yet been implemented.</value>
+  </data>
+  <data name="ObjectNotFound" xml:space="preserve">
+    <value>Object count not be found.</value>
+  </data>
+  <data name="InvalidAccessToken" xml:space="preserve">
+    <value>Invalid Access Token. Please unlink your account and then link it again.</value>
   </data>
 </root>

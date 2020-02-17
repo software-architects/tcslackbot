@@ -162,10 +162,10 @@ namespace TCSlackbot.Controllers
 
             var reply = new Dictionary<string, string>();
             var hiddenMessage = false;
+
             //
             // Set the reply data
             //
-
             //reply["token"] = _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken");
             reply["channel"] = slackEvent.Channel;
             reply["user"] = slackEvent.User;
@@ -213,6 +213,10 @@ namespace TCSlackbot.Controllers
 
                 case "filter":
                     reply["text"] = await _commandHandler.FilterObjectsAsync(slackEvent);
+                    break;
+
+                case "project":
+                    reply["text"] = await _commandHandler.SetDefaultProject(slackEvent);
                     break;
 
                 default:

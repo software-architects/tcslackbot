@@ -2,10 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TCSlackbot.Logic.TimeCockpit.Objects;
 
 namespace TCSlackbot.Logic
 {
-    public class Break
+    public class Duration
     {
         public DateTime? Start { get; set; }
         public DateTime? End { get; set; }
@@ -35,9 +36,12 @@ namespace TCSlackbot.Logic
         public DateTime? StartTime { get; set; }
 
         /// <summary>
-        /// The end time of the working session.
+        /// The duration of the working session.
         /// </summary>
         public DateTime? EndTime { get; set; }
+
+        // TODO: Use this instead of StartTime and EndTime 
+        public Duration? Worktime { get; set; }
 
         /// <summary>
         /// The description of the working session.
@@ -47,7 +51,12 @@ namespace TCSlackbot.Logic
         /// <summary>
         /// The list of breaks during a working session. 
         /// </summary>
-        public Stack<Break>? Breaks { get; set; }
+        public Stack<Duration>? Breaks { get; set; }
+
+        /// <summary>
+        /// The default project, used whenever a user executes a command and doesn't pass a custom project.
+        /// </summary>
+        public Project? DefaultProject { get; set; }
 
         /// <summary>
         /// Boolean whether the user is working.
@@ -97,7 +106,7 @@ namespace TCSlackbot.Logic
         {
             if (Breaks == null)
             {
-                Breaks = new Stack<Break>();
+                Breaks = new Stack<Duration>();
             }
 
             if (Breaks.Count != 0)
@@ -113,7 +122,7 @@ namespace TCSlackbot.Logic
             }
 
             // 3. Insert a new break
-            var newBreak = new Break
+            var newBreak = new Duration
             {
                 Start = date,
                 End = null
