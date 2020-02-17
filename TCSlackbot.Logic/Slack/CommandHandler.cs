@@ -59,7 +59,7 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.NotWorking;
             }
 
-            var timeSpan = DateTime.Now - user.StartTime.GetValueOrDefault();
+            var timeSpan = user.TotalWorkTime();
             var hours = timeSpan.Hours;
             var minutes = timeSpan.Minutes;
 

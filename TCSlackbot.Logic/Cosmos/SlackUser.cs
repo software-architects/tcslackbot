@@ -158,5 +158,27 @@ namespace TCSlackbot.Logic
 
             return true;
         }
+
+        /// <summary>
+        /// The total time spent on breaks.
+        /// </summary>
+        /// <returns>A time span with the total break time</returns>
+        public TimeSpan TotalBreakTime() => new TimeSpan(Breaks.Sum(b =>
+        {
+            // If end has not been set, use current date
+            if (b.End == null)
+            {
+                return (DateTime.Now - b.Start.GetValueOrDefault()).Ticks;
+            }
+
+            return (b.End.GetValueOrDefault() - b.Start.GetValueOrDefault()).Ticks;
+        }));
+
+        /// <summary>
+        /// The total work time without breaks.
+        /// </summary>
+        /// <returns>A time span with the total work time. If the end has not been set, the current time is used.</returns>
+        public TimeSpan TotalWorkTime() => 
+            ((EndTime == null ? DateTime.Now : EndTime.GetValueOrDefault()) - (StartTime == null ? DateTime.Now : StartTime.GetValueOrDefault())) - TotalBreakTime();
     }
 }
