@@ -71,7 +71,6 @@
         "type": "plain_text",
         "text": "Select a project"
       },
-      "min_query_length": 1,
       "max_selected_items": 1
     }
   },
