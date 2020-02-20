@@ -248,14 +248,21 @@ namespace TCSlackbot.Controllers
                 await _httpClient.PostAsync("https://747773f7.ngrok.io/modal", new FormUrlEncodedContent(replyData));
                 */
 
-                return Ok();
+                using (var content = new StringContent(errorMessage, Encoding.UTF8, "application/json"))
+                {
+                     await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "views.open"), content);
+                }
+
+                return ValidationProblem(errorMessage);
+
+               
             }
 
             DateTime date = payload.View.State.Values.Date.Date.Day;
 
             user.StartTime = date + startTime;
             user.EndTime = date + endTime;
-            if (payload.View.State.Values.Project.Project.Value == null || payload.View.State.Values.Project.Project.Value.Length == 0)
+            if (payload.View.State.Values.Project == null)
             {
                 user.Project = "";
             }else
@@ -263,9 +270,11 @@ namespace TCSlackbot.Controllers
                 user.Project = payload.View.State.Values.Project.Project.Value;
             }
             user.Description = payload.View.State.Values.Description.Description.Value;
-            user.IsWorking = false;
             
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
+
+            user.ResetWorktime();
+
 
             var channel = await CommandController.GetIMChannelFromUserAsync(_httpClient, payload.User.Id);
             if (channel is null)
@@ -278,7 +287,7 @@ namespace TCSlackbot.Controllers
             {
                 ["user"] = payload.User.Id,
                 ["channel"] = channel,
-                ["text"] = "Your time has been saved saved"
+                ["text"] = "Your time has been saved"
             };
 
             _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), new FormUrlEncodedContent(replyData));

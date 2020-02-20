@@ -37,7 +37,7 @@
       "action_id": "StartTime",
       "placeholder": {
         "type": "plain_text",
-        "text": "StartTime"
+        "text": "eg. 12:00"
       }
     },
     "label": {
@@ -50,7 +50,11 @@
     "block_id": "endtime",
     "element": {
       "type": "plain_text_input",
-      "action_id": "EndTime"
+      "action_id": "EndTime",
+      "placeholder": {
+        "type": "plain_text",
+        "text": "eg. 18:00"
+      }
     },
     "label": {
       "type": "plain_text",
