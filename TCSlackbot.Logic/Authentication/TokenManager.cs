@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using System.Net.Http;
 using System.Threading.Tasks;
 using TCSlackbot.Logic.Authentication.Exceptions;
+using TCSlackbot.Logic.Resources;
 
 namespace TCSlackbot.Logic.Utils
 {
@@ -29,50 +30,57 @@ namespace TCSlackbot.Logic.Utils
         /// (The user may need to login again if the refresh token in the key vault was invalid.)</returns>
         public async Task<string?> GetAccessTokenAsync(string userId)
         {
-            //
-            // Check if already in the cache
-            //
-            if (accessTokenCache.HasValidToken(userId))
+            try
             {
-                return accessTokenCache.Get(userId);
+                //
+                // Check if already in the cache
+                //
+                if (accessTokenCache.HasValidToken(userId))
+                {
+                    return accessTokenCache.Get(userId);
+                }
+
+                //
+                // Get the refresh token
+                //
+                var oldRefreshToken = _secretManager.GetSecret(userId);
+
+                // No refresh token found -> User needs to login first
+                if (oldRefreshToken is null)
+                {
+                    return default;
+                }
+
+                //
+                // Get the new access and refresh token
+                //
+                var (accessToken, refreshToken) = await RenewTokensAsync(oldRefreshToken);
+
+                // Tokens could not be renewed
+                if (accessToken is null || refreshToken is null)
+                {
+                    // Delete the refresh token if it's invalid
+                    await _secretManager.DeleteSecretAsync(userId);
+
+                    throw new LoggedOutException();
+                }
+
+                //
+                // Update the refresh token in the keyvault
+                //
+                _secretManager.SetSecret(userId, refreshToken);
+
+                //
+                // Add it to the cache
+                //
+                accessTokenCache.Add(userId, accessToken);
+
+                return accessToken;
             }
-
-            //
-            // Get the refresh token
-            //
-            var oldRefreshToken = _secretManager.GetSecret(userId);
-
-            // No refresh token found -> User needs to login first
-            if (oldRefreshToken is null)
+            catch (LoggedOutException)
             {
-                return default;
+                return BotResponses.ErrorLoggedOut;
             }
-
-            //
-            // Get the new access and refresh token
-            //
-            var (accessToken, refreshToken) = await RenewTokensAsync(oldRefreshToken);
-
-            // Tokens could not be renewed
-            if (accessToken is null || refreshToken is null)
-            {
-                // Delete the refresh token if it's invalid
-                await _secretManager.DeleteSecretAsync(userId);
-
-                throw new LoggedOutException();
-            }
-
-            //
-            // Update the refresh token in the keyvault
-            //
-            _secretManager.SetSecret(userId, refreshToken);
-
-            //
-            // Add it to the cache
-            //
-            accessTokenCache.Add(userId, accessToken);
-
-            return accessToken;
         }
 
         /// <summary>
