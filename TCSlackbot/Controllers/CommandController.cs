@@ -14,6 +14,7 @@ using TCSlackbot.Logic;
 using TCSlackbot.Logic.Resources;
 using TCSlackbot.Logic.Slack;
 using TCSlackbot.Logic.Slack.Requests;
+using TCSlackbot.Logic.TimeCockpit.Objects;
 using TCSlackbot.Logic.Utils;
 
 namespace TCSlackbot.Controllers

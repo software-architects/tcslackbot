@@ -271,8 +271,7 @@ namespace TCSlackbot.Logic.Slack
                             return BotResponses.InvalidAccessToken;
                         }
 
-                        var queryData = new TCQueryData($"From P In Project Where P.Code Like '%{text.ElementAtOrDefault(2)}%' Select P");
-                        var data = await _tcDataManager.GetFilteredObjectsAsync<Project>(accessToken, queryData);
+                        var data = await _tcDataManager.GetFilteredProjects(accessToken, text.ElementAtOrDefault(2));
                         return data.Any() ? string.Join('\n', data.Take(10).Select(element => $"- {element.ProjectName}")) : BotResponses.NoObjectsFound;
                     }
                     catch (LoggedOutException)
