@@ -58,7 +58,7 @@ namespace TCSlackbot.Controllers
             {
                 throw new ArgumentNullException("ISecretManager");
             }
-            #pragma warning restore CA2208 // Instantiate argument exceptions correctly
+#pragma warning restore CA2208 // Instantiate argument exceptions correctly
 
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
@@ -83,30 +83,8 @@ namespace TCSlackbot.Controllers
             string json = "{\"options\": [";
             var queryData = new TCQueryData($"From P In Project Where P.Code Like '%{payload.Value}%' Select P");
 
-            //  queryData = new TCQueryData($"From P In Project Where P.Code Like '%{text.ElementAtOrDefault(2)}%' Select P");
-            //string userId = HttpContext.Request.Form.TryGetValue("user");
-
-           /* try
+            try
             {
-                var accessToken = await _tokenManager.GetAccessTokenAsync(payload.User.Id);
-                if (accessToken != null)
-                {
-                    var data = await _tcDataManager.GetFilteredObjectsAsync<Project>(accessToken, queryData);
-
-                    //foreach (var d in data.Any() ? string.Join('\n', data.Take(10).Select(element => $"- {element.ProjectName}")) : BotResponses.NoObjectsFound)
-                    foreach (var project in data.Select(element => $"- {element.ProjectName}"))
-                    {
-                        json += "{\"text\": {\"type\": \"plain_text\",  \"text\": \"" + project + "\"},\"value\": \"" + project + "\" },";
-                    }
-                    json = json.Remove(json.Length-1) + "]}";
-                }
-            }
-            catch (LoggedOutException)
-            {
-                return Ok(BotResponses.ErrorLoggedOut);
-            }
-            */
-            try {
                 var accessToken = await _tokenManager.GetAccessTokenAsync(payload.User.Id);
                 if (accessToken != null)
                 {
@@ -116,13 +94,10 @@ namespace TCSlackbot.Controllers
                     {
                         json += "{\"text\": {\"type\": \"plain_text\",  \"text\": \"" + i.ProjectName + "\"},\"value\": \"" + i.ProjectName + "\" },";
                     }
-                    json = json.Remove(json.Length-1) + "]}";
-                    // using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
-                    // {
-                    //    await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "views.open"), content);
-                    // }
+
+                    json = json.Remove(json.Length - 1) + "]}";
                 }
-                   
+
             }
             catch (LoggedOutException)
             {
@@ -130,8 +105,25 @@ namespace TCSlackbot.Controllers
             }
 
             Console.WriteLine(json);
-            return Ok(new StringContent(json, Encoding.UTF8, "application/json"));
+            //return Ok(new StringContent(json, Encoding.UTF8, "application/json"));
+
+            var debugData = new
+            {
+                options = new[]
+                {
+                    new {
+                        text = new {
+                            type = "plain_text",
+                            text = " *this is plain_text text*"
+                        },
+                        value = "value-0"
+                    }
+                }
+            };
+            return Ok(new StringContent(JsonSerializer.Serialize(debugData), Encoding.UTF8, "application/json"));
         }
+
+
         /// <summary>
         /// Handles the incoming requests (only if they have a valid slack signature).
         /// </summary>
@@ -156,7 +148,7 @@ namespace TCSlackbot.Controllers
             //
             if (payload.Type == "block_actions" || payload.Type == "view_closed")
                 return Ok();
-           
+
             //
             // Check if user is logged in, working
             //
@@ -250,12 +242,12 @@ namespace TCSlackbot.Controllers
 
                 using (var content = new StringContent(errorMessage, Encoding.UTF8, "application/json"))
                 {
-                     await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "views.open"), content);
+                    await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "views.open"), content);
                 }
 
                 return ValidationProblem(errorMessage);
 
-               
+
             }
 
             DateTime date = payload.View.State.Values.Date.Date.Day;
@@ -265,12 +257,13 @@ namespace TCSlackbot.Controllers
             if (payload.View.State.Values.Project == null)
             {
                 user.Project = "";
-            }else
+            }
+            else
             {
                 user.Project = payload.View.State.Values.Project.Project.Value;
             }
             user.Description = payload.View.State.Values.Description.Description.Value;
-            
+
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
             user.ResetWorktime();
