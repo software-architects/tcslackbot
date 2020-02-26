@@ -147,6 +147,7 @@ namespace TCSlackbot.Logic.Slack
             // Stop working (reset the start and end time)
             //
             user.ResetWorktime();
+            user.Breaks?.Clear();
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
             return BotResponses.StoppedWorking;
