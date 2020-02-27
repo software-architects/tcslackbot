@@ -14,6 +14,7 @@ using TCSlackbot.Logic;
 using TCSlackbot.Logic.Resources;
 using TCSlackbot.Logic.Slack;
 using TCSlackbot.Logic.Slack.Requests;
+using TCSlackbot.Logic.TimeCockpit.Objects;
 using TCSlackbot.Logic.Utils;
 
 namespace TCSlackbot.Controllers
@@ -166,16 +167,23 @@ namespace TCSlackbot.Controllers
             //
             // Set the reply data
             //
-            //reply["token"] = _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken");
             reply["channel"] = slackEvent.Channel;
             reply["user"] = slackEvent.User;
+
+            // We accept two types of messages as command: 
+            // - Normal Chat Messages: 
+            //      > time
+            //      > start
+            // - Bot Mentions
+            //      > @tcslackbot time
+            //      > @tcslackbot start
+            // 
+            // Slack does not provide names but ids, thus, if we replace the id, it'll basically be treated like a normal chat message and still be handled.
+            var text = slackEvent.Text.Replace("<@UJZLBL7BL> ", "", StringComparison.CurrentCulture).ToLower().Trim().Split(' ').FirstOrDefault();
 
             //
             // Handle the command
             //
-            //var user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, slackEvent.User);
-
-            var text = slackEvent.Text.Replace("<@UJZLBL7BL> ", "", StringComparison.CurrentCulture).ToLower().Trim().Split(' ').FirstOrDefault();
             switch (text)
             {
                 case "login":
@@ -226,36 +234,6 @@ namespace TCSlackbot.Controllers
             await SendReplyAsync(reply, hiddenMessage);
 
             return Ok();
-        }
-
-        private async void ReminderScheduler(int hour, int min, double intervalInHour, Action task)
-        {
-            _ = hour;
-            _ = min;
-            _ = intervalInHour;
-            _ = task;
-
-            var queryable = _cosmosManager.GetAllSlackUsers();
-            if (queryable == null)
-            {
-                return;
-            }
-
-            while (queryable.HasMoreResults)
-            {
-                // Iterate through SlackUsers
-                foreach (SlackUser s in await queryable.ExecuteNextAsync<SlackUser>())
-                {
-                    var reply = new Dictionary<string, string>
-                    {
-                        ["user"] = s.UserId,
-                        ["channel"] = s.ChannelId,
-                        ["text"] = BotResponses.TakeABreak
-                    };
-
-                    await SendReplyAsync(reply, true);
-                }
-            }
         }
 
         /// <summary>
