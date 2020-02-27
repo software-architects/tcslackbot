@@ -70,12 +70,11 @@
     },
     "accessory": {
       "action_id": "Project",
-      "type": "multi_external_select",
+      "type": "external_select",
       "placeholder": {
         "type": "plain_text",
         "text": "Select a project"
       },
-      "max_selected_items": 1
     }
   },
   {

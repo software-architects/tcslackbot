@@ -217,20 +217,14 @@ namespace TCSlackbot.Controllers
             var payload = Serializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
 
             string errorMessage = "{ \"response_action\": \"errors\", \"errors\": {";
-            if (payload.View.State.Values.Date.Date.Day == null)
-            {
-                // TODO: send message to user
-                return Ok();
-            }
             if (!TimeSpan.TryParse(payload.View.State.Values.Starttime.StartTime.Value, out TimeSpan startTime))
             {
-                // TODO: send message to user
                 errorMessage += "\"starttime\": \"Please use a valid time format! (eg. \"08:00\")\",";
             }
             if (!TimeSpan.TryParse(payload.View.State.Values.Endtime.EndTime.Value, out TimeSpan endTime))
             {
                 // TODO: send message to user
-                errorMessage += "\"endtime\": \"Please use a valid time format! (eg. \"08:00\")\",";
+                errorMessage += "\"endtime\": \"Please use a valid time format! (eg. \"18:00\")\",";
             }
             if (endTime.CompareTo(startTime) != 1)
             {
@@ -250,10 +244,13 @@ namespace TCSlackbot.Controllers
 
                 using (var content = new StringContent(errorMessage, Encoding.UTF8, "application/json"))
                 {
-                     await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "views.open"), content);
-                }
+                    // await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "stopTracking"), content);
+                    await _httpClient.PostAsync(new Uri("https://ab0f0b30.eu.ngrok.io/modal"), content);
+                    // await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "stopTracking"), content);
+                    // await _httpClient.PostAsync(new Uri("https://ab0f0b30.eu.ngrok.io/modal/stopTracking"), content);
 
-                return ValidationProblem(errorMessage);
+                }
+                return BadRequest(errorMessage);
 
                
             }
