@@ -18,7 +18,7 @@ namespace TCSlackbot.Logic
         /// The id of the user (and document). 
         /// </summary>
         [JsonProperty(PropertyName = "id")]
-        public string UserId { get; set; }
+        public string UserId { get; set; } = String.Empty;
 
         /// <summary>
         /// The id of the user (and document). 

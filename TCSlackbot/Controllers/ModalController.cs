@@ -71,12 +71,39 @@ namespace TCSlackbot.Controllers
             _commandHandler = new CommandHandler(_protector, _cosmosManager, _secretManager, _tokenManager, _tcDataManager);
         }
 
+        [HttpPost]
+        [Route("getData")]
+        public IActionResult GetExternalDataTemp()
+        {
+            var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
+
+            var debugData = new
+            {
+                options = new[]
+                {
+                    new {
+                        text = new {
+                            type = "plain_text",
+                            text = " *this is plain_text text*"
+                        },
+                        value = "value-0"
+                    }
+                }
+            };
+
+            var data = JsonSerializer.Serialize(debugData);
+            Console.WriteLine(data);
+
+            using var content = new StringContent(data, Encoding.UTF8, "application/json");
+            return Ok(content);
+        }
+
         /// <summary>
         /// Send Project Data to Modal
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [Route("getData")]
+        //[Route("getData")]
         public async Task<IActionResult> GetExternalData()
         {
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
@@ -96,6 +123,7 @@ namespace TCSlackbot.Controllers
                     }
 
                     json = json.Remove(json.Length - 1) + "]}";
+                    return Ok(new StringContent(json, Encoding.UTF8, "application/json"));
                 }
 
             }
@@ -104,25 +132,8 @@ namespace TCSlackbot.Controllers
                 return Ok(BotResponses.ErrorLoggedOut);
             }
 
-            Console.WriteLine(json);
-            //return Ok(new StringContent(json, Encoding.UTF8, "application/json"));
-
-            var debugData = new
-            {
-                options = new[]
-                {
-                    new {
-                        text = new {
-                            type = "plain_text",
-                            text = " *this is plain_text text*"
-                        },
-                        value = "value-0"
-                    }
-                }
-            };
-            return Ok(new StringContent(JsonSerializer.Serialize(debugData), Encoding.UTF8, "application/json"));
+            return BadRequest();
         }
-
 
         /// <summary>
         /// Handles the incoming requests (only if they have a valid slack signature).
