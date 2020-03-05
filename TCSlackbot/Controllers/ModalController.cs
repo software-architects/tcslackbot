@@ -207,22 +207,8 @@ namespace TCSlackbot.Controllers
             if (errorMessage.EndsWith(",", StringComparison.CurrentCulture))
             {
                 errorMessage = errorMessage[0..^1] + "}}";
-
-                /*
-                var replyData = new Dictionary<string, string>();
-                replyData["user"] = payload.User.Id;
-                replyData["text"] = errorMessage;
-
-                await _httpClient.PostAsync("https://747773f7.ngrok.io/modal", new FormUrlEncodedContent(replyData));
-                */
-
-                using (var content = new StringContent(errorMessage, Encoding.UTF8, "application/json"))
-                {
-                    await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "views.open"), content);
-                }
-                return Ok(errorMessage);
-
-
+                
+                return Content(errorMessage, "application/json");
             }
 
             DateTime date = payload.View.State.Values.Date.Date.Day;
