@@ -72,57 +72,40 @@ namespace TCSlackbot.Controllers
         }
 
         /// <summary>
-        /// Send Project Data to Modal
+        /// Returns the data that is needed for the 'external select'.
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [Route("getData")]
+        [Route("data")]
         public async Task<IActionResult> GetExternalData()
         {
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
-            string json = "{\"options\": [";
-            var queryData = new TCQueryData($"From P In Project Where P.Code Like '%{payload.Value}%' Select P");
 
             try
             {
                 var accessToken = await _tokenManager.GetAccessTokenAsync(payload.User.Id);
-                if (accessToken != null)
+                if (accessToken == null)
                 {
-                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                    var projectList = await _httpClient.GetAsync("https://web.timecockpit.com/odata/APP_Project");
-                    foreach (var i in JsonSerializer.Deserialize<ProjectRequest>(await projectList.Content.ReadAsStringAsync()).Values)
-                    {
-                        json += "{\"text\": {\"type\": \"plain_text\",  \"text\": \"" + i.ProjectName + "\"},\"value\": \"" + i.ProjectName + "\" },";
-                    }
-
-                    json = json.Remove(json.Length - 1) + "]}";
+                    return BadRequest();
                 }
 
+                // Create the list of projects
+                string json = "{\"options\": [";
+                var projects = await _tcDataManager.GetFilteredProjects(accessToken, payload.Value);
+                foreach (var project in projects)
+                {
+                    json += "{\"text\": {\"type\": \"plain_text\",  \"text\": \"" + project.ProjectName + "\"},\"value\": \"" + project.ProjectName + "\" },";
+                }
+
+                json = json.Remove(json.Length - 1) + "]}";
+
+                return Content(json, "application/json");
             }
             catch (LoggedOutException)
             {
                 return Ok(BotResponses.ErrorLoggedOut);
             }
-
-            Console.WriteLine(json);
-            //return Ok(new StringContent(json, Encoding.UTF8, "application/json"));
-
-            var debugData = new
-            {
-                options = new[]
-                {
-                    new {
-                        text = new {
-                            type = "plain_text",
-                            text = " *this is plain_text text*"
-                        },
-                        value = "value-0"
-                    }
-                }
-            };
-            return Ok(new StringContent(JsonSerializer.Serialize(debugData), Encoding.UTF8, "application/json"));
         }
-
 
         /// <summary>
         /// Handles the incoming requests (only if they have a valid slack signature).
@@ -197,7 +180,6 @@ namespace TCSlackbot.Controllers
 
             return Ok(json);
         }
-
 
         public async Task<IActionResult> ProcessModalDataAsync(SlackUser user)   /* , Dictionary<string,string> replyData */
         {
