@@ -8,6 +8,13 @@ namespace TCSlackbot.Logic
 {
     public class Duration
     {
+
+        public Duration(DateTime? start, DateTime? end)
+        {
+            Start = start;
+            End = end;
+        }
+
         public DateTime? Start { get; set; }
         public DateTime? End { get; set; }
     }
@@ -122,11 +129,7 @@ namespace TCSlackbot.Logic
             }
 
             // 3. Insert a new break
-            var newBreak = new Duration
-            {
-                Start = date,
-                End = null
-            };
+            var newBreak = new Duration(date, null);
             Breaks.Push(newBreak);
 
             return true;
@@ -180,5 +183,47 @@ namespace TCSlackbot.Logic
         /// <returns>A time span with the total work time. If the end has not been set, the current time is used.</returns>
         public TimeSpan TotalWorkTime() => 
             ((EndTime == null ? DateTime.Now : EndTime.GetValueOrDefault()) - (StartTime == null ? DateTime.Now : StartTime.GetValueOrDefault())) - TotalBreakTime();
+
+        public IEnumerable<Duration> GetWorkSessions()
+        {
+            var sessions = new List<Duration>();
+            var breaks = Breaks.OrderBy(duration => duration.Start);
+
+            if(StartTime == null || EndTime == null)
+            {
+                throw new InvalidOperationException("StartTime or EndTime null");
+            }
+
+            // Check if there are any breaks
+            if (!breaks.Any())
+            {
+                sessions.Add(new Duration(StartTime, EndTime));
+                return sessions;
+
+            }
+
+            // Last session will be set after loop
+            for (var i = 0; i <= breaks.Count() - 1; i++)
+            {
+                var curBreak = breaks.ElementAt(i);
+
+                if (i == 0)
+                {
+                    sessions.Add(new Duration(StartTime, curBreak.Start));
+                } else
+                {
+                    var lastBreak = breaks.ElementAt(i - 1);
+
+                    sessions.Add(new Duration(lastBreak.End, curBreak.Start));
+                }
+
+            }
+            Console.WriteLine("\n\n\n\n" + breaks.Last().End + "\n\n\n\n");
+            Console.WriteLine("\n\n\n\n" + breaks.Count() + "\n\n\n\n");
+
+            sessions.Add(new Duration(breaks.Last().End, EndTime));
+
+            return sessions;
+        }
     }
 }

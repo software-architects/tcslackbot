@@ -238,7 +238,7 @@ namespace TCSlackbot.Controllers
                 {
                     await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "views.open"), content);
                 }
-                return BadRequest(errorMessage);
+                return Ok(errorMessage);
 
 
             }
@@ -258,10 +258,6 @@ namespace TCSlackbot.Controllers
             user.Description = payload.View.State.Values.Description.Description.Value;
 
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
-
-            user.ResetWorktime();
-
-
             var channel = await CommandController.GetIMChannelFromUserAsync(_httpClient, payload.User.Id);
             if (channel is null)
             {
@@ -277,6 +273,11 @@ namespace TCSlackbot.Controllers
             };
 
             _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), new FormUrlEncodedContent(replyData));
+
+            user.IsWorking = false;
+            user.ResetWorktime();
+            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
+
 
             return Ok();
         }

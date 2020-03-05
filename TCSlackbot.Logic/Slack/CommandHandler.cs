@@ -136,13 +136,58 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.ErrorOnBreak;
             }
 
+            // TODO: Extract description and project and check if they are null
+
             //
             // Send the request to the TimeCockpit API
             //
             user.IsWorking = false;
 
-            // TODO: Send the request
 
+
+            // TODO: Send the request
+            try
+            {
+                var accessToken = await _tokenManager.GetAccessTokenAsync(userId);
+                if (accessToken == null)
+                {
+                    return BotResponses.InvalidAccessToken;
+                }
+
+                var sessions = user.GetWorkSessions();
+
+                var userDetail = await _tcDataManager.GetCurrentUserDetailsAsync(accessToken);
+                if (userDetail == null)
+                {
+                    return BotResponses.ObjectNotFound;
+                }
+
+                // TODO: Replace project name with user input
+                var project = await _tcDataManager.GetProjectAsync(accessToken, "tcslackbot");
+                if (project == null)
+                {
+                    return BotResponses.ObjectNotFound;
+                }
+
+                // TODO: Replace description with user input
+                var description = "Will be done soonTM";
+
+                foreach (var session in sessions)
+                {
+                    await _tcDataManager.CreateObjectAsync(accessToken, new Timesheet { 
+                        BeginTime = session.Start.GetValueOrDefault(),
+                        EndTime = session.End.GetValueOrDefault(),
+                        UserDetailUuid = userDetail.UserDetailUuid,
+                        ProjectUuid = project.ProjectUuid,
+                        Description = description
+                    });
+
+                }
+            }
+            catch (LoggedOutException)
+            {
+                return BotResponses.ErrorLoggedOut;
+            }
             //
             // Stop working (reset the start and end time)
             //

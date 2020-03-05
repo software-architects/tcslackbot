@@ -63,6 +63,6 @@ namespace TCSlackbot.Logic.Utils
         /// </summary>
         /// <param name="accessToken">The access token for the specified user</param>
         /// <returns>The user details or default</returns>
-        public Task<UserDetail?> GetCurrentUserDetails(string accessToken);
+        public Task<UserDetail?> GetCurrentUserDetailsAsync(string accessToken);
     }
 }

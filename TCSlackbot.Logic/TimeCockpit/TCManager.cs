@@ -121,7 +121,7 @@ namespace TCSlackbot.Logic.Utils
         }
 
         /// <inheritdoc/>
-        public async Task<UserDetail?> GetCurrentUserDetails(string accessToken)
+        public async Task<UserDetail?> GetCurrentUserDetailsAsync(string accessToken)
         {
             var queryData = new TCQueryData("From U In UserDetail Where U.UserDetailUuid = Environment.CurrentUser.APP_UserDetailUuid Select U");
 
