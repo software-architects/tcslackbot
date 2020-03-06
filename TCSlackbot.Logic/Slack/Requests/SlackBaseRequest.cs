@@ -2,6 +2,6 @@
 {
     public class SlackBaseRequest
     {
-        public string Type { get; set; }
+        public string Type { get; set; } = string.Empty;
     }
 }

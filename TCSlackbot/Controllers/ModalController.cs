@@ -80,6 +80,10 @@ namespace TCSlackbot.Controllers
         public async Task<IActionResult> GetExternalData()
         {
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
+            if (payload is null || payload.User is null)
+            {
+                return BadRequest();
+            }
 
             try
             {
@@ -126,6 +130,11 @@ namespace TCSlackbot.Controllers
             // }
 
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
+            if (payload is null || payload.User is null)
+            {
+                return BadRequest();
+            }
+
             //
             // Ignore unecessary requests
             //
@@ -189,13 +198,19 @@ namespace TCSlackbot.Controllers
             }
 
             var payload = Serializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
+            var startTimeValue = payload?.View?.State?.Values?.Starttime?.StartTime?.Value;
+            var endTimeValue = payload?.View?.State?.Values?.Endtime?.EndTime?.Value;
+            if (endTimeValue is null || startTimeValue is null)
+            {
+                return BadRequest();
+            }
 
             string errorMessage = "{ \"response_action\": \"errors\", \"errors\": {";
-            if (!TimeSpan.TryParse(payload.View.State.Values.Starttime.StartTime.Value, out TimeSpan startTime))
+            if (!TimeSpan.TryParse(startTimeValue, out TimeSpan startTime))
             {
                 errorMessage += "\"starttime\": \"Please use a valid time format! (eg. \"08:00\")\",";
             }
-            if (!TimeSpan.TryParse(payload.View.State.Values.Endtime.EndTime.Value, out TimeSpan endTime))
+            if (!TimeSpan.TryParse(endTimeValue, out TimeSpan endTime))
             {
                 // TODO: send message to user
                 errorMessage += "\"endtime\": \"Please use a valid time format! (eg. \"18:00\")\",";
@@ -225,7 +240,8 @@ namespace TCSlackbot.Controllers
 
             }
 
-            DateTime date = payload.View.State.Values.Date.Date.Day;
+            // In case of merge error: DO NOT USE THIS
+            DateTime date = payload.View.State.Values.Date.Date.Day.GetValueOrDefault();
 
             user.StartTime = date + startTime;
             user.EndTime = date + endTime;

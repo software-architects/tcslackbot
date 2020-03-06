@@ -248,8 +248,14 @@ namespace TCSlackbot.Controllers
                 return default;
             }
 
-            var list = await client.GetAsync(new Uri("https://slack.com/api/conversations.list?types=im"));
-            foreach (var channel in Serializer.Deserialize<ConversationsList>(await list.Content.ReadAsStringAsync()).Channels)
+            var response = await client.GetAsync(new Uri("https://slack.com/api/conversations.list?types=im"));
+            var conversationList = Serializer.Deserialize<ConversationsList>(await response.Content.ReadAsStringAsync());
+            if (conversationList is null)
+            {
+                return default;
+            }
+
+            foreach (var channel in conversationList.Channels)
             {
                 if (channel.User == user)
                 {
