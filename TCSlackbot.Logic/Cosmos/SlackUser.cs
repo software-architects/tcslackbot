@@ -30,12 +30,7 @@ namespace TCSlackbot.Logic
         /// <summary>
         /// The id of the user (and document). 
         /// </summary>
-        public string ChannelId { get; set; }
-
-        /// <summary>
-        /// The standard project of the user.
-        /// </summary>
-        public string Project { get; set; }
+        public string ChannelId { get; set; }   
 
         /// <summary>
         /// The start time of the working session.

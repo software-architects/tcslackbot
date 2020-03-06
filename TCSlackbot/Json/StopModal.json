@@ -65,19 +65,27 @@
     }
   },
   {
-    "type": "section",
+    "type": "input",
     "block_id": "project",
-    "text": {
-      "type": "mrkdwn",
-      "text": "Project"
-    },
-    "accessory": {
+    "element": {
       "action_id": "Project",
       "type": "external_select",
+      "initial_option": {
+        "text": {
+          "type": "plain_text",
+          "text": REPLACE_PROJECT,
+          "emoji": true
+        },
+        "value": REPLACE_PROJECT
+      },
       "placeholder": {
         "type": "plain_text",
         "text": "Select a project"
-      },
+      }
+    },
+    "label": {
+      "type": "plain_text",
+      "text": "Project"
     }
   },
   {

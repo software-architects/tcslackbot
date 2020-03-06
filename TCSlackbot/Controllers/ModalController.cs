@@ -163,7 +163,7 @@ namespace TCSlackbot.Controllers
             }
             return Ok();
         }
-        
+
         public async Task<IActionResult> ViewModalAsync(AppActionPayload payload)
         {
             if (payload is null)
@@ -174,16 +174,21 @@ namespace TCSlackbot.Controllers
 
             string json = "{\"trigger_id\": \"" + payload.TriggerId + "\", \"view\": { \"type\": \"modal\", \"callback_id\": \"" + payload.CallbackId + "\",";
             json += await System.IO.File.ReadAllTextAsync("Json/StopModal.json"); // Changed to New
-                                                                                  
 
-            if (user == null) {
+
+            if (user == null)
+            {
                 return BadRequest();
             }
             // Replace the hardcoded values in json (set initial values)
             var startTime = user.StartTime.HasValue ? user.StartTime.Value.ToString("HH:mm", CultureInfo.InvariantCulture) : "";
+            var projectName = user.DefaultProject != null ? user.DefaultProject.ProjectName : "";
+
             json = json.Replace("REPLACE_DATE", "\"initial_date\": \"" + DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "\"");
             json = json.Replace("REPLACE_START", "\"initial_value\": \"" + startTime + "\"");
             json = json.Replace("REPLACE_END", "\"initial_value\": \"" + DateTime.Now.ToString("HH:mm", CultureInfo.InvariantCulture) + "\"");
+            json = json.Replace("REPLACE_PROJECT", "\" " + projectName + "\"");
+            // json = json.Replace("REPLACE_PROJECT", "\" TCSlackbot \"");
 
             using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
             {
@@ -212,6 +217,11 @@ namespace TCSlackbot.Controllers
                 // TODO: send message to user
                 errorMessage += "\"endtime\": \"Please use a valid time format! (eg. '18:00')\",";
             }
+            if (payload.View.State.Values.Project == null)
+            {
+                // TODO: send message to user
+                errorMessage += "\"project\": \"Please select a project!\",";
+            }
             else if (endTime.CompareTo(startTime) != 1)
             {
                 errorMessage += "\"endtime\": \"End Time has to be after Start Time!\",";
@@ -228,14 +238,14 @@ namespace TCSlackbot.Controllers
 
             user.StartTime = date + startTime;
             user.EndTime = date + endTime;
-            if (payload.View.State.Values.Project == null)
+
+            var accessToken = await _tokenManager.GetAccessTokenAsync(payload.User.Id);
+            if (accessToken == null)
             {
-                user.Project = "";
+                return Content("");
             }
-            else
-            {
-                user.Project = payload.View.State.Values.Project.Project.Value;
-            }
+            user.DefaultProject = await _tcDataManager.GetProjectAsync(accessToken, payload.View.State.Values.Project.Project.Value);
+
             user.Description = payload.View.State.Values.Description.Description.Value;
 
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
