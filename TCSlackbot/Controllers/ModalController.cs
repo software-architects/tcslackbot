@@ -81,6 +81,10 @@ namespace TCSlackbot.Controllers
         public async Task<ContentResult> GetExternalData()
         {
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
+            if (payload is null || payload.User is null)
+            {
+                return BadRequest();
+            }
 
             try
             {
@@ -127,6 +131,11 @@ namespace TCSlackbot.Controllers
             // }
 
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
+            if (payload is null || payload.User is null)
+            {
+                return BadRequest();
+            }
+
             //
             // Ignore unecessary requests
             //
@@ -206,6 +215,12 @@ namespace TCSlackbot.Controllers
             }
 
             var payload = Serializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
+            var startTimeValue = payload?.View?.State?.Values?.Starttime?.StartTime?.Value;
+            var endTimeValue = payload?.View?.State?.Values?.Endtime?.EndTime?.Value;
+            if (endTimeValue is null || startTimeValue is null)
+            {
+                return BadRequest();
+            }
 
             string errorMessage = "{ \"response_action\": \"errors\", \"errors\": {";
             if (!TimeSpan.TryParseExact(payload.View.State.Values.Starttime.StartTime.Value, "h\\:mm", CultureInfo.InvariantCulture, out TimeSpan startTime))
@@ -234,7 +249,8 @@ namespace TCSlackbot.Controllers
                 return Content(errorMessage, "application/json");
             }
 
-            DateTime date = payload.View.State.Values.Date.Date.Day;
+            // In case of merge error: DO NOT USE THIS
+            DateTime date = payload.View.State.Values.Date.Date.Day.GetValueOrDefault();
 
             user.StartTime = date + startTime;
             user.EndTime = date + endTime;
