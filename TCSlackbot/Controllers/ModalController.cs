@@ -83,7 +83,7 @@ namespace TCSlackbot.Controllers
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
             if (payload is null || payload.User is null)
             {
-                return BadRequest();
+                return Content("");
             }
 
             try
@@ -173,32 +173,59 @@ namespace TCSlackbot.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Called whenever the user wants to open a modal.
+        /// </summary>
+        /// <param name="payload"></param>
+        /// <returns></returns>
         public async Task<IActionResult> ViewModalAsync(AppActionPayload payload)
         {
             if (payload is null)
             {
                 return BadRequest();
             }
-            var user = await _commandHandler.GetSlackUserAsync(payload.User.Id);
 
-            string json = "{\"trigger_id\": \"" + payload.TriggerId + "\", \"view\": { \"type\": \"modal\", \"callback_id\": \"" + payload.CallbackId + "\",";
-            json += await System.IO.File.ReadAllTextAsync("Json/StopModal.json"); // Changed to New
+            var payloadUserId = payload?.User?.Id;
+            var payloadTriggerId = payload?.TriggerId;
+            var payloadCallbackId = payload?.CallbackId;
+            if (payloadUserId is null || payloadTriggerId is null || payloadCallbackId is null)
+            {
+                return BadRequest();
+            }
 
-
+            var user = await _commandHandler.GetSlackUserAsync(payloadUserId);
             if (user == null)
             {
                 return BadRequest();
             }
-            // Replace the hardcoded values in json (set initial values)
+
+            //
+            // Load the modal from the file
+            //
+            // TODO: Add a placeholder for this too (like below)
+            string json = "{\"trigger_id\": \"" + payloadTriggerId + "\", \"view\": { \"type\": \"modal\", \"callback_id\": \"" + payloadCallbackId + "\",";
+            json += await System.IO.File.ReadAllTextAsync("Json/StopModal.json");
+
+            //
+            // Set the initial values by replacing the placeholders in the json
+            //
+            var date = DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            json = json.Replace("REPLACE_DATE", "\"initial_date\": \"" + date + "\"", StringComparison.Ordinal);
+
             var startTime = user.StartTime.HasValue ? user.StartTime.Value.ToString("HH:mm", CultureInfo.InvariantCulture) : "";
-            var projectName = user.DefaultProject != null ? user.DefaultProject.ProjectName : "";
+            json = json.Replace("REPLACE_START", "\"initial_value\": \"" + startTime + "\"", StringComparison.Ordinal);
 
-            json = json.Replace("REPLACE_DATE", "\"initial_date\": \"" + DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "\"");
-            json = json.Replace("REPLACE_START", "\"initial_value\": \"" + startTime + "\"");
-            json = json.Replace("REPLACE_END", "\"initial_value\": \"" + DateTime.Now.ToString("HH:mm", CultureInfo.InvariantCulture) + "\"");
-            json = json.Replace("REPLACE_PROJECT", "\" " + projectName + "\"");
-            // json = json.Replace("REPLACE_PROJECT", "\" TCSlackbot \"");
 
+            var endTime = DateTime.Now.ToString("HH:mm", CultureInfo.InvariantCulture);
+            json = json.Replace("REPLACE_END", "\"initial_value\": \"" + endTime + "\"", StringComparison.Ordinal);
+
+
+            var projectName = user.DefaultProject != null ? user.DefaultProject.ProjectName : string.Empty;
+            json = json.Replace("REPLACE_PROJECT", "\" " + projectName + "\"", StringComparison.Ordinal);
+
+            //
+            // Send the response
+            //
             using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
             {
                 await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "views.open"), content);
@@ -207,7 +234,7 @@ namespace TCSlackbot.Controllers
             return Ok(json);
         }
 
-        public async Task<IActionResult> ProcessModalDataAsync(SlackUser user)   /* , Dictionary<string,string> replyData */
+        public async Task<IActionResult> ProcessModalDataAsync(SlackUser user)
         {
             if (user is null)
             {
@@ -215,76 +242,100 @@ namespace TCSlackbot.Controllers
             }
 
             var payload = Serializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
-            var startTimeValue = payload?.View?.State?.Values?.Starttime?.StartTime?.Value;
-            var endTimeValue = payload?.View?.State?.Values?.Endtime?.EndTime?.Value;
-            if (endTimeValue is null || startTimeValue is null)
+            var payloadStart = payload?.View?.State?.Values?.Starttime?.StartTime?.Value;
+            var payloadEnd = payload?.View?.State?.Values?.Endtime?.EndTime?.Value;
+            var payloadDate = payload?.View?.State?.Values?.Date?.Date?.Day;
+            var payloadUserId = payload?.User?.Id;
+            var payloadDescription = payload?.View?.State?.Values?.Description?.Description?.Value;
+            var payloadProjectName = payload?.View?.State?.Values?.Project?.Project?.Value;
+            if (payloadEnd is null || payloadStart is null || payloadDate is null || payloadUserId is null || payloadDescription is null || payloadProjectName is null)
             {
                 return BadRequest();
             }
 
+            //
+            // Generate the error response (if there are any)
+            //
             string errorMessage = "{ \"response_action\": \"errors\", \"errors\": {";
-            if (!TimeSpan.TryParseExact(payload.View.State.Values.Starttime.StartTime.Value, "h\\:mm", CultureInfo.InvariantCulture, out TimeSpan startTime))
+            if (!TimeSpan.TryParseExact(payloadStart, "h\\:mm", CultureInfo.InvariantCulture, out TimeSpan startTime))
             {
                 errorMessage += "\"starttime\": \"Please use a valid time format! (eg. '08:00')\",";
             }
-            if (!TimeSpan.TryParseExact(payload.View.State.Values.Endtime.EndTime.Value, "h\\:mm", CultureInfo.InvariantCulture, out TimeSpan endTime))
+            if (!TimeSpan.TryParseExact(payloadEnd, "h\\:mm", CultureInfo.InvariantCulture, out TimeSpan endTime))
             {
-                // TODO: send message to user
                 errorMessage += "\"endtime\": \"Please use a valid time format! (eg. '18:00')\",";
             }
-            if (payload.View.State.Values.Project == null)
+            if (payload?.View?.State?.Values?.Project == null)
             {
-                // TODO: send message to user
                 errorMessage += "\"project\": \"Please select a project!\",";
             }
             else if (endTime.CompareTo(startTime) != 1)
             {
                 errorMessage += "\"endtime\": \"End Time has to be after Start Time!\",";
             }
-            // Check if there was an error
+
+            //
+            // Check if there was an error and return it
+            //
             if (errorMessage.EndsWith(",", StringComparison.CurrentCulture))
             {
                 errorMessage += "}}";
 
+                // TODO: Check if Content works with IActionResult
                 return Content(errorMessage, "application/json");
             }
 
-            // In case of merge error: DO NOT USE THIS
-            DateTime date = payload.View.State.Values.Date.Date.Day.GetValueOrDefault();
+            // 
+            // 
+            // 
+            user.StartTime = payloadDate + startTime;
+            user.EndTime = payloadDate + endTime;
 
-            user.StartTime = date + startTime;
-            user.EndTime = date + endTime;
-
-            var accessToken = await _tokenManager.GetAccessTokenAsync(payload.User.Id);
+            // 
+            // Request the access token
+            // 
+            var accessToken = await _tokenManager.GetAccessTokenAsync(payloadUserId);
             if (accessToken == null)
             {
-                return Content("");
+                return BadRequest();
             }
-            user.DefaultProject = await _tcDataManager.GetProjectAsync(accessToken, payload.View.State.Values.Project.Project.Value);
 
-            user.Description = payload.View.State.Values.Description.Description.Value;
+            //
+            // Set the values
+            //
+            user.DefaultProject = await _tcDataManager.GetProjectAsync(accessToken, payloadProjectName);
+            user.Description = payloadDescription;
 
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
-            var channel = await CommandController.GetIMChannelFromUserAsync(_httpClient, payload.User.Id);
+            
+
+            //
+            // Send the reply
+            //
+            var channel = await CommandController.GetIMChannelFromUserAsync(_httpClient, payloadUserId);
             if (channel is null)
             {
-                // TODO: Maybe return an error message?
                 return BadRequest();
             }
 
             var replyData = new Dictionary<string, string>
             {
-                ["user"] = payload.User.Id,
+                ["user"] = payloadUserId,
                 ["channel"] = channel,
                 ["text"] = "Your time has been saved"
             };
 
-            _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), new FormUrlEncodedContent(replyData));
+            using var replyForm = new FormUrlEncodedContent(replyData);
+            _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), replyForm);
 
+            //
+            // Update the user data (stop working, reset breaks)
+            //
             user.IsWorking = false;
             user.ResetWorktime();
-            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
+            // TODO: Reset breaks
+            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
             return Ok();
         }
