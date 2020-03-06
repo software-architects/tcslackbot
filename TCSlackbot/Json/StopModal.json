@@ -16,6 +16,7 @@
     "block_id": "date",
     "element": {
       "type": "datepicker",
+      REPLACE_DATE,
       "placeholder": {
         "type": "plain_text",
         "text": "Select a date",
@@ -33,6 +34,7 @@
     "type": "input",
     "block_id": "starttime",
     "element": {
+      REPLACE_START,
       "type": "plain_text_input",
       "action_id": "StartTime",
       "placeholder": {
@@ -49,6 +51,7 @@
     "type": "input",
     "block_id": "endtime",
     "element": {
+      REPLACE_END,
       "type": "plain_text_input",
       "action_id": "EndTime",
       "placeholder": {

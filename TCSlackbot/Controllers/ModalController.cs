@@ -18,6 +18,7 @@ using TCSlackbot.Logic.Slack;
 using TCSlackbot.Logic.Slack.Requests;
 using TCSlackbot.Logic.TimeCockpit;
 using TCSlackbot.Logic.Utils;
+using System.Globalization;
 
 namespace TCSlackbot.Controllers
 {
@@ -77,7 +78,7 @@ namespace TCSlackbot.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("data")]
-        public async Task<IActionResult> GetExternalData()
+        public async Task<ContentResult> GetExternalData()
         {
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
 
@@ -86,7 +87,7 @@ namespace TCSlackbot.Controllers
                 var accessToken = await _tokenManager.GetAccessTokenAsync(payload.User.Id);
                 if (accessToken == null)
                 {
-                    return BadRequest();
+                    return Content("");
                 }
 
                 // Create the list of projects
@@ -98,12 +99,12 @@ namespace TCSlackbot.Controllers
                 }
 
                 json = json.Remove(json.Length - 1) + "]}";
-
+                Console.WriteLine(json);
                 return Content(json, "application/json");
             }
             catch (LoggedOutException)
             {
-                return Ok(BotResponses.ErrorLoggedOut);
+                return Content(BotResponses.ErrorLoggedOut);
             }
         }
 
@@ -162,16 +163,27 @@ namespace TCSlackbot.Controllers
             }
             return Ok();
         }
-
+        
         public async Task<IActionResult> ViewModalAsync(AppActionPayload payload)
         {
             if (payload is null)
             {
                 return BadRequest();
             }
+            var user = await _commandHandler.GetSlackUserAsync(payload.User.Id);
 
             string json = "{\"trigger_id\": \"" + payload.TriggerId + "\", \"view\": { \"type\": \"modal\", \"callback_id\": \"" + payload.CallbackId + "\",";
-            json += await System.IO.File.ReadAllTextAsync("Json/StopTimeTrackingNewTest.json"); // Changed to New
+            json += await System.IO.File.ReadAllTextAsync("Json/StopModal.json"); // Changed to New
+                                                                                  
+
+            if (user == null) {
+                return BadRequest();
+            }
+            // Replace the hardcoded values in json (set initial values)
+            var startTime = user.StartTime.HasValue ? user.StartTime.Value.ToString("HH:mm", CultureInfo.InvariantCulture) : "";
+            json = json.Replace("REPLACE_DATE", "\"initial_date\": \"" + DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "\"");
+            json = json.Replace("REPLACE_START", "\"initial_value\": \"" + startTime + "\"");
+            json = json.Replace("REPLACE_END", "\"initial_value\": \"" + DateTime.Now.ToString("HH:mm", CultureInfo.InvariantCulture) + "\"");
 
             using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
             {
@@ -191,23 +203,24 @@ namespace TCSlackbot.Controllers
             var payload = Serializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
 
             string errorMessage = "{ \"response_action\": \"errors\", \"errors\": {";
-            if (!TimeSpan.TryParse(payload.View.State.Values.Starttime.StartTime.Value, out TimeSpan startTime))
+            if (!TimeSpan.TryParseExact(payload.View.State.Values.Starttime.StartTime.Value, "h\\:mm", CultureInfo.InvariantCulture, out TimeSpan startTime))
             {
-                errorMessage += "\"starttime\": \"Please use a valid time format! (eg. \"08:00\")\",";
+                errorMessage += "\"starttime\": \"Please use a valid time format! (eg. '08:00')\",";
             }
-            if (!TimeSpan.TryParse(payload.View.State.Values.Endtime.EndTime.Value, out TimeSpan endTime))
+            if (!TimeSpan.TryParseExact(payload.View.State.Values.Endtime.EndTime.Value, "h\\:mm", CultureInfo.InvariantCulture, out TimeSpan endTime))
             {
                 // TODO: send message to user
-                errorMessage += "\"endtime\": \"Please use a valid time format! (eg. \"18:00\")\",";
+                errorMessage += "\"endtime\": \"Please use a valid time format! (eg. '18:00')\",";
             }
-            if (endTime.CompareTo(startTime) != 1)
+            else if (endTime.CompareTo(startTime) != 1)
             {
-                errorMessage += "\"endtime\": \"End Time has to be after Start Time!";
+                errorMessage += "\"endtime\": \"End Time has to be after Start Time!\",";
             }
+            // Check if there was an error
             if (errorMessage.EndsWith(",", StringComparison.CurrentCulture))
             {
-                errorMessage = errorMessage[0..^1] + "}}";
-                
+                errorMessage += "}}";
+
                 return Content(errorMessage, "application/json");
             }
 
