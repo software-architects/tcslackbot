@@ -195,4 +195,7 @@
   <data name="InvalidAccessToken" xml:space="preserve">
     <value>Invalid Access Token. Please unlink your account and then link it again.</value>
   </data>
+  <data name="ProjectNotFound" xml:space="preserve">
+    <value>Could not find the specified project.</value>
+  </data>
 </root>

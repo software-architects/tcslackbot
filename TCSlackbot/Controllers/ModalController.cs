@@ -78,12 +78,12 @@ namespace TCSlackbot.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("data")]
-        public async Task<ContentResult> GetExternalData()
+        public async Task<IActionResult> GetExternalData()
         {
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
             if (payload is null || payload.User is null)
             {
-                return Content("");
+                return BadRequest();
             }
 
             try
@@ -91,24 +91,24 @@ namespace TCSlackbot.Controllers
                 var accessToken = await _tokenManager.GetAccessTokenAsync(payload.User.Id);
                 if (accessToken == null)
                 {
-                    return Content("");
+                    return BadRequest();
                 }
+
+                var projects = await _tcDataManager.GetFilteredProjects(accessToken, payload.Value);
 
                 // Create the list of projects
                 string json = "{\"options\": [";
-                var projects = await _tcDataManager.GetFilteredProjects(accessToken, payload.Value);
                 foreach (var project in projects)
                 {
                     json += "{\"text\": {\"type\": \"plain_text\",  \"text\": \"" + project.ProjectName + "\"},\"value\": \"" + project.ProjectName + "\" },";
                 }
-
                 json = json.Remove(json.Length - 1) + "]}";
-                Console.WriteLine(json);
+
                 return Content(json, "application/json");
             }
             catch (LoggedOutException)
             {
-                return Content(BotResponses.ErrorLoggedOut);
+                return BadRequest(BotResponses.ErrorLoggedOut);
             }
         }
 
@@ -230,6 +230,11 @@ namespace TCSlackbot.Controllers
             return Ok(json);
         }
 
+        /// <summary>
+        /// Handle the submission of the modal.
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
         public async Task<IActionResult> ProcessModalDataAsync(SlackUser user)
         {
             if (user is null)
@@ -277,12 +282,8 @@ namespace TCSlackbot.Controllers
             {
                 errorMessage += "}}";
 
-                // TODO: Check if Content works with IActionResult
                 return Content(errorMessage, "application/json");
             }
-
-            // Save the values
-            user.Worktime = new Duration(payloadDate + startTime, payloadDate + endTime);
 
             // 
             // Request the access token
@@ -294,12 +295,14 @@ namespace TCSlackbot.Controllers
             }
 
             //
-            // Set the values
+            // (Re)Set and save the values
             //
+            user.Worktime = new Duration(payloadDate + startTime, payloadDate + endTime);
             user.DefaultProject = await _tcDataManager.GetProjectAsync(accessToken, payloadProjectName);
 
+            user.ResetWorktime();
+            user.Breaks?.Clear();
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
-            
 
             //
             // Send the reply
@@ -319,15 +322,6 @@ namespace TCSlackbot.Controllers
 
             using var replyForm = new FormUrlEncodedContent(replyData);
             _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), replyForm);
-
-            //
-            // Update the user data (stop working, reset breaks)
-            //
-            user.IsWorking = false;
-            user.ResetWorktime();
-
-            // TODO: Reset breaks
-            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
             return Ok();
         }
