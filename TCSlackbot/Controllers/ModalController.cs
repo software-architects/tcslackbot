@@ -19,6 +19,10 @@ using TCSlackbot.Logic.Slack.Requests;
 using TCSlackbot.Logic.TimeCockpit;
 using TCSlackbot.Logic.Utils;
 using System.Globalization;
+using System.Security.Cryptography;
+using System.IO;
+using System.IO.Pipelines;
+using System.Buffers;
 
 namespace TCSlackbot.Controllers
 {
@@ -121,10 +125,12 @@ namespace TCSlackbot.Controllers
             //
             // TODO: Make it work in Modals
             //
-            // if (!IsValidSignature(HttpContext.Request.Body.ToString(), HttpContext.Request.Headers))
-            // {
-            //    return BadRequest();
-            // }
+            var body = HttpContext.Request.Body;
+
+            if (!IsValidSignature(body.ToString().ToString(), HttpContext.Request.Headers))
+            {
+               return BadRequest();
+            }
 
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
             //
@@ -170,6 +176,7 @@ namespace TCSlackbot.Controllers
             {
                 return BadRequest();
             }
+
             var user = await _commandHandler.GetSlackUserAsync(payload.User.Id);
 
             string json = "{\"trigger_id\": \"" + payload.TriggerId + "\", \"view\": { \"type\": \"modal\", \"callback_id\": \"" + payload.CallbackId + "\",";
@@ -272,5 +279,63 @@ namespace TCSlackbot.Controllers
 
             return Ok();
         }
+
+        private async Task<string> ReadBodyAsync(PipeReader reader)
+        {
+            string results = "";
+
+            while (true)
+            {
+                ReadResult readResult = await reader.ReadAsync();
+                var buffer = readResult.Buffer;
+
+                SequencePosition? position = null;
+
+                do
+                {
+                    // Look for a EOL in the buffer
+                    position = buffer.PositionOf((byte)'\n');
+
+                    if (position != null)
+                    {
+                        var readOnlySequence = buffer.Slice(0, position.Value);
+                        results += readOnlySequence.ToString();
+                        buffer = buffer.Slice(buffer.GetPosition(1, position.Value));
+                    }
+                }
+                while (position != null);
+
+                // At this point, buffer will be updated to point one byte after the last
+                // \n character.
+                reader.AdvanceTo(buffer.Start, buffer.End);
+
+                if (readResult.IsCompleted)
+                {
+                    break;
+                }
+            }
+
+            return results;
+        }
+        /// <summary>
+        /// Validates the signature of the slack request.
+        /// </summary>
+        /// <param name="body">The request body</param>
+        /// <param name="headers">The request headers</param>
+        /// <returns>True if the signature is valid</returns>
+        private bool IsValidSignature(string body, IHeaderDictionary headers)
+        {
+            var timestamp = headers["X-Slack-Request-Timestamp"];
+            var signature = headers["X-Slack-Signature"];
+            var signingSecret = _secretManager.GetSecret("Slack-SigningSecret");
+
+            var encoding = new UTF8Encoding();
+            using var hmac = new HMACSHA256(encoding.GetBytes(signingSecret));
+            var hash = hmac.ComputeHash(encoding.GetBytes($"v0:{timestamp}:{body}"));
+            var ownSignature = $"v0={BitConverter.ToString(hash).Replace("-", "", StringComparison.CurrentCulture).ToLower()}";
+
+            return ownSignature.Equals(signature, StringComparison.CurrentCulture);
+        }
     }
+        
 }
