@@ -200,15 +200,13 @@ namespace TCSlackbot.Controllers
             }
 
             //
-            // Load the modal from the file
+            // Load the modal from the file and set the dynamic values by replacing the placeholders in the json
             //
-            // TODO: Add a placeholder for this too (like below)
-            string json = "{\"trigger_id\": \"" + payloadTriggerId + "\", \"view\": { \"type\": \"modal\", \"callback_id\": \"" + payloadCallbackId + "\",";
-            json += await System.IO.File.ReadAllTextAsync("Json/StopModal.json");
+            var json = await System.IO.File.ReadAllTextAsync("Json/StopModal.json");
 
-            //
-            // Set the initial values by replacing the placeholders in the json
-            //
+            json = json.Replace("REPLACE_TRIGGER_ID", payloadTriggerId, StringComparison.Ordinal);
+            json = json.Replace("REPLACE_CALLBACK_ID", payloadCallbackId, StringComparison.Ordinal);
+
             var date = DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             json = json.Replace("REPLACE_DATE", "\"initial_date\": \"" + date + "\"", StringComparison.Ordinal);
 

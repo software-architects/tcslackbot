@@ -27,7 +27,9 @@ namespace TCSlackbot.Logic
         [JsonProperty(PropertyName = "id")]
         public string UserId { get; set; } = string.Empty;
 
-        // TODO: Use this instead of StartTime and EndTime 
+        /// <summary>
+        /// Contains the start and end time of a working session. 
+        /// </summary>
         public Duration? Worktime { get; set; }
 
         /// <summary>
