@@ -119,7 +119,7 @@ namespace TCSlackbot.Controllers
                 return BadRequest();
             }
 
-            switch (request.Event.Type)
+            switch (request?.Event?.Type)
             {
                 case "message":
                     return await HandleSlackMessage(request.Event);
@@ -248,8 +248,14 @@ namespace TCSlackbot.Controllers
                 return default;
             }
 
-            var list = await client.GetAsync(new Uri("https://slack.com/api/conversations.list?types=im"));
-            foreach (var channel in Serializer.Deserialize<ConversationsList>(await list.Content.ReadAsStringAsync()).Channels)
+            var response = await client.GetAsync(new Uri("https://slack.com/api/conversations.list?types=im"));
+            var conversationChannels = Serializer.Deserialize<ConversationsList>(await response.Content.ReadAsStringAsync())?.Channels;
+            if (conversationChannels is null)
+            {
+                return default;
+            }
+
+            foreach (var channel in conversationChannels)
             {
                 if (channel.User == user)
                 {
@@ -273,7 +279,6 @@ namespace TCSlackbot.Controllers
             var channel = GetIMChannelFromUserAsync(_httpClient, replyData["user"]).Result;
             if (channel is null)
             {
-                // TODO: Return error message
                 return;
             }
 

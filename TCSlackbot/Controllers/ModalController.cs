@@ -19,10 +19,6 @@ using TCSlackbot.Logic.Slack.Requests;
 using TCSlackbot.Logic.TimeCockpit;
 using TCSlackbot.Logic.Utils;
 using System.Globalization;
-using System.Security.Cryptography;
-using System.IO;
-using System.IO.Pipelines;
-using System.Buffers;
 
 namespace TCSlackbot.Controllers
 {
@@ -82,33 +78,37 @@ namespace TCSlackbot.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("data")]
-        public async Task<ContentResult> GetExternalData()
+        public async Task<IActionResult> GetExternalData()
         {
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
+            if (payload is null || payload.User is null)
+            {
+                return BadRequest();
+            }
 
             try
             {
                 var accessToken = await _tokenManager.GetAccessTokenAsync(payload.User.Id);
                 if (accessToken == null)
                 {
-                    return Content("");
+                    return BadRequest();
                 }
+
+                var projects = await _tcDataManager.GetFilteredProjects(accessToken, payload.Value);
 
                 // Create the list of projects
                 string json = "{\"options\": [";
-                var projects = await _tcDataManager.GetFilteredProjects(accessToken, payload.Value);
                 foreach (var project in projects)
                 {
                     json += "{\"text\": {\"type\": \"plain_text\",  \"text\": \"" + project.ProjectName + "\"},\"value\": \"" + project.ProjectName + "\" },";
                 }
-
                 json = json.Remove(json.Length - 1) + "]}";
-                Console.WriteLine(json);
+
                 return Content(json, "application/json");
             }
             catch (LoggedOutException)
             {
-                return Content(BotResponses.ErrorLoggedOut);
+                return BadRequest(BotResponses.ErrorLoggedOut);
             }
         }
 
@@ -125,14 +125,17 @@ namespace TCSlackbot.Controllers
             //
             // TODO: Make it work in Modals
             //
-            var body = HttpContext.Request.Body;
-
-            if (!IsValidSignature(body.ToString().ToString(), HttpContext.Request.Headers))
-            {
-               return BadRequest();
-            }
+            // if (!IsValidSignature(HttpContext.Request.Body.ToString(), HttpContext.Request.Headers))
+            // {
+            //    return BadRequest();
+            // }
 
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
+            if (payload is null || payload.User is null)
+            {
+                return BadRequest();
+            }
+
             //
             // Ignore unecessary requests
             //
@@ -170,6 +173,11 @@ namespace TCSlackbot.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Called whenever the user wants to open a modal.
+        /// </summary>
+        /// <param name="payload"></param>
+        /// <returns></returns>
         public async Task<IActionResult> ViewModalAsync(AppActionPayload payload)
         {
             if (payload is null)
@@ -177,26 +185,43 @@ namespace TCSlackbot.Controllers
                 return BadRequest();
             }
 
-            var user = await _commandHandler.GetSlackUserAsync(payload.User.Id);
+            var payloadUserId = payload?.User?.Id;
+            var payloadTriggerId = payload?.TriggerId;
+            var payloadCallbackId = payload?.CallbackId;
+            if (payloadUserId is null || payloadTriggerId is null || payloadCallbackId is null)
+            {
+                return BadRequest();
+            }
 
-            string json = "{\"trigger_id\": \"" + payload.TriggerId + "\", \"view\": { \"type\": \"modal\", \"callback_id\": \"" + payload.CallbackId + "\",";
-            json += await System.IO.File.ReadAllTextAsync("Json/StopModal.json"); // Changed to New
-
-
+            var user = await _commandHandler.GetSlackUserAsync(payloadUserId);
             if (user == null)
             {
                 return BadRequest();
             }
-            // Replace the hardcoded values in json (set initial values)
-            var startTime = user.StartTime.HasValue ? user.StartTime.Value.ToString("HH:mm", CultureInfo.InvariantCulture) : "";
-            var projectName = user.DefaultProject != null ? user.DefaultProject.ProjectName : "";
 
-            json = json.Replace("REPLACE_DATE", "\"initial_date\": \"" + DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "\"");
-            json = json.Replace("REPLACE_START", "\"initial_value\": \"" + startTime + "\"");
-            json = json.Replace("REPLACE_END", "\"initial_value\": \"" + DateTime.Now.ToString("HH:mm", CultureInfo.InvariantCulture) + "\"");
-            json = json.Replace("REPLACE_PROJECT", "\" " + projectName + "\"");
-            // json = json.Replace("REPLACE_PROJECT", "\" TCSlackbot \"");
+            //
+            // Load the modal from the file and set the dynamic values by replacing the placeholders in the json
+            //
+            var json = await System.IO.File.ReadAllTextAsync("Json/StopModal.json");
 
+            json = json.Replace("REPLACE_TRIGGER_ID", payloadTriggerId, StringComparison.Ordinal);
+            json = json.Replace("REPLACE_CALLBACK_ID", payloadCallbackId, StringComparison.Ordinal);
+
+            var date = DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            json = json.Replace("REPLACE_DATE", "\"initial_date\": \"" + date + "\"", StringComparison.Ordinal);
+
+            var startTime = user?.Worktime?.Start != null ? user.Worktime.Start.Value.ToString("HH:mm", CultureInfo.InvariantCulture) : "";
+            json = json.Replace("REPLACE_START", "\"initial_value\": \"" + startTime + "\"", StringComparison.Ordinal);
+
+            var endTime = DateTime.Now.ToString("HH:mm", CultureInfo.InvariantCulture);
+            json = json.Replace("REPLACE_END", "\"initial_value\": \"" + endTime + "\"", StringComparison.Ordinal);
+
+            var projectName = user?.DefaultProject != null ? user.DefaultProject.ProjectName : string.Empty;
+            json = json.Replace("REPLACE_PROJECT", "\" " + projectName + "\"", StringComparison.Ordinal);
+
+            //
+            // Send the response
+            //
             using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
             {
                 await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "views.open"), content);
@@ -205,7 +230,12 @@ namespace TCSlackbot.Controllers
             return Ok(json);
         }
 
-        public async Task<IActionResult> ProcessModalDataAsync(SlackUser user)   /* , Dictionary<string,string> replyData */
+        /// <summary>
+        /// Handle the submission of the modal.
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public async Task<IActionResult> ProcessModalDataAsync(SlackUser user)
         {
             if (user is null)
             {
@@ -213,27 +243,41 @@ namespace TCSlackbot.Controllers
             }
 
             var payload = Serializer.Deserialize<SlackViewSubmission>(HttpContext.Request.Form["payload"]);
+            var payloadStart = payload?.View?.State?.Values?.Starttime?.StartTime?.Value;
+            var payloadEnd = payload?.View?.State?.Values?.Endtime?.EndTime?.Value;
+            var payloadDate = payload?.View?.State?.Values?.Date?.Date?.Day;
+            var payloadUserId = payload?.User?.Id;
+            var payloadDescription = payload?.View?.State?.Values?.Description?.Description?.Value;
+            var payloadProjectName = payload?.View?.State?.Values?.Project?.Project?.Value;
+            if (payloadEnd is null || payloadStart is null || payloadDate is null || payloadUserId is null || payloadDescription is null || payloadProjectName is null)
+            {
+                return BadRequest();
+            }
 
+            //
+            // Generate the error response (if there are any)
+            //
             string errorMessage = "{ \"response_action\": \"errors\", \"errors\": {";
-            if (!TimeSpan.TryParseExact(payload.View.State.Values.Starttime.StartTime.Value, "h\\:mm", CultureInfo.InvariantCulture, out TimeSpan startTime))
+            if (!TimeSpan.TryParseExact(payloadStart, "h\\:mm", CultureInfo.InvariantCulture, out TimeSpan startTime))
             {
                 errorMessage += "\"starttime\": \"Please use a valid time format! (eg. '08:00')\",";
             }
-            if (!TimeSpan.TryParseExact(payload.View.State.Values.Endtime.EndTime.Value, "h\\:mm", CultureInfo.InvariantCulture, out TimeSpan endTime))
+            if (!TimeSpan.TryParseExact(payloadEnd, "h\\:mm", CultureInfo.InvariantCulture, out TimeSpan endTime))
             {
-                // TODO: send message to user
                 errorMessage += "\"endtime\": \"Please use a valid time format! (eg. '18:00')\",";
             }
-            if (payload.View.State.Values.Project == null)
+            if (payload?.View?.State?.Values?.Project == null)
             {
-                // TODO: send message to user
                 errorMessage += "\"project\": \"Please select a project!\",";
             }
             else if (endTime.CompareTo(startTime) != 1)
             {
                 errorMessage += "\"endtime\": \"End Time has to be after Start Time!\",";
             }
-            // Check if there was an error
+
+            //
+            // Check if there was an error and return it
+            //
             if (errorMessage.EndsWith(",", StringComparison.CurrentCulture))
             {
                 errorMessage += "}}";
@@ -241,101 +285,45 @@ namespace TCSlackbot.Controllers
                 return Content(errorMessage, "application/json");
             }
 
-            DateTime date = payload.View.State.Values.Date.Date.Day;
-
-            user.StartTime = date + startTime;
-            user.EndTime = date + endTime;
-
-            var accessToken = await _tokenManager.GetAccessTokenAsync(payload.User.Id);
+            // 
+            // Request the access token
+            // 
+            var accessToken = await _tokenManager.GetAccessTokenAsync(payloadUserId);
             if (accessToken == null)
             {
-                return Content("");
+                return BadRequest();
             }
-            user.DefaultProject = await _tcDataManager.GetProjectAsync(accessToken, payload.View.State.Values.Project.Project.Value);
 
-            user.Description = payload.View.State.Values.Description.Description.Value;
+            //
+            // (Re)Set and save the values
+            //
+            user.Worktime = new Duration(payloadDate + startTime, payloadDate + endTime);
+            user.DefaultProject = await _tcDataManager.GetProjectAsync(accessToken, payloadProjectName);
 
+            user.ResetWorktime();
+            user.Breaks?.Clear();
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
-            var channel = await CommandController.GetIMChannelFromUserAsync(_httpClient, payload.User.Id);
+
+            //
+            // Send the reply
+            //
+            var channel = await CommandController.GetIMChannelFromUserAsync(_httpClient, payloadUserId);
             if (channel is null)
             {
-                // TODO: Maybe return an error message?
                 return BadRequest();
             }
 
             var replyData = new Dictionary<string, string>
             {
-                ["user"] = payload.User.Id,
+                ["user"] = payloadUserId,
                 ["channel"] = channel,
                 ["text"] = "Your time has been saved"
             };
 
-            _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), new FormUrlEncodedContent(replyData));
-
-            user.IsWorking = false;
-            user.ResetWorktime();
-            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
-
+            using var replyForm = new FormUrlEncodedContent(replyData);
+            _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), replyForm);
 
             return Ok();
         }
-
-        private async Task<string> ReadBodyAsync(PipeReader reader)
-        {
-            string results = "";
-
-            while (true)
-            {
-                ReadResult readResult = await reader.ReadAsync();
-                var buffer = readResult.Buffer;
-
-                SequencePosition? position = null;
-
-                do
-                {
-                    // Look for a EOL in the buffer
-                    position = buffer.PositionOf((byte)'\n');
-
-                    if (position != null)
-                    {
-                        var readOnlySequence = buffer.Slice(0, position.Value);
-                        results += readOnlySequence.ToString();
-                        buffer = buffer.Slice(buffer.GetPosition(1, position.Value));
-                    }
-                }
-                while (position != null);
-
-                // At this point, buffer will be updated to point one byte after the last
-                // \n character.
-                reader.AdvanceTo(buffer.Start, buffer.End);
-
-                if (readResult.IsCompleted)
-                {
-                    break;
-                }
-            }
-
-            return results;
-        }
-        /// <summary>
-        /// Validates the signature of the slack request.
-        /// </summary>
-        /// <param name="body">The request body</param>
-        /// <param name="headers">The request headers</param>
-        /// <returns>True if the signature is valid</returns>
-        private bool IsValidSignature(string body, IHeaderDictionary headers)
-        {
-            var timestamp = headers["X-Slack-Request-Timestamp"];
-            var signature = headers["X-Slack-Signature"];
-            var signingSecret = _secretManager.GetSecret("Slack-SigningSecret");
-
-            var encoding = new UTF8Encoding();
-            using var hmac = new HMACSHA256(encoding.GetBytes(signingSecret));
-            var hash = hmac.ComputeHash(encoding.GetBytes($"v0:{timestamp}:{body}"));
-            var ownSignature = $"v0={BitConverter.ToString(hash).Replace("-", "", StringComparison.CurrentCulture).ToLower()}";
-
-            return ownSignature.Equals(signature, StringComparison.CurrentCulture);
-        }
     }
-        
 }

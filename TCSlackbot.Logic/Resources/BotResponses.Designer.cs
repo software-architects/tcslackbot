@@ -223,6 +223,15 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Could not find the specified project..
+        /// </summary>
+        public static string ProjectNotFound {
+            get {
+                return ResourceManager.GetString("ProjectNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to start break..
         /// </summary>
         public static string StartBreakFailure {

@@ -136,16 +136,16 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.ErrorOnBreak;
             }
 
-            // TODO: Extract description and project and check if they are null
+            // stop <description> <project>
+            // stop <description> -> Uses the default project
+            var text = slackEvent.Text.ToLower().Trim().Split(" ");
+            if (text.Length != 2 || text.Length != 3)
+            {
+                return BotResponses.InvalidParameter;
+            }
 
-            //
-            // Send the request to the TimeCockpit API
-            //
-            user.IsWorking = false;
 
 
-
-            // TODO: Send the request
             try
             {
                 var accessToken = await _tokenManager.GetAccessTokenAsync(userId);
@@ -154,6 +154,20 @@ namespace TCSlackbot.Logic.Slack
                     return BotResponses.InvalidAccessToken;
                 }
 
+                // 
+                // Extract the parameters
+                // 
+                var description = text.ElementAtOrDefault(1);
+                var project = text.Length == 3 ? await _tcDataManager.GetProjectAsync(accessToken, text.ElementAtOrDefault(2)) : user.DefaultProject;
+                if (project == null)
+                {
+                    return BotResponses.ProjectNotFound;
+                }
+
+                //
+                // Get the data needed to the request
+                //
+                user.IsWorking = false;
                 var sessions = user.GetWorkSessions();
 
                 var userDetail = await _tcDataManager.GetCurrentUserDetailsAsync(accessToken);
@@ -162,16 +176,9 @@ namespace TCSlackbot.Logic.Slack
                     return BotResponses.ObjectNotFound;
                 }
 
-                // TODO: Replace project name with user input
-                var project = await _tcDataManager.GetProjectAsync(accessToken, "tcslackbot");
-                if (project == null)
-                {
-                    return BotResponses.ObjectNotFound;
-                }
-
-                // TODO: Replace description with user input
-                var description = "Will be done soonTM";
-
+                //
+                // Send each session
+                //
                 foreach (var session in sessions)
                 {
                     await _tcDataManager.CreateObjectAsync(accessToken, new Timesheet { 
@@ -181,15 +188,15 @@ namespace TCSlackbot.Logic.Slack
                         ProjectUuid = project.ProjectUuid,
                         Description = description
                     });
-
                 }
             }
             catch (LoggedOutException)
             {
                 return BotResponses.ErrorLoggedOut;
             }
+
             //
-            // Stop working (reset the start and end time)
+            // Reset and save the user data
             //
             user.ResetWorktime();
             user.Breaks?.Clear();
@@ -418,9 +425,6 @@ namespace TCSlackbot.Logic.Slack
 
             await _secretManager.DeleteSecretAsync(slackEvent.User);
 
-            // TODO: Remove all user data too?
-            //await _cosmosManager.RemoveDocumentAsync(Collection.Users, slackEvent.User);
-
             return BotResponses.Unlinked;
         }
 
@@ -461,11 +465,11 @@ namespace TCSlackbot.Logic.Slack
             //
             if (System.Diagnostics.Debugger.IsAttached)
             {
-                return "<https://localhost:6001/auth/link/?data=" + _protector.Protect(jsonData) + "|Link TimeCockpit Account>";
+                return "<https://localhost:6001/auth/link/?data=" + _protector.Protect(jsonData) + "|Link Account>";
             }
             else
             {
-                return "<https://tcslackbot.azurewebsites.net/auth/link/?data=" + _protector.Protect(jsonData) + "|Link TimeCockpit Account>";
+                return "<https://tcslackbot.azurewebsites.net/auth/link/?data=" + _protector.Protect(jsonData) + "|Link Account>";
             }
         }
 

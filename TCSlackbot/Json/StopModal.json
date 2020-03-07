@@ -1,107 +1,116 @@
-"title": {
-  "type": "plain_text",
-  "text": "Stop Timetracking",
-  "emoji": true
-}, "submit": {
-  "type": "plain_text",
-  "text": "Submit",
-  "emoji": true
-}, "close": {
-  "type": "plain_text",
-  "text": "Cancel",
-  "emoji": true
-}, "blocks": [
-  {
-    "type": "input",
-    "block_id": "date",
-    "element": {
-      "type": "datepicker",
-      REPLACE_DATE,
-      "placeholder": {
-        "type": "plain_text",
-        "text": "Select a date",
-        "emoji": true
-      },
-      "action_id": "Date"
-    },
-    "label": {
+{
+  "trigger_id": "REPLACE_TRIGGER_ID",
+  "view": {
+    "type": "modal",
+    "callback_id": "REPLACE_CALLBACK_ID",
+    "title": {
       "type": "plain_text",
-      "text": "Date",
+      "text": "Stop Timetracking",
       "emoji": true
-    }
-  },
-  {
-    "type": "input",
-    "block_id": "starttime",
-    "element": {
-      REPLACE_START,
-      "type": "plain_text_input",
-      "action_id": "StartTime",
-      "placeholder": {
-        "type": "plain_text",
-        "text": "eg. 12:00"
-      }
     },
-    "label": {
+    "submit": {
       "type": "plain_text",
-      "text": "Start Time"
-    }
-  },
-  {
-    "type": "input",
-    "block_id": "endtime",
-    "element": {
-      REPLACE_END,
-      "type": "plain_text_input",
-      "action_id": "EndTime",
-      "placeholder": {
-        "type": "plain_text",
-        "text": "eg. 18:00"
-      }
+      "text": "Submit",
+      "emoji": true
     },
-    "label": {
+    "close": {
       "type": "plain_text",
-      "text": "End Time"
-    }
-  },
-  {
-    "type": "input",
-    "block_id": "project",
-    "element": {
-      "action_id": "Project",
-      "type": "external_select",
-      "initial_option": {
-        "text": {
-          "type": "plain_text",
-          "text": REPLACE_PROJECT,
-          "emoji": true
+      "text": "Cancel",
+      "emoji": true
+    },
+    "blocks": [
+      {
+        "type": "input",
+        "block_id": "date",
+        "element": {
+          "type": "datepicker",
+          "REPLACE_DATE",
+          "placeholder": {
+            "type": "plain_text",
+            "text": "Select a date",
+            "emoji": true
+          },
+          "action_id": "Date"
         },
-        "value": REPLACE_PROJECT
+        "label": {
+          "type": "plain_text",
+          "text": "Date",
+          "emoji": true
+        }
       },
-      "placeholder": {
-        "type": "plain_text",
-        "text": "Select a project"
+      {
+        "type": "input",
+        "block_id": "starttime",
+        "element": {
+          "REPLACE_START",
+          "type": "plain_text_input",
+          "action_id": "StartTime",
+          "placeholder": {
+            "type": "plain_text",
+            "text": "eg. 12:00"
+          }
+        },
+        "label": {
+          "type": "plain_text",
+          "text": "Start Time"
+        }
+      },
+      {
+        "type": "input",
+        "block_id": "endtime",
+        "element": {
+          "REPLACE_END",
+          "type": "plain_text_input",
+          "action_id": "EndTime",
+          "placeholder": {
+            "type": "plain_text",
+            "text": "eg. 18:00"
+          }
+        },
+        "label": {
+          "type": "plain_text",
+          "text": "End Time"
+        }
+      },
+      {
+        "type": "input",
+        "block_id": "project",
+        "element": {
+          "action_id": "Project",
+          "type": "external_select",
+          "initial_option": {
+            "text": {
+              "type": "plain_text",
+              "text": "REPLACE_PROJECT",
+              "emoji": true
+            },
+            "value": "REPLACE_PROJECT"
+          },
+          "placeholder": {
+            "type": "plain_text",
+            "text": "Select a project"
+          }
+        },
+        "label": {
+          "type": "plain_text",
+          "text": "Project"
+        }
+      },
+      {
+        "type": "input",
+        "block_id": "description",
+        "element": {
+          "type": "plain_text_input",
+          "multiline": true,
+          "action_id": "Description"
+        },
+        "label": {
+          "type": "plain_text",
+          "text": "Description",
+          "emoji": true
+        }
       }
-    },
-    "label": {
-      "type": "plain_text",
-      "text": "Project"
-    }
-  },
-  {
-    "type": "input",
-    "block_id": "description",
-    "element": {
-      "type": "plain_text_input",
-      "multiline": true,
-      "action_id": "Description"
-    },
-    "label": {
-      "type": "plain_text",
-      "text": "Description",
-      "emoji": true
-    }
+    ]
   }
-] }
 
 }

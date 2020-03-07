@@ -8,18 +8,18 @@ namespace TCSlackbot.Logic.Slack.Requests
     public partial class ConversationsList
     {
         [JsonPropertyName("ok")]
-        public bool Ok { get; set; }
+        public bool? Ok { get; set; }
 
         [JsonPropertyName("channels")]
-        public List<Channel> Channels { get; set; }
+        public List<Channel>? Channels { get; }
     }
 
     public partial class Channel
     {
         [JsonPropertyName("id")]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         [JsonPropertyName("user")]
-        public string User { get; set; }
+        public string? User { get; set; }
     }
 }
