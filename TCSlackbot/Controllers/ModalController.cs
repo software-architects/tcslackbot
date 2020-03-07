@@ -19,6 +19,8 @@ using TCSlackbot.Logic.Slack.Requests;
 using TCSlackbot.Logic.TimeCockpit;
 using TCSlackbot.Logic.Utils;
 using System.Globalization;
+using System.Security.Cryptography;
+using System.IO;
 
 namespace TCSlackbot.Controllers
 {
@@ -125,16 +127,33 @@ namespace TCSlackbot.Controllers
             //
             // TODO: Make it work in Modals
             //
-            // if (!IsValidSignature(HttpContext.Request.Body.ToString(), HttpContext.Request.Headers))
-            // {
-            //    return BadRequest();
-            // }
+            string body = Request.Body.ToString();
+
+            if (!IsValidSignature(body, HttpContext.Request.Headers))
+            {
+               return BadRequest();
+            }
 
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
             if (payload is null || payload.User is null)
             {
                 return BadRequest();
             }
+
+            //
+            // Send the reply
+            //
+            var channel = await CommandController.GetIMChannelFromUserAsync(_httpClient, payload.User.Id);
+            if (channel is null)
+            {
+                return BadRequest();
+            }
+
+            var replyData = new Dictionary<string, string>
+            {
+                ["user"] = payload.User.Id,
+                ["channel"] = channel,
+            };
 
             //
             // Ignore unecessary requests
@@ -148,15 +167,17 @@ namespace TCSlackbot.Controllers
             var user = await _commandHandler.GetSlackUserAsync(payload.User.Id);
             if (user == null)
             {
-                // replyData["text"] = BotResponses.NotLoggedIn;
-                // await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));
+                replyData["text"] = BotResponses.NotLoggedIn;
+                using var replyForm = new FormUrlEncodedContent(replyData);
+                _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), replyForm);
                 return Ok();
             }
 
             if (!user.IsWorking)
             {
-                // replyData["text"] = BotResponses.NotWorking;
-                // await _httpClient.PostAsync("chat.postEphemeral", new FormUrlEncodedContent(replyData));                
+                replyData["text"] = BotResponses.NotWorking;
+                using var replyForm = new FormUrlEncodedContent(replyData);
+                _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), replyForm);
                 return Ok();
             }
 
@@ -324,6 +345,26 @@ namespace TCSlackbot.Controllers
             _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), replyForm);
 
             return Ok();
+        }
+
+        /// <summary>
+        /// Validates the signature of the slack request.
+        /// </summary>
+        /// <param name="body">The request body</param>
+        /// <param name="headers">The request headers</param>
+        /// <returns>True if the signature is valid</returns>
+        private bool IsValidSignature(string body, IHeaderDictionary headers)
+        {
+            var timestamp = headers["X-Slack-Request-Timestamp"];
+            var signature = headers["X-Slack-Signature"];
+            var signingSecret = _secretManager.GetSecret("Slack-SigningSecret");
+
+            var encoding = new UTF8Encoding();
+            using var hmac = new HMACSHA256(encoding.GetBytes(signingSecret));
+            var hash = hmac.ComputeHash(encoding.GetBytes($"v0:{timestamp}:{body}"));
+            var ownSignature = $"v0={BitConverter.ToString(hash).Replace("-", "", StringComparison.CurrentCulture).ToLower()}";
+
+            return ownSignature.Equals(signature, StringComparison.CurrentCulture);
         }
     }
 }
