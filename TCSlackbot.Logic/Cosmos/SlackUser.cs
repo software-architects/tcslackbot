@@ -25,35 +25,16 @@ namespace TCSlackbot.Logic
         /// The id of the user (and document). 
         /// </summary>
         [JsonProperty(PropertyName = "id")]
-        public string UserId { get; set; } = String.Empty;
-
-        /// <summary>
-        /// The id of the user (and document). 
-        /// </summary>
-        public string ChannelId { get; set; }   
-
-        /// <summary>
-        /// The start time of the working session.
-        /// </summary>
-        public DateTime? StartTime { get; set; }
-
-        /// <summary>
-        /// The duration of the working session.
-        /// </summary>
-        public DateTime? EndTime { get; set; }
+        public string UserId { get; set; } = string.Empty;
 
         // TODO: Use this instead of StartTime and EndTime 
         public Duration? Worktime { get; set; }
 
         /// <summary>
-        /// The description of the working session.
-        /// </summary>
-        public string Description { get; set; }
-
-        /// <summary>
         /// The list of breaks during a working session. 
         /// </summary>
-        public Stack<Duration>? Breaks { get; set; }
+        // TODO: CHECK IF THE LIST OF BREAKS WILL STILL BE RECEIVED FROM THE COSMOS DB (might not be working with this change)
+        public Stack<Duration> Breaks { get; } = new Stack<Duration>();
 
         /// <summary>
         /// The default project, used whenever a user executes a command and doesn't pass a custom project.
@@ -61,21 +42,27 @@ namespace TCSlackbot.Logic
         public Project? DefaultProject { get; set; }
 
         /// <summary>
-        /// Boolean whether the user is working.
+        /// If set to true, it sets the start time to the current datetime. If set to false, it sets the end time to the current datetime. 
         /// </summary>
         [JsonIgnore]
         public bool IsWorking
         {
-            get => !(StartTime is null);
+            
+            get => !(Worktime?.Start is null);
             set
             {
+                if (Worktime == null)
+                {
+                    Worktime = new Duration(default, default);
+                }
+
                 if (value is true)
                 {
-                    StartTime = DateTime.Now;
+                    Worktime.Start = DateTime.Now;
                 }
                 else
                 {
-                    EndTime = DateTime.Now;
+                    Worktime.End = DateTime.Now;
                 }
             }
         }
@@ -95,8 +82,7 @@ namespace TCSlackbot.Logic
         /// </summary>
         public void ResetWorktime()
         {
-            StartTime = null;
-            EndTime = null;
+            Worktime = new Duration(default, default);
         }
 
         /// <summary>
@@ -106,12 +92,7 @@ namespace TCSlackbot.Logic
         /// <returns>True if successful</returns>
         public bool StartBreak(DateTime date)
         {
-            if (Breaks == null)
-            {
-                Breaks = new Stack<Duration>();
-            }
-
-            if (Breaks.Count != 0)
+            if (Breaks?.Count != 0)
             {
                 // 1. Get the top of the stack
                 var @break = Breaks.LastOrDefault();
@@ -125,7 +106,7 @@ namespace TCSlackbot.Logic
 
             // 3. Insert a new break
             var newBreak = new Duration(date, null);
-            Breaks.Push(newBreak);
+            Breaks?.Push(newBreak);
 
             return true;
         }
@@ -177,24 +158,23 @@ namespace TCSlackbot.Logic
         /// </summary>
         /// <returns>A time span with the total work time. If the end has not been set, the current time is used.</returns>
         public TimeSpan TotalWorkTime() => 
-            ((EndTime == null ? DateTime.Now : EndTime.GetValueOrDefault()) - (StartTime == null ? DateTime.Now : StartTime.GetValueOrDefault())) - TotalBreakTime();
+            ((Worktime?.End == null ? DateTime.Now : Worktime.End.GetValueOrDefault()) - (Worktime?.Start == null ? DateTime.Now : Worktime.Start.GetValueOrDefault())) - TotalBreakTime();
 
         public IEnumerable<Duration> GetWorkSessions()
         {
             var sessions = new List<Duration>();
             var breaks = Breaks.OrderBy(duration => duration.Start);
 
-            if(StartTime == null || EndTime == null)
+            if(Worktime?.Start == null || Worktime?.End == null)
             {
-                throw new InvalidOperationException("StartTime or EndTime null");
+                return sessions;
             }
 
             // Check if there are any breaks
             if (!breaks.Any())
             {
-                sessions.Add(new Duration(StartTime, EndTime));
+                sessions.Add(new Duration(Worktime.Start, Worktime.End));
                 return sessions;
-
             }
 
             // Last session will be set after loop
@@ -204,7 +184,7 @@ namespace TCSlackbot.Logic
 
                 if (i == 0)
                 {
-                    sessions.Add(new Duration(StartTime, curBreak.Start));
+                    sessions.Add(new Duration(Worktime.Start, curBreak.Start));
                 } else
                 {
                     var lastBreak = breaks.ElementAt(i - 1);
@@ -213,10 +193,8 @@ namespace TCSlackbot.Logic
                 }
 
             }
-            Console.WriteLine("\n\n\n\n" + breaks.Last().End + "\n\n\n\n");
-            Console.WriteLine("\n\n\n\n" + breaks.Count() + "\n\n\n\n");
 
-            sessions.Add(new Duration(breaks.Last().End, EndTime));
+            sessions.Add(new Duration(breaks.Last().End, Worktime.End));
 
             return sessions;
         }

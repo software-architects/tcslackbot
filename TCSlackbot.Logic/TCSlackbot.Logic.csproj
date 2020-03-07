@@ -5,7 +5,8 @@
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
     <NoWarn>CA2007</NoWarn> <!-- ConfigureAwait -->
-    <NoWarn>CA1304</NoWarn> <!-- .ToLower(CultureInfo) -->
+    <NoWarn>CA1304</NoWarn>
+    <NeutralLanguage>en</NeutralLanguage> <!-- .ToLower(CultureInfo) -->
   </PropertyGroup>
 
   <ItemGroup>

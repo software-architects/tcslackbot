@@ -212,15 +212,13 @@ namespace TCSlackbot.Controllers
             var date = DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             json = json.Replace("REPLACE_DATE", "\"initial_date\": \"" + date + "\"", StringComparison.Ordinal);
 
-            var startTime = user.StartTime.HasValue ? user.StartTime.Value.ToString("HH:mm", CultureInfo.InvariantCulture) : "";
+            var startTime = user?.Worktime?.Start != null ? user.Worktime.Start.Value.ToString("HH:mm", CultureInfo.InvariantCulture) : "";
             json = json.Replace("REPLACE_START", "\"initial_value\": \"" + startTime + "\"", StringComparison.Ordinal);
-
 
             var endTime = DateTime.Now.ToString("HH:mm", CultureInfo.InvariantCulture);
             json = json.Replace("REPLACE_END", "\"initial_value\": \"" + endTime + "\"", StringComparison.Ordinal);
 
-
-            var projectName = user.DefaultProject != null ? user.DefaultProject.ProjectName : string.Empty;
+            var projectName = user?.DefaultProject != null ? user.DefaultProject.ProjectName : string.Empty;
             json = json.Replace("REPLACE_PROJECT", "\" " + projectName + "\"", StringComparison.Ordinal);
 
             //
@@ -285,11 +283,8 @@ namespace TCSlackbot.Controllers
                 return Content(errorMessage, "application/json");
             }
 
-            // 
-            // 
-            // 
-            user.StartTime = payloadDate + startTime;
-            user.EndTime = payloadDate + endTime;
+            // Save the values
+            user.Worktime = new Duration(payloadDate + startTime, payloadDate + endTime);
 
             // 
             // Request the access token
@@ -304,7 +299,6 @@ namespace TCSlackbot.Controllers
             // Set the values
             //
             user.DefaultProject = await _tcDataManager.GetProjectAsync(accessToken, payloadProjectName);
-            user.Description = payloadDescription;
 
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
             

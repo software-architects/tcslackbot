@@ -66,7 +66,7 @@ namespace TCSlackbot.Logic.Utils
             // Parse response
             var content = Serializer.Deserialize<ODataResponse<T>>(responseContent);
 
-            return content.Value.ToArray();
+            return content?.Value == null ? new List<T>() : (IEnumerable<T>)content.Value.ToArray();
         }
 
         /// <inheritdoc/>
@@ -87,7 +87,7 @@ namespace TCSlackbot.Logic.Utils
             // Parse response
             var content = Serializer.Deserialize<ODataResponse<T>>(responseContent);
 
-            return content.Value.ToArray();
+            return content?.Value == null ? new List<T>() : (IEnumerable<T>)content.Value.ToArray();
         }
 
         /// <inheritdoc/>
