@@ -14,7 +14,7 @@ namespace TCSlackbot.Logic.Utils
         /// <param name="accessToken">The access token for the specified user</param>
         /// <param name="data">The object which should be created</param>
         /// <returns>The created object</returns>
-        public Task<T> CreateObjectAsync<T>(string accessToken, T data);
+        public Task<T?> CreateObjectAsync<T>(string accessToken, T data) where T : class;
 
         /// <summary>
         /// Requests data from the server. 
@@ -22,7 +22,7 @@ namespace TCSlackbot.Logic.Utils
         /// <typeparam name="T">The type of the object which will be retrieved (you don't have to add 'APP_' yourself)</typeparam>
         /// <param name="accessToken">The access token for the specified user</param>
         /// <returns>The list of objects</returns>
-        public Task<IEnumerable<T>> GetObjectsAsync<T>(string accessToken);
+        public Task<IEnumerable<T>?> GetObjectsAsync<T>(string accessToken);
 
         /// <summary>
         /// Requests filtered data from the server.
@@ -31,7 +31,7 @@ namespace TCSlackbot.Logic.Utils
         /// <param name="accessToken">The access token for the specified user</param>
         /// <param name="queryData">The query data (contains all the options needed for the request)</param>
         /// <returns>The list of objects</returns>
-        public Task<IEnumerable<T>> GetFilteredObjectsAsync<T>(string accessToken, TCQueryData queryData);
+        public Task<IEnumerable<T>?> GetFilteredObjectsAsync<T>(string accessToken, TCQueryData queryData);
 
         /// <summary>
         /// Returns the object of the query (calls internally `GetFilteredObjectsAsync`, and checks if it only returns one element).
