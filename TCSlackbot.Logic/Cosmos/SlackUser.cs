@@ -35,8 +35,7 @@ namespace TCSlackbot.Logic
         /// <summary>
         /// The list of breaks during a working session. 
         /// </summary>
-        // TODO: CHECK IF THE LIST OF BREAKS WILL STILL BE RECEIVED FROM THE COSMOS DB (might not be working with this change)
-        public Stack<Duration> Breaks { get; } = new Stack<Duration>();
+        public Stack<Duration>? Breaks { get; set; }
 
         /// <summary>
         /// The default project, used whenever a user executes a command and doesn't pass a custom project.
@@ -94,6 +93,11 @@ namespace TCSlackbot.Logic
         /// <returns>True if successful</returns>
         public bool StartBreak(DateTime date)
         {
+            if (Breaks is null)
+            {
+                Breaks = new Stack<Duration>();
+            }
+
             if (Breaks?.Count != 0)
             {
                 // 1. Get the top of the stack

@@ -249,7 +249,8 @@ namespace TCSlackbot.Controllers
             }
 
             var response = await client.GetAsync(new Uri("https://slack.com/api/conversations.list?types=im"));
-            var conversationChannels = Serializer.Deserialize<ConversationsList>(await response.Content.ReadAsStringAsync())?.Channels;
+            var content = await response.Content.ReadAsStringAsync();
+            var conversationChannels = Serializer.Deserialize<ConversationsList>(content)?.Channels;
             if (conversationChannels is null)
             {
                 return default;

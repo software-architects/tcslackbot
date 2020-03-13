@@ -139,12 +139,10 @@ namespace TCSlackbot.Logic.Slack
             // stop <description> <project>
             // stop <description> -> Uses the default project
             var text = slackEvent.Text.ToLower().Trim().Split(" ");
-            if (text.Length != 2 || text.Length != 3)
+            if (text.Length != 2 && text.Length != 3)
             {
-                return BotResponses.InvalidParameter;
+                return BotResponses.InvalidParameter + " You can use it like this: 'stop <description> <optional_project>'";
             }
-
-
 
             try
             {
@@ -181,13 +179,18 @@ namespace TCSlackbot.Logic.Slack
                 //
                 foreach (var session in sessions)
                 {
-                    await _tcDataManager.CreateObjectAsync(accessToken, new Timesheet { 
+                    var timesheet = new Timesheet
+                    {
                         BeginTime = session.Start.GetValueOrDefault(),
                         EndTime = session.End.GetValueOrDefault(),
                         UserDetailUuid = userDetail.UserDetailUuid,
                         ProjectUuid = project.ProjectUuid,
                         Description = description
-                    });
+                    };
+                    Console.WriteLine(timesheet);
+                    var response = await _tcDataManager.CreateObjectAsync(accessToken, timesheet);
+
+                    Console.WriteLine(response);
                 }
             }
             catch (LoggedOutException)

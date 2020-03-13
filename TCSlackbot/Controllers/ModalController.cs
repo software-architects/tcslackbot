@@ -122,18 +122,6 @@ namespace TCSlackbot.Controllers
         [HttpPost]
         public async Task<IActionResult> HandleRequestAsync()
         {
-            //
-            // Verify slack request
-            //
-            // TODO: Make it work in Modals
-            //
-            string body = Request.Body.ToString();
-
-            if (!IsValidSignature(body, HttpContext.Request.Headers))
-            {
-               return BadRequest();
-            }
-
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
             if (payload is null || payload.User is null)
             {
@@ -345,26 +333,6 @@ namespace TCSlackbot.Controllers
             _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), replyForm);
 
             return Ok();
-        }
-
-        /// <summary>
-        /// Validates the signature of the slack request.
-        /// </summary>
-        /// <param name="body">The request body</param>
-        /// <param name="headers">The request headers</param>
-        /// <returns>True if the signature is valid</returns>
-        private bool IsValidSignature(string body, IHeaderDictionary headers)
-        {
-            var timestamp = headers["X-Slack-Request-Timestamp"];
-            var signature = headers["X-Slack-Signature"];
-            var signingSecret = _secretManager.GetSecret("Slack-SigningSecret");
-
-            var encoding = new UTF8Encoding();
-            using var hmac = new HMACSHA256(encoding.GetBytes(signingSecret));
-            var hash = hmac.ComputeHash(encoding.GetBytes($"v0:{timestamp}:{body}"));
-            var ownSignature = $"v0={BitConverter.ToString(hash).Replace("-", "", StringComparison.CurrentCulture).ToLower()}";
-
-            return ownSignature.Equals(signature, StringComparison.CurrentCulture);
         }
     }
 }
