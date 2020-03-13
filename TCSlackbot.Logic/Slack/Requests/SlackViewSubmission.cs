@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace TCSlackbot.Logic.Slack.Requests
 {
-    public partial class SlackViewSubmission
+    public class SlackViewSubmission
     {
         [JsonPropertyName("type")]
         public string? Type { get; set; }
@@ -21,13 +21,13 @@ namespace TCSlackbot.Logic.Slack.Requests
         public View? View { get; set; }
     }
 
-    public partial class User
+    public class User
     {
         [JsonPropertyName("id")]
         public string? Id { get; set; }
     }
 
-    public partial class View
+    public class View
     {
         [JsonPropertyName("callback_id")]
         public string? CallbackId { get; set; }
@@ -36,13 +36,13 @@ namespace TCSlackbot.Logic.Slack.Requests
         public State? State { get; set; }
     }
 
-    public partial class State
-    {  
+    public class State
+    {
         [JsonPropertyName("values")]
         public Values? Values { get; set; }
     }
 
-    public partial class Values
+    public class Values
     {
         [JsonPropertyName("date")]
         public DateClass? Date { get; set; }
@@ -60,25 +60,25 @@ namespace TCSlackbot.Logic.Slack.Requests
         public ProjectClass? Project { get; set; }
     }
 
-    public partial class DateClass
+    public class DateClass
     {
         [JsonPropertyName("Date")]
-        public Details? Date { get; set; }
+        public DateDetails? Date { get; set; }
     }
 
-    public partial class DescriptionClass
+    public class DescriptionClass
     {
         [JsonPropertyName("Description")]
-        public Details? Description { get; set; }
+        public DateDetails? Description { get; set; }
     }
-    public partial class ProjectClass
+
+    public class ProjectClass
     {
-        [JsonPropertyName("Date")]
-        public Details? Project { get; set; }
+        [JsonPropertyName("Project")]
+        public ProjectDetails? Project { get; set; }
     }
 
-
-    public partial class Details
+    public class DateDetails
     {
         [JsonPropertyName("type")]
         public string? Type { get; set; }
@@ -90,15 +90,30 @@ namespace TCSlackbot.Logic.Slack.Requests
         public DateTime? Day { get; set; }
     }
 
-    public partial class Endtime
+    public class ProjectDetails
     {
-        [JsonPropertyName("EndTime")]
-        public Details? EndTime { get; set; }
+        [JsonPropertyName("type")]
+        public string? Type { get; set; }
+
+        [JsonPropertyName("selected_option")]
+        public SelectedOption? SelectedOption { get; set; }
     }
 
-    public partial class Starttime
+    public class Endtime
+    {
+        [JsonPropertyName("EndTime")]
+        public DateDetails? EndTime { get; set; }
+    }
+
+    public class Starttime
     {
         [JsonPropertyName("StartTime")]
-        public Details? StartTime { get; set; }
+        public DateDetails? StartTime { get; set; }
+    }
+
+    public class SelectedOption
+    {
+        [JsonPropertyName("value")]
+        public string? Value { get; set; }
     }
 }

@@ -497,7 +497,7 @@ namespace TCSlackbot.Logic.Slack
             SlackUser? user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, userId);
             if (user is null)
             {
-                user = await _cosmosManager.CreateDocumentAsync(Collection.Users, new SlackUser { UserId = userId });
+                user = await _cosmosManager.CreateDocumentAsync(Collection.Users, new SlackUser (userId));
             }
 
             //

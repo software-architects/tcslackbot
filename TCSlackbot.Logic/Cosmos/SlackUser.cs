@@ -48,7 +48,7 @@ namespace TCSlackbot.Logic
         [JsonIgnore]
         public bool IsWorking
         {
-            
+
             get => !(Worktime?.Start is null);
             set
             {
@@ -76,6 +76,16 @@ namespace TCSlackbot.Logic
         {
             // Check ALL breaks (you could theoretically also only check the latest one)
             get => !(Breaks is null) && Breaks.Any(b => b.End is null);
+        }
+
+        /// <summary>
+        /// Creates a new SlackUser object.
+        /// </summary>
+        /// <param name="userId">The id of the slack user</param>
+        public SlackUser(string userId)
+        {
+            UserId = userId;
+            Breaks = new Stack<Duration>();
         }
 
         /// <summary>
@@ -163,7 +173,7 @@ namespace TCSlackbot.Logic
         /// The total work time without breaks.
         /// </summary>
         /// <returns>A time span with the total work time. If the end has not been set, the current time is used.</returns>
-        public TimeSpan TotalWorkTime() => 
+        public TimeSpan TotalWorkTime() =>
             ((Worktime?.End == null ? DateTime.Now : Worktime.End.GetValueOrDefault()) - (Worktime?.Start == null ? DateTime.Now : Worktime.Start.GetValueOrDefault())) - TotalBreakTime();
 
         public IEnumerable<Duration> GetWorkSessions()
@@ -171,7 +181,7 @@ namespace TCSlackbot.Logic
             var sessions = new List<Duration>();
             var breaks = Breaks.OrderBy(duration => duration.Start);
 
-            if(Worktime?.Start == null || Worktime?.End == null)
+            if (Worktime?.Start == null || Worktime?.End == null)
             {
                 return sessions;
             }
@@ -191,7 +201,8 @@ namespace TCSlackbot.Logic
                 if (i == 0)
                 {
                     sessions.Add(new Duration(Worktime.Start, curBreak.Start));
-                } else
+                }
+                else
                 {
                     var lastBreak = breaks.ElementAt(i - 1);
 

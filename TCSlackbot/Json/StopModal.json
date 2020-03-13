@@ -24,7 +24,7 @@
         "block_id": "date",
         "element": {
           "type": "datepicker",
-          "REPLACE_DATE",
+          "initial_date": "REPLACE_DATE",
           "placeholder": {
             "type": "plain_text",
             "text": "Select a date",
@@ -42,7 +42,7 @@
         "type": "input",
         "block_id": "starttime",
         "element": {
-          "REPLACE_START",
+          "initial_value": "REPLACE_START",
           "type": "plain_text_input",
           "action_id": "StartTime",
           "placeholder": {
@@ -59,7 +59,7 @@
         "type": "input",
         "block_id": "endtime",
         "element": {
-          "REPLACE_END",
+          "initial_value": "REPLACE_END",
           "type": "plain_text_input",
           "action_id": "EndTime",
           "placeholder": {
@@ -78,14 +78,7 @@
         "element": {
           "action_id": "Project",
           "type": "external_select",
-          "initial_option": {
-            "text": {
-              "type": "plain_text",
-              "text": "REPLACE_PROJECT",
-              "emoji": true
-            },
-            "value": "REPLACE_PROJECT"
-          },
+          INITIAL_OPTION
           "placeholder": {
             "type": "plain_text",
             "text": "Select a project"

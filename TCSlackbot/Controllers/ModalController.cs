@@ -174,11 +174,12 @@ namespace TCSlackbot.Controllers
                 case "message_action":
                     return await ViewModalAsync(payload);
                 case "view_submission":
-                    return await ProcessModalDataAsync(user);    /* , replyData */
+                    return await ProcessModalDataAsync(user);
                 default:
                     Console.WriteLine($"Received unhandled request: {payload.Type}.");
                     break;
             }
+
             return Ok();
         }
 
@@ -209,7 +210,8 @@ namespace TCSlackbot.Controllers
             }
 
             //
-            // Load the modal from the file and set the dynamic values by replacing the placeholders in the json
+            // Load the modal from the file and set the dynamic values by replacing the placeholders in the json:
+            // A placeholder could look like this: '"REPALCE_TEST"' -> you need the double quotes here.
             //
             var json = await System.IO.File.ReadAllTextAsync("Json/StopModal.json");
 
@@ -217,17 +219,23 @@ namespace TCSlackbot.Controllers
             json = json.Replace("REPLACE_CALLBACK_ID", payloadCallbackId, StringComparison.Ordinal);
 
             var date = DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-            json = json.Replace("REPLACE_DATE", "\"initial_date\": \"" + date + "\"", StringComparison.Ordinal);
+            json = json.Replace("REPLACE_DATE", date, StringComparison.Ordinal);
 
-            var startTime = user?.Worktime?.Start != null ? user.Worktime.Start.Value.ToString("HH:mm", CultureInfo.InvariantCulture) : "";
-            json = json.Replace("REPLACE_START", "\"initial_value\": \"" + startTime + "\"", StringComparison.Ordinal);
+            var startTime = user?.Worktime?.Start != null ? user.Worktime.Start.Value.ToString("HH:mm", CultureInfo.InvariantCulture) : string.Empty;
+            json = json.Replace("REPLACE_START", startTime, StringComparison.Ordinal);
 
             var endTime = DateTime.Now.ToString("HH:mm", CultureInfo.InvariantCulture);
-            json = json.Replace("REPLACE_END", "\"initial_value\": \"" + endTime + "\"", StringComparison.Ordinal);
+            json = json.Replace("REPLACE_END", endTime, StringComparison.Ordinal);
 
-            var projectName = user?.DefaultProject != null ? user.DefaultProject.ProjectName : string.Empty;
-            json = json.Replace("REPLACE_PROJECT", "\" " + projectName + "\"", StringComparison.Ordinal);
+            var initialOptionString = user?.DefaultProject != null
+                ? "\"initial_option\":{\"text\":{\"type\":\"plain_text\",\"text\":\"REPLACE_PROJECT\",\"emoji\":true},\"value\":\"REPLACE_PROJECT\"},"
+                    .Replace("REPLACE_PROJECT", user.DefaultProject.ProjectName, StringComparison.Ordinal)
+                : string.Empty;
+            Console.WriteLine(initialOptionString);
+            json = json.Replace("INITIAL_OPTION", initialOptionString, StringComparison.Ordinal);
 
+            Console.WriteLine(json);
+            
             //
             // Send the response
             //
@@ -257,7 +265,7 @@ namespace TCSlackbot.Controllers
             var payloadDate = payload?.View?.State?.Values?.Date?.Date?.Day;
             var payloadUserId = payload?.User?.Id;
             var payloadDescription = payload?.View?.State?.Values?.Description?.Description?.Value;
-            var payloadProjectName = payload?.View?.State?.Values?.Project?.Project?.Value;
+            var payloadProjectName = payload?.View?.State?.Values?.Project?.Project?.SelectedOption?.Value;
             if (payloadEnd is null || payloadStart is null || payloadDate is null || payloadUserId is null || payloadDescription is null || payloadProjectName is null)
             {
                 return BadRequest();
@@ -289,9 +297,9 @@ namespace TCSlackbot.Controllers
             //
             if (errorMessage.EndsWith(",", StringComparison.CurrentCulture))
             {
-                errorMessage += "}}";
+                errorMessage = errorMessage.Remove(errorMessage.Length - 1) + "}}";
 
-                return Content(errorMessage, "application/json");
+                return Content(errorMessage, "application/json", Encoding.UTF8);
             }
 
             // 
@@ -304,11 +312,48 @@ namespace TCSlackbot.Controllers
             }
 
             //
-            // (Re)Set and save the values
+            // Set and save the values
             //
+            user.IsWorking = false;
             user.Worktime = new Duration(payloadDate + startTime, payloadDate + endTime);
-            user.DefaultProject = await _tcDataManager.GetProjectAsync(accessToken, payloadProjectName);
+            //user.DefaultProject = await _tcDataManager.GetProjectAsync(accessToken, payloadProjectName);
 
+            //
+            // Send the request
+            //
+            
+            // Get the project
+            var project = await _tcDataManager.GetProjectAsync(accessToken, payloadProjectName);
+            if (project == null)
+            {
+                return BadRequest();
+            }
+
+            // Get the user details
+            var userDetail = await _tcDataManager.GetCurrentUserDetailsAsync(accessToken);
+            if (userDetail == null)
+            {
+                return BadRequest();
+            }
+
+            // Send each session
+            foreach (var session in user.GetWorkSessions())
+            {
+                var timesheet = new Timesheet
+                {
+                    BeginTime = session.Start.GetValueOrDefault(),
+                    EndTime = session.End.GetValueOrDefault(),
+                    UserDetailUuid = userDetail.UserDetailUuid,
+                    ProjectUuid = project.ProjectUuid,
+                    Description = payloadDescription
+                };
+
+                await _tcDataManager.CreateObjectAsync(accessToken, timesheet);
+            }
+
+            //
+            // Reset the data
+            //
             user.ResetWorktime();
             user.Breaks?.Clear();
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
