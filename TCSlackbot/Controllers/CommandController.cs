@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 using TCSlackbot.Logic;
 using TCSlackbot.Logic.Resources;
 using TCSlackbot.Logic.Slack;
+using TCSlackbot.Logic.Slack.Requests;
+using TCSlackbot.Logic.TimeCockpit.Objects;
 using TCSlackbot.Logic.Utils;
 
 namespace TCSlackbot.Controllers
@@ -117,7 +119,7 @@ namespace TCSlackbot.Controllers
                 return BadRequest();
             }
 
-            switch (request.Event.Type)
+            switch (request?.Event?.Type)
             {
                 case "message":
                     return await HandleSlackMessage(request.Event);
@@ -165,37 +167,36 @@ namespace TCSlackbot.Controllers
             //
             // Set the reply data
             //
-
-            //reply["token"] = _secretManager.GetSecret("Slack-SlackbotOAuthAccessToken");
             reply["channel"] = slackEvent.Channel;
             reply["user"] = slackEvent.User;
+
+            // We accept two types of messages as command: 
+            // - Normal Chat Messages: 
+            //      > time
+            //      > start
+            // - Bot Mentions
+            //      > @tcslackbot time
+            //      > @tcslackbot start
+            // 
+            // Slack does not provide names but ids, thus, if we replace the id, it'll basically be treated like a normal chat message and still be handled.
+            var text = slackEvent.Text.Replace("<@UJZLBL7BL> ", "", StringComparison.CurrentCulture).ToLower().Trim().Split(' ').FirstOrDefault();
 
             //
             // Handle the command
             //
-            //var user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, slackEvent.User);
-
-            var text = slackEvent.Text.Replace("<@UJZLBL7BL> ", "", StringComparison.CurrentCulture).ToLower().Trim().Split(' ').FirstOrDefault();
             switch (text)
             {
                 case "login":
                 case "link":
                     reply["text"] = _commandHandler.GetLoginLink(slackEvent);
                     hiddenMessage = true;
-                    //await _cosmosManager.ReplaceDocumentAsync<SlackUser>(Collection.Users, user, user.UserId);
                     break;
 
                 case "logout":
                 case "unlink":
-                    //reply["text"] = BotResponses.LogoutMessage;
-                    //hiddenMessage = true;
-                    //await _secretManager.DeleteSecretAsync(slackEvent.User);
-                    //await _cosmosManager.RemoveDocumentAsync(Collection.Users, slackEvent.User);
-                    //break;
-                    reply["text"] = BotResponses.NotLoggedIn;
+                    reply["text"] = await _commandHandler.Logout(slackEvent);
                     break;
 
-                // TODO: Reminder after 4h to take a break    
                 case "start":
                     reply["text"] = await _commandHandler.StartWorkingAsync(slackEvent);
                     break;
@@ -204,7 +205,6 @@ namespace TCSlackbot.Controllers
                     reply["text"] = await _commandHandler.StopWorkingAsync(slackEvent);
                     break;
 
-                // stop@13:00 Maybe add 10 minute break for every 4h
                 case "pause":
                 case "break":
                     reply["text"] = await _commandHandler.PauseWorktimeAsync(slackEvent);
@@ -214,13 +214,17 @@ namespace TCSlackbot.Controllers
                     reply["text"] = await _commandHandler.ResumeWorktimeAsync(slackEvent);
                     break;
 
-                case "starttime":
-                case "gettime":
+                case "status":
+                case "time":
                     reply["text"] = await _commandHandler.GetWorktimeAsync(slackEvent);
                     break;
 
                 case "filter":
                     reply["text"] = await _commandHandler.FilterObjectsAsync(slackEvent);
+                    break;
+
+                case "project":
+                    reply["text"] = await _commandHandler.SetDefaultProject(slackEvent);
                     break;
 
                 default:
@@ -232,35 +236,35 @@ namespace TCSlackbot.Controllers
             return Ok();
         }
 
-        private async void ReminderScheduler(int hour, int min, double intervalInHour, Action task)
+        /// <summary>
+        /// Get the IM channel id from user
+        /// </summary>
+        /// <param name="user">Id of user</param>
+        /// <returns>channel id</returns>
+        public static async Task<string?> GetIMChannelFromUserAsync(HttpClient client, string user)
         {
-            _ = hour;
-            _ = min;
-            _ = intervalInHour;
-            _ = task;
-
-            var queryable = _cosmosManager.GetAllSlackUsers();
-            if (queryable == null)
+            if (client is null)
             {
-                return;
+                return default;
             }
 
-
-            while (queryable.HasMoreResults)
+            var response = await client.GetAsync(new Uri("https://slack.com/api/conversations.list?types=im"));
+            var content = await response.Content.ReadAsStringAsync();
+            var conversationChannels = Serializer.Deserialize<ConversationsList>(content)?.Channels;
+            if (conversationChannels is null)
             {
-                // Iterate through SlackUsers
-                foreach (SlackUser s in await queryable.ExecuteNextAsync<SlackUser>())
-                {
-                    var reply = new Dictionary<string, string>
-                    {
-                        ["user"] = s.UserId,
-                        ["channel"] = s.ChannelId,
-                        ["text"] = BotResponses.TakeABreak
-                    };
+                return default;
+            }
 
-                    await SendReplyAsync(reply, true);
+            foreach (var channel in conversationChannels)
+            {
+                if (channel.User == user)
+                {
+                    return channel.Id;
                 }
             }
+
+            return default;
         }
 
         /// <summary>
@@ -273,16 +277,23 @@ namespace TCSlackbot.Controllers
         {
             string requestUri = "chat.postMessage";
 
+            var channel = GetIMChannelFromUserAsync(_httpClient, replyData["user"]).Result;
+            if (channel is null)
+            {
+                return;
+            }
+
             //
             // Use a different uri for the direct message
             //
             if (directMessage)
             {
+                replyData["channel"] = channel;
                 requestUri = "chat.postEphemeral";
             }
 
             using var content = new FormUrlEncodedContent(replyData);
-            _ = await _httpClient.PostAsync(new Uri(requestUri), content);
+            _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, requestUri), content);
         }
 
         /// <summary>

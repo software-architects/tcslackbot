@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using TCSlackbot.Logic.Authentication;
+using TCSlackbot.Logic.Authentication.Exceptions;
 using TCSlackbot.Logic.Cosmos;
 using TCSlackbot.Logic.Resources;
 using TCSlackbot.Logic.TimeCockpit;
@@ -58,8 +59,11 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.NotWorking;
             }
 
-            // TODO: Maybe show a duration instead
-            return "Started at: " + user.StartTime;
+            var timeSpan = user.TotalWorkTime();
+            var hours = timeSpan.Hours;
+            var minutes = timeSpan.Minutes;
+
+            return $"You have been working for {((hours > 0) ? string.Format("{0} hours {1} minutes", hours, minutes) : string.Format("{0} minutes", minutes))}";
         }
 
         /// <summary>
@@ -87,11 +91,15 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.AlreadyWorking;
             }
 
+            if (user.IsOnBreak)
+            {
+                return BotResponses.ErrorOnBreak;
+            }
+
             //
             // Start working
             //
             user.IsWorking = true;
-
             await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
             return BotResponses.StartedWorking;
@@ -123,37 +131,79 @@ namespace TCSlackbot.Logic.Slack
                 return BotResponses.NotWorking;
             }
 
-            //
-            // Send the request to the TimeCockpit API
-            //
-            user.EndTime = DateTime.Now;
+            if (user.IsOnBreak)
+            {
+                return BotResponses.ErrorOnBreak;
+            }
 
-            // TODO: Send the request
+            // stop <description> <project>
+            // stop <description> -> Uses the default project
+            var text = slackEvent.Text.ToLower().Trim().Split(" ");
+            if (text.Length != 2 && text.Length != 3)
+            {
+                return BotResponses.InvalidParameter + " You can use it like this: 'stop <description> <optional_project>'";
+            }
 
-            //
-            // Stop working (reset the start and end time)
-            //
-            user.IsWorking = false;
-            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
-
-            //
-            // This will maybe be done with Slack Modal 
-            //
-            // TODO: Implement
-            var message = slackEvent.Text.Split(" ");
             try
             {
-                // user.Project = message[1];
-                if (slackEvent.Text.Split(" ").Length > 2)
+                var accessToken = await _tokenManager.GetAccessTokenAsync(userId);
+                if (accessToken == null)
                 {
-                    // user.Description = message[2];
+                    return BotResponses.InvalidAccessToken;
+                }
+
+                // 
+                // Extract the parameters
+                // 
+                var description = text.ElementAtOrDefault(1);
+                var project = text.Length == 3 ? await _tcDataManager.GetProjectAsync(accessToken, text.ElementAtOrDefault(2)) : user.DefaultProject;
+                if (project == null)
+                {
+                    return BotResponses.ProjectNotFound;
+                }
+
+                //
+                // Get the data needed to the request
+                //
+                user.IsWorking = false;
+                var sessions = user.GetWorkSessions();
+
+                var userDetail = await _tcDataManager.GetCurrentUserDetailsAsync(accessToken);
+                if (userDetail == null)
+                {
+                    return BotResponses.ObjectNotFound;
+                }
+
+                //
+                // Send each session
+                //
+                foreach (var session in sessions)
+                {
+                    var timesheet = new Timesheet
+                    {
+                        BeginTime = session.Start.GetValueOrDefault(),
+                        EndTime = session.End.GetValueOrDefault(),
+                        UserDetailUuid = userDetail.UserDetailUuid,
+                        ProjectUuid = project.ProjectUuid,
+                        Description = description
+                    };
+                    Console.WriteLine(timesheet);
+                    var response = await _tcDataManager.CreateObjectAsync(accessToken, timesheet);
+
+                    Console.WriteLine(response);
                 }
             }
-            catch (IndexOutOfRangeException e)
+            catch (LoggedOutException)
             {
-                Console.WriteLine(e.Message);
-                return "Wrong Syntax";
+                return BotResponses.ErrorLoggedOut;
             }
+
+            //
+            // Reset and save the user data
+            //
+            user.ResetWorktime();
+            user.Breaks?.Clear();
+            await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
 
             return BotResponses.StoppedWorking;
         }
@@ -199,65 +249,6 @@ namespace TCSlackbot.Logic.Slack
         }
 
         /// <summary>
-        /// The user wants a list of objects.
-        /// </summary>
-        /// <param name="slackEvent"></param>
-        /// <returns>The bot response message</returns>
-        public async Task<string> FilterObjectsAsync(SlackEvent slackEvent)
-        {
-            if (slackEvent is null)
-            {
-                return BotResponses.Error;
-            }
-
-            var userId = slackEvent.User;
-
-            var user = await GetSlackUserAsync(userId);
-            if (user is null)
-            {
-                return BotResponses.NotLoggedIn;
-            }
-
-            // filter <object> <filter_text>
-            var text = slackEvent.Text.ToLower().Trim().Split(" ");
-            if (text.Length != 3)
-            {
-                return BotResponses.InvalidParameter;
-            }
-
-            switch (text.ElementAtOrDefault(1))
-            {
-                case "projects":
-                case "project":
-                    var queryData = new TCQueryData($"From P In Project Where P.Code Like '%{text.ElementAtOrDefault(2)}%' Select P");
-
-                    var accessToken = await _tokenManager.GetAccessTokenAsync(userId);
-                    if (accessToken != null)
-                    {
-                        var data = await _tcDataManager.GetFilteredObjectsAsync<Project>(accessToken, queryData);
-                        if (data.Any())
-                        {
-                            return string.Join('\n', data.Take(10).Select(element => $"- {element.ProjectName}"));
-                        }
-                    }
-
-                    break;
-
-                case "tasks":
-                case "task":
-                    // Send request to the TimeCockpit API
-                    // Return the list with the data
-
-                    break;
-
-                default:
-                    return BotResponses.FilterObjectNotFound;
-            }
-
-            return BotResponses.FilterObjectNotFound;
-        }
-
-        /// <summary>
         /// The user wants a break. 
         /// </summary>
         /// <param name="slackEvent"></param>
@@ -298,13 +289,146 @@ namespace TCSlackbot.Logic.Slack
         }
 
         /// <summary>
-        /// Checks whether the specified user is logged in.
+        /// The user wants a list of objects.
         /// </summary>
-        /// <param name="userId">The id of the user</param>
-        /// <returns>True if already logged in</returns>
-        public bool IsLoggedIn(string userId)
+        /// <param name="slackEvent"></param>
+        /// <returns>The bot response message</returns>
+        public async Task<string> FilterObjectsAsync(SlackEvent slackEvent)
         {
-            return _secretManager.GetSecret(userId) != null;
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
+            var userId = slackEvent.User;
+
+            var user = await GetSlackUserAsync(userId);
+            if (user is null)
+            {
+                return BotResponses.NotLoggedIn;
+            }
+
+            // filter <object> <filter_text>
+            var text = slackEvent.Text.ToLower().Trim().Split(" ");
+            if (text.Length != 3)
+            {
+                return BotResponses.InvalidParameter;
+            }
+
+            switch (text.ElementAtOrDefault(1))
+            {
+                case "projects":
+                case "project":
+                    try
+                    {
+                        var accessToken = await _tokenManager.GetAccessTokenAsync(userId);
+                        if (accessToken == null)
+                        {
+                            return BotResponses.InvalidAccessToken;
+                        }
+
+                        var data = await _tcDataManager.GetFilteredProjects(accessToken, text.ElementAtOrDefault(2));
+                        return data.Any() ? string.Join('\n', data.Take(10).Select(element => $"- {element.ProjectName}")) : BotResponses.NoObjectsFound;
+                    }
+                    catch (LoggedOutException)
+                    {
+                        return BotResponses.ErrorLoggedOut;
+                    }
+
+                case "tasks":
+                case "task":
+                    // Send request to the TimeCockpit API
+                    // Return the list with the data
+
+                    return BotResponses.NoObjectsFound;
+            }
+
+            return BotResponses.FilterObjectNotFound;
+        }
+
+        /// <summary>
+        /// Sets the default project for the user who executed the command.
+        /// </summary>
+        /// <param name="slackEvent"></param>
+        /// <returns>The bot response message</returns>
+        public async Task<string> SetDefaultProject(SlackEvent slackEvent)
+        {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
+            var userId = slackEvent.User;
+
+            var user = await GetSlackUserAsync(userId);
+            if (user is null)
+            {
+                return BotResponses.NotLoggedIn;
+            }
+
+            // project <project_name>
+            var text = slackEvent.Text.ToLower().Trim().Split(" ");
+            if (text.Length != 2)
+            {
+                return BotResponses.InvalidParameter;
+            }
+
+            try
+            {
+                var accessToken = await _tokenManager.GetAccessTokenAsync(userId);
+                if (accessToken == null)
+                {
+                    return BotResponses.InvalidAccessToken;
+                }
+
+                var data = await _tcDataManager.GetFilteredProjects(accessToken, text.ElementAtOrDefault(1));
+                
+                if (data.Count() == 1)
+                {
+                    user.DefaultProject = data.FirstOrDefault();
+                }
+            }
+            catch (LoggedOutException)
+            {
+                return BotResponses.ErrorLoggedOut;
+            }
+
+            return BotResponses.ObjectNotFound;
+        }
+
+        /// <summary>
+        /// Logs the user out and deletes his refresh token.
+        /// </summary>
+        /// <param name="slackEvent"></param>
+        /// <returns>The bot response message</returns>
+        public async Task<string> Logout(SlackEvent slackEvent)
+        {
+            if (slackEvent is null)
+            {
+                return BotResponses.Error;
+            }
+
+            var userId = slackEvent.User;
+
+            var user = await GetSlackUserAsync(userId);
+            if (user is null)
+            {
+                return BotResponses.NotLoggedIn;
+            }
+
+            if (user.IsWorking)
+            {
+                return BotResponses.UnlinkWhileWorking;
+            }
+
+            if (user.IsOnBreak)
+            {
+                return BotResponses.UnlinkWhileOnBreak;
+            }
+
+            await _secretManager.DeleteSecretAsync(slackEvent.User);
+
+            return BotResponses.Unlinked;
         }
 
         /// <summary>
@@ -344,11 +468,11 @@ namespace TCSlackbot.Logic.Slack
             //
             if (System.Diagnostics.Debugger.IsAttached)
             {
-                return "<https://localhost:6001/auth/link/?data=" + _protector.Protect(jsonData) + "|Link TimeCockpit Account>";
+                return "<https://localhost:6001/auth/link/?data=" + _protector.Protect(jsonData) + "|Link Account>";
             }
             else
             {
-                return "<https://tcslackbot.azurewebsites.net/auth/link/?data=" + _protector.Protect(jsonData) + "|Link TimeCockpit Account>";
+                return "<https://tcslackbot.azurewebsites.net/auth/link/?data=" + _protector.Protect(jsonData) + "|Link Account>";
             }
         }
 
@@ -357,8 +481,7 @@ namespace TCSlackbot.Logic.Slack
         /// </summary>
         /// <param name="userId">The id of the user</param>
         /// <returns>The object of the slack user</returns>
-        public async Task<SlackUser?> GetSlackUserAsync
-            (string userId)
+        public async Task<SlackUser?> GetSlackUserAsync(string userId)
         {
             //
             // Check if the user is logged in
@@ -374,7 +497,7 @@ namespace TCSlackbot.Logic.Slack
             SlackUser? user = await _cosmosManager.GetDocumentAsync<SlackUser>(Collection.Users, userId);
             if (user is null)
             {
-                user = await _cosmosManager.CreateDocumentAsync(Collection.Users, new SlackUser { UserId = userId });
+                user = await _cosmosManager.CreateDocumentAsync(Collection.Users, new SlackUser (userId));
             }
 
             //
@@ -386,6 +509,16 @@ namespace TCSlackbot.Logic.Slack
             }
 
             return user;
+        }
+
+        /// <summary>
+        /// Checks whether the specified user is logged in.
+        /// </summary>
+        /// <param name="userId">The id of the user</param>
+        /// <returns>True if already logged in</returns>
+        public bool IsLoggedIn(string userId)
+        {
+            return _secretManager.GetSecret(userId) != null;
         }
     }
 }

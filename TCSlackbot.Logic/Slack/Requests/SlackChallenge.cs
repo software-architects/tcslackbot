@@ -4,7 +4,7 @@ namespace TCSlackbot.Logic
 {
     public class SlackChallenge : SlackBaseRequest
     {
-        public string Token { get; set; }
-        public string Challenge { get; set; }
+        public string Token { get; set; } = string.Empty;
+        public string Challenge { get; set; } = string.Empty;
     }
 }

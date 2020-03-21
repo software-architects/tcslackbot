@@ -6,90 +6,114 @@ using System.Text.Json.Serialization;
 
 namespace TCSlackbot.Logic.Slack.Requests
 {
-    public partial class SlackViewSubmission
+    public class SlackViewSubmission
     {
         [JsonPropertyName("type")]
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         [JsonPropertyName("user")]
-        public User User { get; set; }
+        public User? User { get; set; }
 
         [JsonPropertyName("trigger_id")]
-        public string TriggerId { get; set; }
+        public string? TriggerId { get; set; }
 
         [JsonPropertyName("view")]
-        public View View { get; set; }
+        public View? View { get; set; }
     }
 
-    public partial class User
+    public class User
     {
         [JsonPropertyName("id")]
-        public string Id { get; set; }
+        public string? Id { get; set; }
     }
 
-    public partial class View
+    public class View
     {
         [JsonPropertyName("callback_id")]
-        public string CallbackId { get; set; }
+        public string? CallbackId { get; set; }
 
         [JsonPropertyName("state")]
-        public State State { get; set; }
+        public State? State { get; set; }
     }
 
-    public partial class State
-    {  
+    public class State
+    {
         [JsonPropertyName("values")]
-        public Values Values { get; set; }
+        public Values? Values { get; set; }
     }
 
-    public partial class Values
+    public class Values
     {
         [JsonPropertyName("date")]
-        public DateClass Date { get; set; }
+        public DateClass? Date { get; set; }
 
         [JsonPropertyName("starttime")]
-        public Starttime Starttime { get; set; }
+        public Starttime? Starttime { get; set; }
 
         [JsonPropertyName("endtime")]
-        public Endtime Endtime { get; set; }
+        public Endtime? Endtime { get; set; }
 
         [JsonPropertyName("description")]
-        public DescriptionClass Description { get; set; }
+        public DescriptionClass? Description { get; set; }
+
+        [JsonPropertyName("project")]
+        public ProjectClass? Project { get; set; }
     }
 
-    public partial class DateClass
+    public class DateClass
     {
         [JsonPropertyName("Date")]
-        public Details Date { get; set; }
+        public DateDetails? Date { get; set; }
     }
 
-    public partial class DescriptionClass
+    public class DescriptionClass
     {
         [JsonPropertyName("Description")]
-        public Details Description { get; set; }
+        public DateDetails? Description { get; set; }
     }
 
-    public partial class Details
+    public class ProjectClass
+    {
+        [JsonPropertyName("Project")]
+        public ProjectDetails? Project { get; set; }
+    }
+
+    public class DateDetails
     {
         [JsonPropertyName("type")]
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         [JsonPropertyName("value")]
-        public string Value { get; set; }
+        public string? Value { get; set; }
 
         [JsonPropertyName("selected_date")]
-        public DateTime Day { get; set; }
+        public DateTime? Day { get; set; }
     }
 
-    public partial class Endtime
+    public class ProjectDetails
+    {
+        [JsonPropertyName("type")]
+        public string? Type { get; set; }
+
+        [JsonPropertyName("selected_option")]
+        public SelectedOption? SelectedOption { get; set; }
+    }
+
+    public class Endtime
     {
         [JsonPropertyName("EndTime")]
-        public Details EndTime { get; set; }
+        public DateDetails? EndTime { get; set; }
     }
 
-    public partial class Starttime
+    public class Starttime
     {
         [JsonPropertyName("StartTime")]
-        public Details StartTime { get; set; }
+        public DateDetails? StartTime { get; set; }
+    }
+
+    public class SelectedOption
+    {
+        [JsonPropertyName("value")]
+        public string? Value { get; set; }
     }
 }

@@ -14,7 +14,7 @@ namespace TCSlackbot.Logic.Utils
     {
         private const string DatabaseName = "tcslackbot";
 
-        private static DocumentClient client;
+        private static DocumentClient? client;
 
         private readonly IConfiguration _configuration;
         private readonly ILogger<CosmosManager> _logger;
@@ -55,6 +55,11 @@ namespace TCSlackbot.Logic.Utils
         /// <inheritdoc/>
         public async Task<T?> GetDocumentAsync<T>(string collectionName, string documentId) where T: class
         {
+            if (client is null)
+            {
+                return default;
+            }
+
             try
             {
                 var documentUri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, documentId);
@@ -75,12 +80,17 @@ namespace TCSlackbot.Logic.Utils
         /// <inheritdoc/>
         public IDocumentQuery<SlackUser>? GetAllSlackUsers()
         {
+            if (client is null)
+            {
+                return default;
+            }
+
             try
             {
                 var response = client.CreateDocumentQuery<SlackUser>(
                     Collection.Users,
                     new FeedOptions { MaxItemCount = 10 })
-                    .Where(s => s.IsWorking && s.StartTime != null && (DateTime.Now - s.StartTime).Value > TimeSpan.FromHours(4))
+                    .Where(s => s.IsWorking && s.Worktime != null && s.Worktime.Start != null && (DateTime.Now - s.Worktime.Start).Value > TimeSpan.FromHours(4))
                     .AsDocumentQuery();
 
                 return (dynamic)response;
@@ -98,6 +108,11 @@ namespace TCSlackbot.Logic.Utils
         /// <inheritdoc/>
         public async Task<T?> CreateDocumentAsync<T>(string collectionName, T document) where T: class
         {
+            if (client is null)
+            {
+                return default;
+            }
+
             await CreateCollectionIfNotExistsAsync(DatabaseName, collectionName);
 
             try
@@ -120,6 +135,11 @@ namespace TCSlackbot.Logic.Utils
         /// <inheritdoc/>
         public async Task<T?> ReplaceDocumentAsync<T>(string collectionName, T document, string documentId) where T: class
         {
+            if (client is null)
+            {
+                return default;
+            }
+
             try
             {
                 var documentUri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, documentId);
@@ -139,6 +159,11 @@ namespace TCSlackbot.Logic.Utils
 
         public async Task RemoveDocumentAsync(string collectionName, string documentId)
         {
+            if (client is null)
+            {
+                return;
+            }
+
             try
             {
                 var documentUri = UriFactory.CreateDocumentUri(DatabaseName, collectionName, documentId);
@@ -152,6 +177,11 @@ namespace TCSlackbot.Logic.Utils
 
         public bool ExistsDocument(string collectionName, string documentId)
         {
+            if (client is null)
+            {
+                return default;
+            }
+
             try
             {
                 var collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, collectionName);
@@ -173,6 +203,11 @@ namespace TCSlackbot.Logic.Utils
         /// <returns></returns>
         private static async Task CreateDatabaseIfNotExistsAsync(string databaseId)
         {
+            if (client is null)
+            {
+                return;
+            }
+
             try
             {
                 await client.ReadDatabaseAsync(UriFactory.CreateDatabaseUri(databaseId));
@@ -198,6 +233,11 @@ namespace TCSlackbot.Logic.Utils
         /// <returns></returns>
         private static async Task CreateCollectionIfNotExistsAsync(string databaseId, string collectionId)
         {
+            if (client is null)
+            {
+                return;
+            }
+
             try
             {
                 await client.ReadDocumentCollectionAsync(UriFactory.CreateDocumentCollectionUri(databaseId, collectionId));
@@ -217,6 +257,5 @@ namespace TCSlackbot.Logic.Utils
                 }
             }
         }
-
     }
 }

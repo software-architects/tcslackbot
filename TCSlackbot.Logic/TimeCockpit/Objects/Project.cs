@@ -5,11 +5,12 @@ namespace TCSlackbot.Logic.TimeCockpit.Objects
     public class Project
     {
         [JsonPropertyName("APP_Code")]
-        public string Code { get; set; }
+        public string Code { get; set; } = string.Empty;
 
         [JsonPropertyName("APP_ProjectName")]
-        public string ProjectName { get; set; }
+        public string ProjectName { get; set; } = string.Empty;
 
-        // TODO: Add more
+        [JsonPropertyName("APP_ProjectUuid")]
+        public string ProjectUuid { get; set; } = string.Empty;
     }
 }

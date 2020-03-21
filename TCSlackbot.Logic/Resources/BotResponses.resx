@@ -127,8 +127,7 @@
     <value>You are already on break. Did you forget to unpause?</value>
   </data>
   <data name="NotLoggedIn" xml:space="preserve">
-    <value>You have to login before you can use this bot!
-Type login or link to get the login link.</value>
+    <value>Please login to use this bot.</value>
   </data>
   <data name="NotOnBreak" xml:space="preserve">
     <value>You are not on break. Did you forget to pause?</value>
@@ -155,10 +154,10 @@ Type login or link to get the login link.</value>
     <value>You have succesfully logged out. Goodbye.</value>
   </data>
   <data name="InvalidParameter" xml:space="preserve">
-    <value>There was one or more parameters missing. </value>
+    <value>Invalid parameters.</value>
   </data>
   <data name="BreakEnded" xml:space="preserve">
-    <value />
+    <value>Successfully stopped the break.</value>
   </data>
   <data name="EndBreakFailure" xml:space="preserve">
     <value>Failed to stop the break.</value>
@@ -168,5 +167,35 @@ Type login or link to get the login link.</value>
   </data>
   <data name="StartBreakFailure" xml:space="preserve">
     <value>Failed to start break.</value>
+  </data>
+  <data name="Unlinked" xml:space="preserve">
+    <value>You successfully unlinked your account.</value>
+  </data>
+  <data name="UnlinkWhileOnBreak" xml:space="preserve">
+    <value>Cannot unlink, because you are on break.</value>
+  </data>
+  <data name="UnlinkWhileWorking" xml:space="preserve">
+    <value>Cannot unlink, because you are working.</value>
+  </data>
+  <data name="ErrorLoggedOut" xml:space="preserve">
+    <value>An error occured. You have been logged out.</value>
+  </data>
+  <data name="ErrorOnBreak" xml:space="preserve">
+    <value>You are on break.</value>
+  </data>
+  <data name="NoObjectsFound" xml:space="preserve">
+    <value>No objects found.</value>
+  </data>
+  <data name="NotYetImplemented" xml:space="preserve">
+    <value>This function has not yet been implemented.</value>
+  </data>
+  <data name="ObjectNotFound" xml:space="preserve">
+    <value>Object count not be found.</value>
+  </data>
+  <data name="InvalidAccessToken" xml:space="preserve">
+    <value>Invalid Access Token. Please unlink your account and then link it again.</value>
+  </data>
+  <data name="ProjectNotFound" xml:space="preserve">
+    <value>Could not find the specified project.</value>
   </data>
 </root>

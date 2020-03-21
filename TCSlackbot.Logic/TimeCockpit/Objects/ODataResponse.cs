@@ -6,6 +6,6 @@ namespace TCSlackbot.Logic.TimeCockpit.Objects
     public class ODataResponse<T>
     {
         [JsonPropertyName("value")]
-        public List<T> Value { get; } = new List<T>();
+        public List<T>? Value { get; set; }
     }
 }

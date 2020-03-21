@@ -50,14 +50,14 @@ namespace TCSlackbot.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("login")]
-        public IActionResult Authenticate([FromQuery] Uri ReturnUri)
+        public IActionResult Authenticate([FromQuery] Uri ReturnUrl)
         {
-            if (ReturnUri == null)
+            if (ReturnUrl == null)
             {
-                ReturnUri = new Uri("/");
+                return BadRequest("ReturnUrl not found.");
             }
 
-            return Challenge(new AuthenticationProperties { RedirectUri = ReturnUri.AbsoluteUri }, OpenIdConnectDefaults.AuthenticationScheme);
+            return Challenge(new AuthenticationProperties { RedirectUri = ReturnUrl.ToString() }, OpenIdConnectDefaults.AuthenticationScheme);
         }
 
         /// <summary>

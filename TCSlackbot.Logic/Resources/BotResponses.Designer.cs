@@ -88,7 +88,7 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to Successfully stopped the break..
         /// </summary>
         public static string BreakEnded {
             get {
@@ -115,6 +115,24 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to An error occured. You have been logged out..
+        /// </summary>
+        public static string ErrorLoggedOut {
+            get {
+                return ResourceManager.GetString("ErrorLoggedOut", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You are on break..
+        /// </summary>
+        public static string ErrorOnBreak {
+            get {
+                return ResourceManager.GetString("ErrorOnBreak", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Specified object not found..
         /// </summary>
         public static string FilterObjectNotFound {
@@ -124,7 +142,16 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to There was one or more parameters missing. .
+        ///   Looks up a localized string similar to Invalid Access Token. Please unlink your account and then link it again..
+        /// </summary>
+        public static string InvalidAccessToken {
+            get {
+                return ResourceManager.GetString("InvalidAccessToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid parameters..
         /// </summary>
         public static string InvalidParameter {
             get {
@@ -142,8 +169,16 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to You have to login before you can use this bot!
-        ///Type login or link to get the login link..
+        ///   Looks up a localized string similar to No objects found..
+        /// </summary>
+        public static string NoObjectsFound {
+            get {
+                return ResourceManager.GetString("NoObjectsFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please login to use this bot..
         /// </summary>
         public static string NotLoggedIn {
             get {
@@ -166,6 +201,33 @@ namespace TCSlackbot.Logic.Resources {
         public static string NotWorking {
             get {
                 return ResourceManager.GetString("NotWorking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This function has not yet been implemented..
+        /// </summary>
+        public static string NotYetImplemented {
+            get {
+                return ResourceManager.GetString("NotYetImplemented", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Object count not be found..
+        /// </summary>
+        public static string ObjectNotFound {
+            get {
+                return ResourceManager.GetString("ObjectNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Could not find the specified project..
+        /// </summary>
+        public static string ProjectNotFound {
+            get {
+                return ResourceManager.GetString("ProjectNotFound", resourceCulture);
             }
         }
         
@@ -211,6 +273,33 @@ namespace TCSlackbot.Logic.Resources {
         public static string TakeABreak {
             get {
                 return ResourceManager.GetString("TakeABreak", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You successfully unlinked your account..
+        /// </summary>
+        public static string Unlinked {
+            get {
+                return ResourceManager.GetString("Unlinked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot unlink, because you are on break..
+        /// </summary>
+        public static string UnlinkWhileOnBreak {
+            get {
+                return ResourceManager.GetString("UnlinkWhileOnBreak", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot unlink, because you are working..
+        /// </summary>
+        public static string UnlinkWhileWorking {
+            get {
+                return ResourceManager.GetString("UnlinkWhileWorking", resourceCulture);
             }
         }
     }
