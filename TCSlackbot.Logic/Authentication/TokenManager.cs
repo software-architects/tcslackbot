@@ -35,10 +35,10 @@ namespace TCSlackbot.Logic.Utils
                 //
                 // Check if already in the cache
                 //
-                if (accessTokenCache.HasValidToken(userId))
-                {
-                    return accessTokenCache.Get(userId);
-                }
+//                 if (accessTokenCache.HasValidToken(userId))
+//                 {
+//                     return accessTokenCache.Get(userId);
+//                 }
 
                 //
                 // Get the refresh token
