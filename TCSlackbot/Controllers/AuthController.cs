@@ -78,7 +78,7 @@ namespace TCSlackbot.Controllers
                 var jsonData = Serializer.Deserialize<LinkData>(decryptedData);
 
                 // Validate the time
-                if (DateTime.Now > jsonData.ValidUntil)
+                if (jsonData is null || DateTime.Now > jsonData.ValidUntil)
                 {
                     return BadRequest("Link has expired.");
                 }
