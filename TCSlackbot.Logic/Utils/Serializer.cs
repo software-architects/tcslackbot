@@ -13,8 +13,13 @@ namespace TCSlackbot.Logic.Utils
         /// <typeparam name="T">The type of the deserialized data</typeparam>
         /// <param name="content">The serialized content</param>
         /// <returns>The deserialized object of the specified type</returns>
-        public static T Deserialize<T>(string content)
+        public static T? Deserialize<T>(string content) where T: class
         {
+            if (content is null)
+            {
+                return default;
+            }
+
             return JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
     }
