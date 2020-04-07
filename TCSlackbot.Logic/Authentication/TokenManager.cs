@@ -64,7 +64,9 @@ namespace TCSlackbot.Logic.Utils
             }
             catch (LoggedOutException)
             {
-                return BotResponses.ErrorLoggedOut;
+                // Throw new exception, so you don't have to rethrow the catched exception (this would change the stack information)
+                // 
+                throw new LoggedOutException();
             }
         }
 
