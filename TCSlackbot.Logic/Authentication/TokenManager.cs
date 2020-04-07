@@ -9,8 +9,6 @@ namespace TCSlackbot.Logic.Utils
 {
     public class TokenManager : ITokenManager
     {
-        public static readonly AccessTokenCache accessTokenCache = new AccessTokenCache();
-
         private readonly HttpClient _client;
         private readonly IConfiguration _configuration;
         private readonly ISecretManager _secretManager;
@@ -32,14 +30,6 @@ namespace TCSlackbot.Logic.Utils
         {
             try
             {
-                //
-                // Check if already in the cache
-                //
-//                 if (accessTokenCache.HasValidToken(userId))
-//                 {
-//                     return accessTokenCache.Get(userId);
-//                 }
-
                 //
                 // Get the refresh token
                 //
@@ -69,11 +59,6 @@ namespace TCSlackbot.Logic.Utils
                 // Update the refresh token in the keyvault
                 //
                 _secretManager.SetSecret(userId, refreshToken);
-
-                //
-                // Add it to the cache
-                //
-                accessTokenCache.Add(userId, accessToken);
 
                 return accessToken;
             }

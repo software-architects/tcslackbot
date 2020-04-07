@@ -21,8 +21,6 @@ namespace TCSlackbot.Controllers
     [Route("auth")]
     public class AuthController : ControllerBase
     {
-        public static readonly AccessTokenCache accessTokenCache = new AccessTokenCache();
-
         private readonly ILogger<AuthController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IDataProtector _protector;
