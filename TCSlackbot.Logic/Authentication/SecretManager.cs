@@ -38,15 +38,21 @@ namespace TCSlackbot.Logic
                 return;
             }
 
+            // Delete the secret in the key vault
+            //
             try
             {
                 await keyVaultClient.DeleteSecretAsync(KeyVaultEndpoint, key);
-
             }
             catch (KeyVaultErrorException ex)
             {
                 Console.WriteLine("\n\nError:" + ex.Message);
             }
+
+            // Delete it locally (needed in case the secret cannot be deleted). If the above statement fails, this will save it. 
+            // Without this, the user may have an invalid refresh token stored in the key vault and can't use the bot anymore.
+            // 
+            _configuration[key] = null;
 
             // Reload the configuration because we added a new secret
             ((IConfigurationRoot)_configuration).Reload();
