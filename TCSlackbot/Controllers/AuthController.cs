@@ -21,8 +21,6 @@ namespace TCSlackbot.Controllers
     [Route("auth")]
     public class AuthController : ControllerBase
     {
-        public static readonly AccessTokenCache accessTokenCache = new AccessTokenCache();
-
         private readonly ILogger<AuthController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IDataProtector _protector;
@@ -80,7 +78,7 @@ namespace TCSlackbot.Controllers
                 var jsonData = Serializer.Deserialize<LinkData>(decryptedData);
 
                 // Validate the time
-                if (DateTime.Now > jsonData.ValidUntil)
+                if (jsonData is null || DateTime.Now > jsonData.ValidUntil)
                 {
                     return BadRequest("Link has expired.");
                 }
