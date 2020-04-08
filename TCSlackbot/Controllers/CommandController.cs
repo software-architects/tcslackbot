@@ -89,6 +89,8 @@ namespace TCSlackbot.Controllers
             string headerValue = HttpContext.Request.Headers["X-Slack-Retry-Reason"].ToString();
             if (headerValue == "http_timeout")
             {
+                HttpContext.Response.Headers.Add("X-Slack-No-Retry", "1");
+
                 return Ok();
             }
 
