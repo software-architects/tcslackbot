@@ -214,7 +214,7 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Object count not be found..
+        ///   Looks up a localized string similar to Object could not be found..
         /// </summary>
         public static string ObjectNotFound {
             get {

@@ -190,7 +190,7 @@
     <value>This function has not yet been implemented.</value>
   </data>
   <data name="ObjectNotFound" xml:space="preserve">
-    <value>Object count not be found.</value>
+    <value>Object could not be found.</value>
   </data>
   <data name="InvalidAccessToken" xml:space="preserve">
     <value>Invalid Access Token. Please unlink your account and then link it again.</value>

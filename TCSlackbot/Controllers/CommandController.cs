@@ -81,6 +81,18 @@ namespace TCSlackbot.Controllers
             var request = Serializer.Deserialize<SlackBaseRequest>(body.ToString());
 
             //
+            // Check whether the message has been sent again. This prevents duplicate responses.
+            // This header is only set on the retry requests. There's also the "X-Slack-Retry-Num" header,
+            // which stands for the number of the retry request. 
+            // See this for more information: https://api.slack.com/events-api#errors
+            //
+            string headerValue = HttpContext.Request.Headers["X-Slack-Retry-Reason"].ToString();
+            if (headerValue == "http_timeout")
+            {
+                return Ok();
+            }
+
+            //
             // Verify slack request
             //
             if (!IsValidSignature(body.ToString(), HttpContext.Request.Headers))
