@@ -231,7 +231,6 @@ namespace TCSlackbot.Controllers
                 ? "\"initial_option\":{\"text\":{\"type\":\"plain_text\",\"text\":\"REPLACE_PROJECT\",\"emoji\":true},\"value\":\"REPLACE_PROJECT\"},"
                     .Replace("REPLACE_PROJECT", user.DefaultProject.ProjectName, StringComparison.Ordinal)
                 : string.Empty;
-            Console.WriteLine(initialOptionString);
             json = json.Replace("INITIAL_OPTION", initialOptionString, StringComparison.Ordinal);
 
             Console.WriteLine(json);

@@ -386,6 +386,8 @@ namespace TCSlackbot.Logic.Slack
                 if (data.Count() == 1)
                 {
                     user.DefaultProject = data.FirstOrDefault();
+                    await _cosmosManager.ReplaceDocumentAsync(Collection.Users, user, user.UserId);
+
                     return BotResponses.DefaultProjectSet;
                 }
             }
