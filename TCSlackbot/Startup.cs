@@ -43,7 +43,6 @@ namespace TCSlackbot
                 .AddCookie(options =>
                 {
                     options.LoginPath = "/auth/login";
-                    options.AccessDeniedPath = "/error";
 
                     // Don't reuse the tokens via the cookie, because it could have been renewed, thus they would be invalid.
                     options.ExpireTimeSpan = TimeSpan.FromSeconds(1);
