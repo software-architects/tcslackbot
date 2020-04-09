@@ -55,8 +55,6 @@ namespace TCSlackbot
 
                     options.UsePkce = true;
                     options.SaveTokens = true;
-                    options.RequireHttpsMetadata = true;
-                    options.GetClaimsFromUserInfoEndpoint = true;
 
                     // Use the authorization code flow.
                     options.ResponseType = OpenIdConnectResponseType.Code;
