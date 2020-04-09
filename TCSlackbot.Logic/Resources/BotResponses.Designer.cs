@@ -97,6 +97,15 @@ namespace TCSlackbot.Logic.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Default project has been set..
+        /// </summary>
+        public static string DefaultProjectSet {
+            get {
+                return ResourceManager.GetString("DefaultProjectSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to stop the break..
         /// </summary>
         public static string EndBreakFailure {

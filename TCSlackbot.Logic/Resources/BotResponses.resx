@@ -198,4 +198,7 @@
   <data name="ProjectNotFound" xml:space="preserve">
     <value>Could not find the specified project.</value>
   </data>
+  <data name="DefaultProjectSet" xml:space="preserve">
+    <value>Default project has been set.</value>
+  </data>
 </root>

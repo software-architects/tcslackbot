@@ -386,6 +386,7 @@ namespace TCSlackbot.Logic.Slack
                 if (data.Count() == 1)
                 {
                     user.DefaultProject = data.FirstOrDefault();
+                    return BotResponses.DefaultProjectSet;
                 }
             }
             catch (LoggedOutException)
