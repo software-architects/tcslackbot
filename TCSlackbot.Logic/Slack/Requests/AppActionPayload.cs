@@ -13,9 +13,12 @@ namespace TCSlackbot.Logic.Slack.Requests
         [JsonPropertyName("type")]
         public string Type { get; set; } = string.Empty;
 
+        [JsonPropertyName("team")]
+        public Team? Team { get; set; }
+
         [JsonPropertyName("channel")]
         public UserChannel? Channel { get; set; }
-
+            
         [JsonPropertyName("user")]
         public UserChannel? User { get; set; }
 
@@ -31,5 +34,13 @@ namespace TCSlackbot.Logic.Slack.Requests
 
         [JsonPropertyName("name")]
         public string Name { get; set; } = string.Empty;
+    }
+
+    public class Team
+    {
+        /// <summary>
+        /// The unique identifier of the team.
+        /// </summary>
+        public string Id { get; set; } = string.Empty;
     }
 }
