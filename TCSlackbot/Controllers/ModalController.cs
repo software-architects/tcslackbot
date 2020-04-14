@@ -4,11 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using TCSlackbot.Logic.TimeCockpit.Objects;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using TCSlackbot.Logic;
 using TCSlackbot.Logic.Authentication.Exceptions;
@@ -16,11 +14,9 @@ using TCSlackbot.Logic.Cosmos;
 using TCSlackbot.Logic.Resources;
 using TCSlackbot.Logic.Slack;
 using TCSlackbot.Logic.Slack.Requests;
-using TCSlackbot.Logic.TimeCockpit;
 using TCSlackbot.Logic.Utils;
 using System.Globalization;
-using System.Security.Cryptography;
-using System.IO;
+using Microsoft.Extensions.Configuration;
 
 namespace TCSlackbot.Controllers
 {
@@ -28,6 +24,7 @@ namespace TCSlackbot.Controllers
     [Route("modal")]
     public class ModalController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
         private readonly IDataProtector _protector;
         private readonly ISecretManager _secretManager;
         private readonly ICosmosManager _cosmosManager;
@@ -37,6 +34,7 @@ namespace TCSlackbot.Controllers
         private readonly CommandHandler _commandHandler;
 
         public ModalController(
+            IConfiguration configuration,
             IHttpClientFactory factory,
             IDataProtectionProvider provider,
             ISecretManager secretManager,
@@ -63,11 +61,11 @@ namespace TCSlackbot.Controllers
             }
 #pragma warning restore CA2208 // Instantiate argument exceptions correctly
 
+            _configuration = configuration;
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
             _cosmosManager = cosmosManager;
             _httpClient = factory.CreateClient("BotClient");
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", secretManager.GetSecret("Slack-SlackbotOAuthAccessToken"));
             _tokenManager = tokenManager;
             _tcDataManager = dataManager;
 
@@ -123,16 +121,7 @@ namespace TCSlackbot.Controllers
         public async Task<IActionResult> HandleRequestAsync()
         {
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
-            if (payload is null || payload.User is null)
-            {
-                return BadRequest();
-            }
-
-            //
-            // Send the reply
-            //
-            var channel = await CommandController.GetIMChannelFromUserAsync(_httpClient, payload.User.Id);
-            if (channel is null)
+            if (payload is null || payload.User is null || payload?.Team is null || payload?.Channel is null)
             {
                 return BadRequest();
             }
@@ -140,7 +129,7 @@ namespace TCSlackbot.Controllers
             var replyData = new Dictionary<string, string>
             {
                 ["user"] = payload.User.Id,
-                ["channel"] = channel,
+                ["channel"] = payload.Channel.Id,
             };
 
             //
@@ -156,16 +145,16 @@ namespace TCSlackbot.Controllers
             if (user == null)
             {
                 replyData["text"] = BotResponses.NotLoggedIn;
-                using var replyForm = new FormUrlEncodedContent(replyData);
-                _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), replyForm);
+                await SendReplyAsync(payload.Team.Id, replyData, true);
+
                 return Ok();
             }
 
             if (!user.IsWorking)
             {
                 replyData["text"] = BotResponses.NotWorking;
-                using var replyForm = new FormUrlEncodedContent(replyData);
-                _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), replyForm);
+                await SendReplyAsync(payload.Team.Id, replyData, true);
+
                 return Ok();
             }
 
@@ -173,8 +162,10 @@ namespace TCSlackbot.Controllers
             {
                 case "message_action":
                     return await ViewModalAsync(payload);
+
                 case "view_submission":
                     return await ProcessModalDataAsync(user);
+
                 default:
                     Console.WriteLine($"Received unhandled request: {payload.Type}.");
                     break;
@@ -195,10 +186,11 @@ namespace TCSlackbot.Controllers
                 return BadRequest();
             }
 
+            var payloadTeamId = payload?.Team?.Id;
             var payloadUserId = payload?.User?.Id;
             var payloadTriggerId = payload?.TriggerId;
             var payloadCallbackId = payload?.CallbackId;
-            if (payloadUserId is null || payloadTriggerId is null || payloadCallbackId is null)
+            if (payloadTeamId is null || payloadUserId is null || payloadTriggerId is null || payloadCallbackId is null)
             {
                 return BadRequest();
             }
@@ -233,15 +225,10 @@ namespace TCSlackbot.Controllers
                 : string.Empty;
             json = json.Replace("INITIAL_OPTION", initialOptionString, StringComparison.Ordinal);
 
-            Console.WriteLine(json);
-            
             //
             // Send the response
             //
-            using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
-            {
-                await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "views.open"), content);
-            }
+            await OpenModalAsync(payloadTeamId, json);
 
             return Ok(json);
         }
@@ -315,7 +302,6 @@ namespace TCSlackbot.Controllers
             //
             user.IsWorking = false;
             user.Worktime = new Duration(payloadDate + startTime, payloadDate + endTime);
-            //user.DefaultProject = await _tcDataManager.GetProjectAsync(accessToken, payloadProjectName);
 
             //
             // Send the request
@@ -360,23 +346,92 @@ namespace TCSlackbot.Controllers
             //
             // Send the reply
             //
-            var channel = await CommandController.GetIMChannelFromUserAsync(_httpClient, payloadUserId);
-            if (channel is null)
-            {
-                return BadRequest();
-            }
+            //var channel = await CommandController.GetIMChannelFromUserAsync(_httpClient, payloadUserId);
+            //if (channel is null)
+            //{
+            //    return BadRequest();
+            //}
 
             var replyData = new Dictionary<string, string>
             {
                 ["user"] = payloadUserId,
-                ["channel"] = channel,
+                //["channel"] = channel,
                 ["text"] = "Your time has been saved"
             };
 
             using var replyForm = new FormUrlEncodedContent(replyData);
             _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), replyForm);
 
+            //await SendReplyAsync(payload.Team.Id, replyData, true);
+
             return Ok();
+        }
+
+        /// <summary>
+        /// Sends a reply either in the group channel or via direct message.
+        /// </summary>
+        /// <param name="replyData">The data of the reply (message, channel, ...)</param>
+        /// <param name="directMessage">True when it should be sent via direct message</param>
+        /// <returns></returns>
+        public async Task SendReplyAsync(string teamId, Dictionary<string, string> replyData, bool directMessage)
+        {
+            string requestUri = "chat.postMessage";
+
+            //
+            // Set the correct token
+            //
+            var token = _configuration[teamId];
+            if (token is null)
+            {
+                return;
+            }
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            //
+            // Use a different uri for the direct message
+            //
+            if (directMessage)
+            {
+                requestUri = "chat.postEphemeral";
+            }
+
+            using var content = new FormUrlEncodedContent(replyData);
+            _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, requestUri), content);
+
+            // 
+            // Reset the authorization header
+            //
+            _httpClient.DefaultRequestHeaders.Authorization = null;
+        }
+
+        /// <summary>
+        /// Opens the modal by sending a request to views.open.
+        /// </summary>
+        /// <param name="teamId"></param>
+        /// <param name="jsonContent"></param>
+        /// <returns></returns>
+        public async Task OpenModalAsync(string teamId, string jsonContent)
+        {
+            //
+            // Set the correct token
+            //
+            var token = _configuration[teamId];
+            if (token is null)
+            {
+                return;
+            }
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+
+            using (var content = new StringContent(jsonContent, Encoding.UTF8, "application/json"))
+            {
+                await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "views.open"), content);
+            }
+
+            // 
+            // Reset the authorization header
+            //
+            _httpClient.DefaultRequestHeaders.Authorization = null;
         }
     }
 }
