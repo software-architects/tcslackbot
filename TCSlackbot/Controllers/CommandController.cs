@@ -302,7 +302,6 @@ namespace TCSlackbot.Controllers
             //
             if (directMessage)
             {
-                replyData["channel"] = channel;
                 requestUri = "chat.postEphemeral";
             }
 
