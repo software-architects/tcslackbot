@@ -63,7 +63,10 @@ namespace TCSlackbot.Logic.Slack
             var hours = timeSpan.Hours;
             var minutes = timeSpan.Minutes;
 
-            return $"You have been working for {((hours > 0) ? string.Format("{0} hours {1} minutes", hours, minutes) : string.Format("{0} minutes", minutes))}";
+            var hourString = hours > 1 ? "hours" : "hour";
+            var minuteString = minutes > 1 ? "minutes" : "minute";
+
+            return $"You have been working for {((hours > 0) ? string.Format("{0} {1} {2} {3}", hours, hourString, minutes, minuteString) : string.Format("{0} {1}", minutes, minuteString))}";
         }
 
         /// <summary>

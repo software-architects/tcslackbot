@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +25,7 @@ namespace TCSlackbot.Controllers
     [Route("command")]
     public class CommandController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
         private readonly IDataProtector _protector;
         private readonly ISecretManager _secretManager;
         private readonly ICosmosManager _cosmosManager;
@@ -33,6 +35,7 @@ namespace TCSlackbot.Controllers
 
         private readonly CommandHandler _commandHandler;
         public CommandController(
+            IConfiguration configuration,
             IHttpClientFactory factory,
             IDataProtectionProvider provider,
             ISecretManager secretManager,
@@ -59,6 +62,7 @@ namespace TCSlackbot.Controllers
             }
 #pragma warning restore CA2208 // Instantiate argument exceptions correctly
 
+            _configuration = configuration;
             _protector = provider.CreateProtector("UUIDProtector");
             _secretManager = secretManager;
             _cosmosManager = cosmosManager;
@@ -136,10 +140,8 @@ namespace TCSlackbot.Controllers
             switch (request?.Event?.Type)
             {
                 case "message":
-                    return await HandleSlackMessage(request.Event);
-
                 case "app_mention":
-                    return await HandleSlackMessage(request.Event);
+                    return await HandleSlackMessage(request.Event, request?.TeamId);
 
                 default:
                     break;
@@ -167,8 +169,9 @@ namespace TCSlackbot.Controllers
         /// Handles all slack messages and calls the specified command handler if it is a command.
         /// </summary>
         /// <param name="slackEvent"></param>
+        /// <param name="teamId">The team of the user of the sent request.</param>
         /// <returns></returns>
-        public async Task<IActionResult> HandleSlackMessage(SlackEvent slackEvent)
+        public async Task<IActionResult> HandleSlackMessage(SlackEvent slackEvent, string teamId)
         {
             if (slackEvent is null || _commandHandler == null)
             {
@@ -245,40 +248,9 @@ namespace TCSlackbot.Controllers
                     break;
             }
 
-            await SendReplyAsync(reply, hiddenMessage);
+            await SendReplyAsync(teamId, reply, hiddenMessage);
 
             return Ok();
-        }
-
-        /// <summary>
-        /// Get the IM channel id from user
-        /// </summary>
-        /// <param name="user">Id of user</param>
-        /// <returns>channel id</returns>
-        public static async Task<string?> GetIMChannelFromUserAsync(HttpClient client, string user)
-        {
-            if (client is null)
-            {
-                return default;
-            }
-
-            var response = await client.GetAsync(new Uri("https://slack.com/api/conversations.list?types=im"));
-            var content = await response.Content.ReadAsStringAsync();
-            var conversationChannels = Serializer.Deserialize<ConversationsList>(content)?.Channels;
-            if (conversationChannels is null)
-            {
-                return default;
-            }
-
-            foreach (var channel in conversationChannels)
-            {
-                if (channel.User == user)
-                {
-                    return channel.Id;
-                }
-            }
-
-            return default;
         }
 
         /// <summary>
@@ -287,27 +259,35 @@ namespace TCSlackbot.Controllers
         /// <param name="replyData">The data of the reply (message, channel, ...)</param>
         /// <param name="directMessage">True when it should be sent via direct message</param>
         /// <returns></returns>
-        private async Task SendReplyAsync(Dictionary<string, string> replyData, bool directMessage)
+        public async Task SendReplyAsync(string teamId, Dictionary<string, string> replyData, bool directMessage)
         {
             string requestUri = "chat.postMessage";
 
-            var channel = GetIMChannelFromUserAsync(_httpClient, replyData["user"]).Result;
-            if (channel is null)
+            //
+            // Set the correct token
+            //
+            var token = _configuration[teamId];
+            if (token is null)
             {
                 return;
             }
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             //
             // Use a different uri for the direct message
             //
             if (directMessage)
             {
-                replyData["channel"] = channel;
                 requestUri = "chat.postEphemeral";
             }
 
             using var content = new FormUrlEncodedContent(replyData);
             _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, requestUri), content);
+
+            // 
+            // Reset the authorization header
+            //
+            _httpClient.DefaultRequestHeaders.Authorization = null;
         }
 
         /// <summary>
