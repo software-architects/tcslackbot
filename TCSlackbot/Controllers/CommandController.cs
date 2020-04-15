@@ -178,6 +178,13 @@ namespace TCSlackbot.Controllers
                 return BadRequest();
             }
 
+            // Ignore if the message is coming from the bot
+            //
+            if (string.IsNullOrEmpty(slackEvent.User))
+            {
+                return Ok();
+            }
+
             var reply = new Dictionary<string, string>();
             var hiddenMessage = false;
 
