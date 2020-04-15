@@ -11,10 +11,13 @@ To install the Bot on your server, simply click this button:
 </a>
 
 # Task
-Users of the time management application time cockpit spend a lot of time in the communication software Slack and do not want to change the tool to record their time. The goal of this diploma thesis is to create a Slack Bot that solves this problem for time cockpit customers. This will save valuable time and money.
+
+Users of the time management software time cockpit spend a lot of time in the communication software Slack and do not want to change the tool to record their time. The goal of this diploma thesis is to create a Slack Bot that solves this problem for time cockpit customers by enabling the interaction with time cockpit directly out of Slack. This saves valuable time and money.
 
 # Implementation
-The bot was implemented as an open source ASP.NET core application, which was published under the MIT license. The bot is hosted in the cloud.  Time cockpit customers can use commands to make their time bookings directly in Slack. The commands are sent from Slack to our server, which then processes them.
+
+The bot was implemented as an open source ASP.NET core application and released under the MIT license. The bot is hosted in the Microsoft Azure Cloud. Time cockpit customers can use commands like `start`, `stop` or `pause` to do their time bookings directly in Slack. The commands are sent from Slack to our server, which then processes them.
 
 # Result
+
 Our bot is designed to help customers of time cockpit to automate tasks and thus gain valuable time. At the time of printing it was not yet decided if the results of this diploma thesis will be used in practice at customers of the client. A final presentation was still pending. In the preliminary presentation the client was satisfied with the results of our work.
