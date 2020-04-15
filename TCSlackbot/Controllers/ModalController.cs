@@ -315,12 +315,12 @@ namespace TCSlackbot.Controllers
             //
             user.IsWorking = false;
             user.Worktime = new Duration(payloadDate + startTime, payloadDate + endTime);
-            //user.DefaultProject = await _tcDataManager.GetProjectAsync(accessToken, payloadProjectName);
+            user.DefaultProject = await _tcDataManager.GetProjectAsync(accessToken, payloadProjectName);
 
             //
             // Send the request
             //
-            
+
             // Get the project
             var project = await _tcDataManager.GetProjectAsync(accessToken, payloadProjectName);
             if (project == null)
