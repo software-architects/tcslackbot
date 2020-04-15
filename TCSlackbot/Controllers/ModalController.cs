@@ -121,11 +121,15 @@ namespace TCSlackbot.Controllers
         public async Task<IActionResult> HandleRequestAsync()
         {
             var payload = Serializer.Deserialize<AppActionPayload>(HttpContext.Request.Form["payload"]);
-            if (payload is null || payload.User is null || payload?.Team is null || payload?.Channel is null)
+            if (payload is null || payload.User is null || payload?.Team is null) // || payload?.Channel is null
             {
                 return BadRequest();
             }
-
+            if(payload.Channel == null)
+            {
+                payload.Channel = new UserChannel();
+                payload.Channel.Id = "";
+            }
             var replyData = new Dictionary<string, string>
             {
                 ["user"] = payload.User.Id,
@@ -194,7 +198,7 @@ namespace TCSlackbot.Controllers
             {
                 return BadRequest();
             }
-
+            
             var user = await _commandHandler.GetSlackUserAsync(payloadUserId);
             if (user == null)
             {
@@ -355,16 +359,61 @@ namespace TCSlackbot.Controllers
             var replyData = new Dictionary<string, string>
             {
                 ["user"] = payloadUserId,
-                //["channel"] = channel,
+                ["channel"] = await GetIMChannelFromUserAsync(_httpClient, user.UserId, payload?.Team.Id),
                 ["text"] = "Your time has been saved"
             };
 
             using var replyForm = new FormUrlEncodedContent(replyData);
-            _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), replyForm);
+            // _ = await _httpClient.PostAsync(new Uri(_httpClient.BaseAddress, "chat.postEphemeral"), replyForm);
 
-            //await SendReplyAsync(payload.Team.Id, replyData, true);
+             await SendReplyAsync(payload.Team.Id, replyData, true);
 
             return Ok();
+        }
+
+        public bool SetAuthToken(String teamId)
+        {
+            //
+            // Set the correct token
+            //
+            var token = _configuration[teamId];
+            if (token is null)
+            {
+                return false;
+            }
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            return true;
+        }
+
+        public async Task<string?> GetIMChannelFromUserAsync(HttpClient client, string user, string teamId)
+        {
+            if (client is null)
+            {
+                return default;
+            }
+
+            if (!SetAuthToken(teamId))
+            {
+                return default;
+            }
+
+            var response = await client.GetAsync(new Uri("https://slack.com/api/conversations.list?types=im"));
+            var content = await response.Content.ReadAsStringAsync();
+            var conversationChannels = Serializer.Deserialize<ConversationsList>(content)?.Channels;
+            if (conversationChannels is null)
+            {
+                return default;
+            }
+
+            foreach (var channel in conversationChannels)
+            {
+                if (channel.User == user)
+                {
+                    return channel.Id;
+                }
+            }
+
+            return default;
         }
 
         /// <summary>
@@ -377,15 +426,10 @@ namespace TCSlackbot.Controllers
         {
             string requestUri = "chat.postMessage";
 
-            //
-            // Set the correct token
-            //
-            var token = _configuration[teamId];
-            if (token is null)
+            if (!SetAuthToken(teamId))
             {
-                return;
+                return ;
             }
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             //
             // Use a different uri for the direct message

@@ -14,6 +14,9 @@ namespace TCSlackbot.Logic.Slack.Requests
         [JsonPropertyName("user")]
         public User? User { get; set; }
 
+        [JsonPropertyName("team")]
+        public Team? Team { get; set; }
+
         [JsonPropertyName("trigger_id")]
         public string? TriggerId { get; set; }
 
@@ -116,4 +119,5 @@ namespace TCSlackbot.Logic.Slack.Requests
         [JsonPropertyName("value")]
         public string? Value { get; set; }
     }
+
 }
