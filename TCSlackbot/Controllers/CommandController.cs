@@ -179,8 +179,9 @@ namespace TCSlackbot.Controllers
             }
 
             // Ignore if the message is coming from the bot
+            // (The user field is only set on the test server, thus we also need to check for that)
             //
-            if (string.IsNullOrEmpty(slackEvent.User))
+            if (slackEvent.User == "UJZLBL7BL" || string.IsNullOrEmpty(slackEvent.User))
             {
                 return Ok();
             }
